@@ -46,7 +46,7 @@ Promise.all([fetch("../data/exercises.json").then(r => r.json()), fetch("../data
   var p7 = checkCommon("Rücken", prof({ verletzungen: ["ruecken"], kraft_erfahrung: "ueber_24", trainingstage: 4 }));
   ok("Rücken: kein Kreuzheben, keine Langhantel-Kniebeuge", !allEx(p7).some(x => ["kreuzheben", "kniebeuge_langhantel", "langhantel_rudern"].indexOf(x.id) >= 0));
   var p8 = Plan.generate(prof({ ziele: ["marathon"], trainingstage: 6 }), EX);
-  ok("Marathon: Kraft auf 3 Tage begrenzt + Hinweis", p8.daysPerWeek === 3 && p8.notes.indexOf("endurance_pending") >= 0);
+  ok("Marathon: Kraft auf 2 Tage begrenzt, kein Ausdauer-Hinweis", p8.daysPerWeek === 2 && p8.notes.indexOf("endurance_pending") < 0);
   var p9 = Plan.generate(prof({ trainingstage: 6, kraft_erfahrung: "m6_24" }), EX);
   ok("6 Tage bei Fortgeschrittenen -> 5 + Hinweis", p9.daysPerWeek === 5 && p9.notes.indexOf("cap_days") >= 0);
   var p10 = Plan.generate(prof({ ziele: ["bodybuilding"], bb_phase: "aufbau", kraft_erfahrung: "m6_24", trainingstage: 4, dauer_min: 90 }), EX);
@@ -58,9 +58,9 @@ Promise.all([fetch("../data/exercises.json").then(r => r.json()), fetch("../data
   var m1 = Plan.generate(prof({ ziele: ["muskelaufbau", "abnehmen"], prioritaet: "abnehmen" }), EX);
   ok("Abnehmen + Muskelaufbau: Hypertrophie-Training + Hinweis recomp", m1.goal === "hyp" && m1.notes.indexOf("recomp") >= 0, m1.goal + " " + m1.notes);
   var m2 = Plan.generate(prof({ ziele: ["kraft", "marathon"], prioritaet: "marathon", trainingstage: 5 }), EX);
-  ok("Priorität Marathon: Kraft auf 3 Tage, Ausdauer-Hinweis", m2.daysPerWeek === 3 && m2.notes.indexOf("endurance_pending") >= 0);
+  ok("Priorität Marathon: Kraft auf 2 Tage", m2.daysPerWeek === 2);
   var m3 = Plan.generate(prof({ ziele: ["kraft", "marathon"], prioritaet: "kraft", trainingstage: 4, kraft_erfahrung: "m6_24" }), EX);
-  ok("Priorität Kraft + Marathon als Zusatz: 4 Kraft-Tage + Ausdauer-Hinweis", m3.daysPerWeek === 4 && m3.notes.indexOf("endurance_pending") >= 0 && m3.goal === "kraft");
+  ok("Priorität Kraft + Marathon als Zusatz: 4 Kraft-Tage", m3.daysPerWeek === 4 && m3.goal === "kraft");
   var m4 = Plan.generate(prof({ ziele: ["bodybuilding", "marathon"], bb_phase: "aufbau" }), EX);
   ok("Bodybuilding + Marathon: Konflikt-Hinweis", m4.notes.indexOf("endu_conflict") >= 0);
   var h2 = Plan.generate(prof({ ort: "zuhause", heim: ["koerper"], kraft_erfahrung: "m6_24", trainingstage: 4 }), EX);

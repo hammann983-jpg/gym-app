@@ -178,9 +178,10 @@
     var injuries = (Array.isArray(a.verletzungen) ? a.verletzungen : []).filter(function (x) { return x !== "keine"; });
     var wanted = Number(a.trainingstage) || 3;
     var notes = [], G = goals(a);
-    var days = endurance ? Math.min(wanted, 3) : Math.min(wanted, lvl === "erfahren" ? 6 : 5);
+    var runPrio = prio(a) === "laufen" || prio(a) === "marathon"; // Läufer:innen: 2x Kraft pro Woche
+    var days = runPrio ? Math.min(wanted, 2) : endurance ? Math.min(wanted, 3) : Math.min(wanted, lvl === "erfahren" ? 6 : 5);
     if (!endurance && wanted > days) notes.push("cap_days");
-    if (hasEndurance(a)) notes.push("endurance_pending");
+    if (G.indexOf("triathlon") >= 0 || G.indexOf("hyrox") >= 0) notes.push("endurance_pending");
     var muscle = G.indexOf("muskelaufbau") >= 0 || (G.indexOf("bodybuilding") >= 0 && a.bb_phase === "aufbau");
     var cut = G.indexOf("abnehmen") >= 0 || (G.indexOf("bodybuilding") >= 0 && a.bb_phase === "definition");
     if (muscle && G.indexOf("abnehmen") >= 0) notes.push("recomp");
@@ -248,7 +249,37 @@
     });
 
     sessions.forEach(function (s) { s.focus = focusOf(s.exercises); });
-    return { version: 2, goal: goal, level: lvl, daysPerWeek: days, weeks: pw.weeks, sessions: sessions, notes: notes, injuries: injuries, priority: prio(a), cut: cut, muscle: muscle };
+    var plan = { version: 3, goal: goal, level: lvl, daysPerWeek: days, weeks: pw.weeks, sessions: sessions, notes: notes, injuries: injuries, priority: prio(a), cut: cut, muscle: muscle };
+    var run = window.Run ? window.Run.build(a, opts.today, !runPrio) : null;
+    if (run) {
+      plan.run = run; plan.weeks = Math.max(pw.weeks, run.weeks.length);
+      notes.push("run");
+      if (run.short && notes.indexOf("event_soon") < 0) notes.push("event_soon");
+    }
+    return plan;
+  }
+
+  // Dauer inklusive Lauf-Plan (Laufen als Zusatzziel kann länger sein als der Kraft-Block)
+  function totalWeeks(a, today) {
+    var w = planWeeks(a, today).weeks, p = prio(a);
+    var run = window.Run ? window.Run.build(a, today, p !== "laufen" && p !== "marathon") : null;
+    return run ? Math.max(w, run.weeks.length) : w;
+  }
+  // Einheiten einer Woche in Reihenfolge: {t:"gym", i} oder {t:"run", j}
+  function weekItems(plan, week) {
+    if (!plan.run) return plan.sessions.map(function (s, i) { return { t: "gym", i: i }; });
+    return window.Run.mix(plan.sessions, window.Run.week(plan.run, week).runs);
+  }
+  function doneBefore(plan, week) {
+    var n = 0;
+    for (var w = 1; w < week; w++) n += weekItems(plan, w).length;
+    return n;
+  }
+  // done = Zahl der erledigten (oder übersprungenen) Einheiten
+  function cursor(plan, done) {
+    var week = 1, rest = done || 0, items = weekItems(plan, 1);
+    while (rest >= items.length) { rest -= items.length; items = weekItems(plan, ++week); }
+    return { week: week, pos: rest, item: items[rest], items: items, seq: done || 0 };
   }
 
   function volume(plan) {
@@ -276,5 +307,5 @@
     return { kg: top, why: "same" };
   }
 
-  window.Plan = { runChain: runChain, RUNG_WEEKS: RUNG_WEEKS, planWeeks: planWeeks, prio: prio, goals: goals, focusOf: focusOf, generate: generate, volume: volume, level: level, goalType: goalType, equipSet: equipSet, available: available, blocked: blocked, isDeload: isDeload, setsFor: setsFor, suggest: suggest, split: split };
+  window.Plan = { totalWeeks: totalWeeks, weekItems: weekItems, doneBefore: doneBefore, cursor: cursor, runChain: runChain, RUNG_WEEKS: RUNG_WEEKS, planWeeks: planWeeks, prio: prio, goals: goals, focusOf: focusOf, generate: generate, volume: volume, level: level, goalType: goalType, equipSet: equipSet, available: available, blocked: blocked, isDeload: isDeload, setsFor: setsFor, suggest: suggest, split: split };
 })();

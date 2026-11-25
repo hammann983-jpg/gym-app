@@ -152,11 +152,11 @@
     if (sc.red) {
       return '<section class="screen">' + logo() + '<h1 style="font-size:36px">' + esc(t("res.red.title")) + '</h1><div class="note red">' + esc(t("res.red.text")) + '</div><button class="btn" id="redchange">' + esc(t("res.red.change")) + "</button></section>";
     }
-    var a = S.answers, G = window.Plan.goals(a), pr = window.Plan.prio(a), pw = window.Plan.planWeeks(a);
+    var a = S.answers, G = window.Plan.goals(a), pr = window.Plan.prio(a), weeks = window.Plan.totalWeeks(a);
     var goal = t("o.ziele." + pr);
     var h = '<section class="screen">' + logo() + "<h1>" + esc(t("res.title")) + "</h1><p>" + esc(t("res.sub")) + '</p><div class="stats">' +
       '<div class="stat"><small>' + esc(t("res.goal")) + "</small><b>" + esc(goal) + "</b></div>" +
-      '<div class="stat"><small>' + esc(t("res.weeks")) + "</small><b>" + pw.weeks + " " + esc(t("u.weeks")) + "</b></div>" +
+      '<div class="stat"><small>' + esc(t("res.weeks")) + "</small><b>" + weeks + " " + esc(t("u.weeks")) + "</b></div>" +
       '<div class="stat"><small>' + esc(t("res.bmi")) + "</small><b>" + (sc.bmi ? sc.bmi.toLocaleString(window.I18N.lang(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "–") + "</b></div>" +
       '<div class="stat"><small>' + esc(t("res.days")) + "</small><b>" + esc(a.trainingstage) + "</b></div></div>";
     if (G.length > 1) h += '<div class="note">' + esc(t("res.goals")) + ": " + esc(G.map(function (g) { return t("o.ziele." + g); }).join(", ")) + "</div>";
@@ -168,7 +168,13 @@
   // ---------- Plan und Training ----------
   function ensurePlan() {
     if (!S.plan && EX.length && window.Plan.prio(S.answers)) { S.plan = window.Plan.generate(S.answers, EX); S.done = 0; S.draft = null; save(); }
+    else if (S.plan && !(S.plan.version >= 3) && EX.length) upgradePlan();
     return S.plan;
+  }
+  // Alter Plan: neu erzeugen, volle erledigte Wochen bleiben erledigt
+  function upgradePlan() {
+    var weeks = Math.floor((S.done || 0) / S.plan.sessions.length);
+    S.plan = window.Plan.generate(S.answers, EX); S.done = window.Plan.doneBefore(S.plan, weeks + 1); S.draft = null; save();
   }
   function sessionTitle(s) { return t("day." + s.type) + (s.letter ? " " + s.letter : ""); }
   // Große Überschrift: die trainierten Muskelgruppen (Ganzkörper behält seinen Namen)
@@ -178,8 +184,9 @@
   }
   function focusLine(s) { return (s.focus || []).map(function (f) { return t("focus." + f); }).join(" · "); }
   function cur() {
-    var n = S.plan.sessions.length, seq = S.done || 0;
-    return { idx: seq % n, week: Math.floor(seq / n) + 1, seq: seq };
+    var c = window.Plan.cursor(S.plan, S.done || 0);
+    c.idx = c.item.i;
+    return c;
   }
   function history(id) {
     return S.log.map(function (l) { var e = l.ex.find(function (x) { return x.id === id; }); return e ? e.sets : null; }).filter(Boolean);
@@ -200,14 +207,14 @@
   }
   function notesHtml() {
     return (S.plan.notes || []).map(function (n) {
-      var txt = n === "cap_days" ? t("note.cap_days", { n: S.plan.daysPerWeek }) : n === "endurance_pending" ? t("note.endurance") : n === "recomp" ? t("note.recomp") : n === "endu_conflict" ? t("note.endu_conflict") : n === "event_soon" ? t("note.event_soon") : "";
+      var txt = n === "cap_days" ? t("note.cap_days", { n: S.plan.daysPerWeek }) : n === "endurance_pending" ? t("note.endurance") : n === "recomp" ? t("note.recomp") : n === "endu_conflict" ? t("note.endu_conflict") : n === "event_soon" ? t("note.event_soon") : n === "run" ? t("note.run") : "";
       return txt ? '<div class="note">' + esc(txt) + "</div>" : "";
     }).join("");
   }
 
   function ensureDraft(c) {
     var s = S.plan.sessions[c.idx];
-    if (S.draft && S.draft.seq === c.seq) return S.draft;
+    if (S.draft && S.draft.seq === c.seq && S.draft.ex && s.exercises.every(function (x) { return S.draft.ex[x.id]; })) return S.draft;
     var d = { seq: c.seq, ex: {} };
     s.exercises.forEach(function (x) {
       var n = window.Plan.setsFor(x, c.week), arr = [];
@@ -218,7 +225,73 @@
     return d;
   }
 
+  // ---------- Lauf-Einheiten ----------
+  function runTitle(r) { return r.k === "race" ? t("run.kind.race", { d: t("dist." + r.dist) }) : t("run.kind." + r.k); }
+  function runSize(r) {
+    if (r.k === "race") return nf(window.Run.RACE_KM[r.dist], 1) + " km";
+    return r.km ? nf(r.km, 0) + " km" : r.min + " " + t("today.min");
+  }
+  function runSteps(r) {
+    if (r.k === "runwalk") return [t("run.rw", { n: r.n, run: nf(r.run, 1), walk: nf(r.walk, 1) })];
+    if (r.k === "cont") return [t("run.cont", { m: r.run })];
+    return (r.q || []).map(function (q) {
+      var id = q.id === "km_fast" && !q.r ? "km_fast_norest" : q.id;
+      return t("run.q." + id, q);
+    });
+  }
+  function paceText(r, rung) {
+    var P = window.Run.paces(S.answers, S.results), z = window.Run.zone(r, rung);
+    if (!P || !z) return "";
+    var a = window.Progress.fmtTime(P[z][0]), b = window.Progress.fmtTime(P[z][1]);
+    return t("run.pace." + z, { p: (a === b ? a : a + "–" + b) + " " + t("rs.perkm") });
+  }
+  function weekLine(w) {
+    return t("run.rungline", { d: t("run.rung." + w.rung), n: w.n, of: w.of }) + (w.flag ? " · " + t("run.flag." + w.flag) : "");
+  }
+  function goalCard(got, goal) {
+    return '<div class="card ringrow">' + ring(got, goal) + "<div><h3>" + esc(t("today.goal")) + "</h3><p>" + esc(t("today.of", { done: got, total: goal })) + "</p></div></div>";
+  }
+  function runToday(p, c) {
+    var w = window.Run.week(p.run, c.week), r = w.runs[c.item.j];
+    if (!(S.draft && S.draft.seq === c.seq && S.draft.run)) { S.draft = { seq: c.seq, run: true, min: "", km: "" }; save(); }
+    var d = S.draft, pace = paceText(r, w.rung), zone = window.Run.zone(r, w.rung);
+    var h = '<div class="sec">' + esc(t("today.next")) + " · " + esc(t("run.title")) + '</div><h2 class="big">' + esc(runTitle(r)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span><span class="pill">' + esc(runSize(r)) + "</span></div>";
+    if (c.week > p.weeks) h += '<div class="note warn">' + esc(t("today.blockdone")) + "</div>";
+    h += goalCard(weekGoalDone(), c.items.length) + notesHtml();
+    h += '<div class="card"><h3>' + esc(weekLine(w)) + "</h3>";
+    h += '<div class="pex"><span>' + esc(t("run.total")) + "</span><span>" + esc(runSize(r)) + "</span></div>";
+    runSteps(r).forEach(function (x) { h += "<p><b>" + esc(x) + "</b></p>"; });
+    h += "<p>" + esc(t("run.how." + r.k)) + "</p>";
+    if (pace) h += "<p><b>" + esc(pace) + "</b></p>";
+    else if (zone && !window.Run.paces(S.answers, S.results)) h += '<p class="qhint">' + esc(t("run.pace.none")) + "</p>";
+    if (r.k !== "race") h += '<p class="qhint">' + esc(t("run.warm")) + "</p>";
+    h += '</div><div class="note warn">' + esc(t("run.stop")) + "</div>";
+    h += '<div class="card ci"><h3>' + esc(t("run.log.title")) + '</h3><div class="cirow"><label class="f"><input type="text" inputmode="decimal" data-run="min" value="' + esc(d.min) + '" placeholder="' + (r.min || "") + '" aria-label="' + esc(t("run.log.min")) + '"><i>' + esc(t("today.min")) + '</i></label><label class="f"><input type="text" inputmode="decimal" data-run="km" value="' + esc(d.km) + '" placeholder="' + (r.km || "") + '" aria-label="' + esc(t("run.log.km")) + '"><i>km</i></label></div><p class="qhint">' + esc(t("run.log.hint")) + "</p></div>";
+    return h + '<p class="err" id="err" role="alert">' + esc(ui.err) + '</p><button class="btn" id="rundone">' + esc(t("run.log.done")) + '</button><button class="btn ghost" id="runskip">' + esc(t("run.log.skip")) + "</button>";
+  }
+  function finishRun() {
+    var c = cur(), p = S.plan, w = window.Run.week(p.run, c.week), r = w.runs[c.item.j], d = S.draft || {};
+    var min = num(d.min || ""), km = num(d.km || "");
+    if (!(min >= 1 && min <= 600) || km < 0 || km > 100) { ui.err = t("run.log.invalid"); render(); return; }
+    S.log.push({ date: iso(new Date()), seq: c.seq, week: c.week, weeks: p.weeks, type: "run", kind: r.k, dist: r.dist || null, rung: w.rung, min: Math.round(min * 10) / 10, km: Math.round(km * 100) / 100, ex: [], vol: 0 });
+    S.done = (S.done || 0) + 1; S.draft = null; ui.err = "";
+    ui.finish = { run: true, idx: S.log.length - 1 }; save(); render(); window.scrollTo(0, 0);
+  }
+  function runStats(l) {
+    var s = [[t("run.stat.time"), nf(l.min, 1), t("today.min")]];
+    if (l.km) s.push([t("run.stat.dist"), nf(l.km, 2), "km"], [t("rs.pace"), window.Progress.fmtTime(l.min * 60 / l.km), "/km"]);
+    return s;
+  }
+  function logTitle(l) {
+    if (l.type === "run") return t("run.title") + " · " + runTitle({ k: l.kind, dist: l.dist });
+    return t("day." + l.type) + (l.letter ? " " + l.letter : "");
+  }
+
   function todayView() {
+    if (ui.finish && ui.finish.run) {
+      var rl = S.log[ui.finish.idx];
+      return '<div class="card done"><h3>' + esc(t("today.done.title")) + '</h3><div class="stats two">' + runStats(rl).map(function (x) { return '<div class="stat"><small>' + esc(x[0]) + "</small><b>" + esc(x[1] + " " + x[2]) + "</b></div>"; }).join("") + '</div><button class="btn" data-share="' + ui.finish.idx + '">' + esc(t("share.btn")) + '</button><button class="btn ghost" id="finok">' + esc(t("today.done.ok")) + "</button></div>";
+    }
     if (ui.finish) {
       var f = ui.finish, h = '<div class="card done"><h3>' + esc(t("today.done.title")) + '</h3><div class="stats two"><div class="stat"><small>' + esc(t("today.done.vol")) + "</small><b>" + nf(f.vol, 0) + ' kg</b></div><div class="stat"><small>' + esc(t("today.done.sets")) + "</small><b>" + f.sets + "</b></div></div>";
       f.prs.forEach(function (p) { h += '<div class="note warn">' + esc(t("today.done.pr")) + ": " + esc(p) + "</div>"; });
@@ -226,12 +299,14 @@
     }
     var p = ensurePlan();
     if (!p) return "";
-    var c = cur(), s = p.sessions[c.idx], d = ensureDraft(c), deload = window.Plan.isDeload(c.week);
-    var goal = p.sessions.length, got = weekGoalDone();
+    var c = cur();
+    if (c.item.t === "run") return runToday(p, c);
+    var s = p.sessions[c.idx], d = ensureDraft(c), deload = window.Plan.isDeload(c.week);
+    var goal = c.items.length, got = weekGoalDone();
     var h = '<div class="sec">' + esc(t("today.next")) + (s.type === "fb" ? "" : " · " + esc(sessionTitle(s))) + '</div><h2 class="big">' + esc(headline(s)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span><span class="pill">' + esc(t("today.exercises", { n: s.exercises.length })) + "</span></div>";
     if (c.week > p.weeks) h += '<div class="note warn">' + esc(t("today.blockdone")) + "</div>";
     if (deload) h += '<div class="note warn">' + esc(t("today.deload")) + "</div>";
-    h += '<div class="card ringrow">' + ring(got, goal) + "<div><h3>" + esc(t("today.goal")) + "</h3><p>" + esc(t("today.of", { done: got, total: goal })) + "</p></div></div>";
+    h += goalCard(got, goal);
     h += notesHtml();
     h += '<p class="qhint">' + esc(t("today.hint")) + "</p>";
     s.exercises.forEach(function (x, i) {
@@ -275,14 +350,24 @@
   function planView() {
     var p = ensurePlan();
     if (!p) return "";
-    var c = cur(), w = ui.planWeek || Math.min(c.week, p.weeks), n = p.sessions.length;
+    var c = cur(), w = ui.planWeek || Math.min(c.week, p.weeks), before = window.Plan.doneBefore(p, w), rw = p.run ? window.Run.week(p.run, w) : null;
     var h = '<div class="weeks">' + Array.from({ length: p.weeks }, function (_, i) { var k = i + 1; return '<button data-week="' + k + '" aria-pressed="' + (k === w) + '"' + (k === Math.min(c.week, p.weeks) ? ' class="now"' : "") + ">" + k + (window.Plan.isDeload(k) ? "·" : "") + "</button>"; }).join("") + "</div>";
     h += '<div class="sec">' + esc(t("plan.week")) + " " + w + (window.Plan.isDeload(w) ? " · " + esc(t("plan.deloadnote")) : "") + "</div>";
     if (window.Plan.isDeload(w)) h += '<div class="note warn">' + esc(t("today.deload")) + "</div>";
+    if (rw) h += '<div class="note">' + esc(weekLine(rw)) + "</div>";
     h += notesHtml();
-    p.sessions.forEach(function (s, i) {
-      var isDone = (S.done || 0) > (w - 1) * n + i;
-      h += '<div class="card psess"><div class="phead"><div><h3>' + esc(headline(s)) + "</h3><small class=\"fl\">" + esc(sessionTitle(s) + (s.type === "fb" ? " · " + focusLine(s) : "")) + "</small></div>" + (isDone ? '<span class="pill acc">' + icon("check") + "</span>" : "") + "</div>";
+    window.Plan.weekItems(p, w).forEach(function (it, i) {
+      var isDone = (S.done || 0) > before + i, tick = isDone ? '<span class="pill acc">' + icon("check") + "</span>" : "";
+      if (it.t === "run") {
+        var r = rw.runs[it.j], pace = paceText(r, rw.rung);
+        h += '<div class="card psess"><div class="phead"><div><h3>' + esc(runTitle(r)) + '</h3><small class="fl">' + esc(t("run.title") + " · " + runSize(r)) + "</small></div>" + tick + "</div>";
+        runSteps(r).forEach(function (x) { h += '<p class="qhint">' + esc(x) + "</p>"; });
+        if (pace) h += '<p class="qhint">' + esc(pace) + "</p>";
+        h += "</div>";
+        return;
+      }
+      var s = p.sessions[it.i];
+      h += '<div class="card psess"><div class="phead"><div><h3>' + esc(headline(s)) + "</h3><small class=\"fl\">" + esc(sessionTitle(s) + (s.type === "fb" ? " · " + focusLine(s) : "")) + "</small></div>" + tick + "</div>";
       s.exercises.forEach(function (x) {
         h += '<div class="pex"><span>' + esc(exName(x.id)) + "</span><span>" + window.Plan.setsFor(x, w) + " × " + esc(x.text) + "</span></div>";
       });
@@ -297,7 +382,8 @@
     S.log.slice().reverse().slice(0, 30).forEach(function (l) {
       var sets = l.ex.reduce(function (a, e) { return a + e.sets.length; }, 0);
       var d = new Date(l.date + "T12:00:00");
-      h += '<div class="card hist"><div><b>' + esc(t("day." + l.type) + (l.letter ? " " + l.letter : "")) + "</b><small>" + esc(d.toLocaleDateString(window.I18N.lang(), { weekday: "short", day: "numeric", month: "short" })) + "</small></div><div class=\"hr\"><span>" + esc(t("prog.entry", { vol: nf(l.vol, 0), sets: sets })) + '</span><button class="swap" data-share="' + S.log.indexOf(l) + '">' + esc(t("share.btn")) + "</button></div></div>";
+      var info = l.type === "run" ? runStats(l).map(function (x) { return x[1] + " " + x[2]; }).join(" · ") : t("prog.entry", { vol: nf(l.vol, 0), sets: sets });
+      h += '<div class="card hist"><div><b>' + esc(logTitle(l)) + "</b><small>" + esc(d.toLocaleDateString(window.I18N.lang(), { weekday: "short", day: "numeric", month: "short" })) + "</small></div><div class=\"hr\"><span>" + esc(info) + '</span><button class="swap" data-share="' + S.log.indexOf(l) + '">' + esc(t("share.btn")) + "</button></div></div>";
     });
     return h;
   }
@@ -507,14 +593,17 @@
   function weekStartIso(s) { var d = new Date(s + "T12:00:00"), k = (d.getDay() + 6) % 7; d.setDate(d.getDate() - k); return iso(d); }
   function shareData(i) {
     var l = S.log[i]; if (!l) return null;
-    var lang = window.I18N.lang(), ws = weekStartIso(l.date), goal = S.plan ? S.plan.sessions.length : 3;
+    var lang = window.I18N.lang(), ws = weekStartIso(l.date), goal = S.plan ? window.Plan.weekItems(S.plan, l.week).length : 3;
     var byWeek = {}; S.log.forEach(function (x) { var k = weekStartIso(x.date); byWeek[k] = (byWeek[k] || 0) + 1; });
     var days = [0, 0, 0, 0, 0, 0, 0]; S.log.forEach(function (x) { if (weekStartIso(x.date) === ws) days[(new Date(x.date + "T12:00:00").getDay() + 6) % 7] = 1; });
     var streak = 0, k = ws; while (byWeek[k] >= goal) { streak++; var dd = new Date(k + "T12:00:00"); dd.setDate(dd.getDate() - 7); k = iso(dd); }
-    var title = (l.type === "fb" || !(l.focus || []).length) ? t("day." + l.type) + (l.letter ? " " + l.letter : "") : l.focus.map(function (f) { return t("focus." + f); }).join(" · ");
+    var isRun = l.type === "run", rs = isRun ? runStats(l) : null;
+    var title = isRun ? runTitle({ k: l.kind, dist: l.dist }) : (l.type === "fb" || !(l.focus || []).length) ? t("day." + l.type) + (l.letter ? " " + l.letter : "") : l.focus.map(function (f) { return t("focus." + f); }).join(" · ");
     var exs = l.ex.map(function (e) { var b = e.sets.reduce(function (a, s) { return (s.kg * s.reps > a.kg * a.reps) ? s : a; }, e.sets[0]); return { name: exName(e.id), best: (b.kg ? nf(b.kg, 2) + " kg × " : "") + b.reps + (b.kg ? "" : " ×") }; });
     var dn = []; for (var q = 0; q < 7; q++) dn.push(new Date(2024, 0, 1 + q).toLocaleDateString(lang, { weekday: "short" }).slice(0, 2));
-    return { title: title, date: new Date(l.date + "T12:00:00").toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" }), vol: l.vol, sets: l.ex.reduce(function (a, e) { return a + e.sets.length; }, 0), ex: l.ex.length, prs: l.prs || [], week: Math.min(l.week, l.weeks || (S.plan && S.plan.weeks) || l.week), weeks: l.weeks || (S.plan && S.plan.weeks) || 12, lang: lang, brand: C.APP_NAME, exercises: exs, dayNames: dn,
+    if (isRun) exs = rs.map(function (x) { return { name: x[0], best: x[1] + " " + x[2] }; });
+    var weekNo = Math.min(l.week, l.weeks || (S.plan && S.plan.weeks) || l.week), weekTotal = l.weeks || (S.plan && S.plan.weeks) || 12;
+    return { stats: isRun ? rs.concat([[t("plan.week"), weekNo + "/" + weekTotal, ""]]) : null, foot: isRun ? (l.km ? nf(l.km, 2) + " km" : nf(l.min, 1) + " " + t("today.min")) : null, title: title, date: new Date(l.date + "T12:00:00").toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" }), vol: l.vol, sets: l.ex.reduce(function (a, e) { return a + e.sets.length; }, 0), ex: l.ex.length, prs: l.prs || [], week: Math.min(l.week, l.weeks || (S.plan && S.plan.weeks) || l.week), weeks: l.weeks || (S.plan && S.plan.weeks) || 12, lang: lang, brand: C.APP_NAME, exercises: exs, dayNames: dn,
       weekStats: { done: byWeek[ws] || 0, goal: goal, days: days, streak: streak },
       labels: { volume: t("today.done.vol"), sets: t("today.done.sets"), exercises: t("share.exercises"), week: t("plan.week"), record: t("today.done.pr"), done: t("share.done"), weekdone: t("share.weekdone"), weekprogress: t("share.weekprogress"), sessions: t("share.sessions"), streak: t("share.streak"), weeks: t("share.weeks") } };
   }
@@ -611,6 +700,9 @@
       };
     });
     on("finish", finishSession);
+    on("rundone", finishRun);
+    on("runskip", function () { S.done = (S.done || 0) + 1; S.draft = null; ui.err = ""; save(); render(); window.scrollTo(0, 0); });
+    $app.querySelectorAll("[data-run]").forEach(function (el) { el.oninput = function () { if (S.draft && S.draft.run) { S.draft[el.getAttribute("data-run")] = el.value; save(); } }; });
     on("finok", function () { ui.finish = null; render(); window.scrollTo(0, 0); });
     $app.querySelectorAll("[data-info]").forEach(function (b) { b.onclick = function () { ui.info = b.getAttribute("data-info"); render(); }; });
     on("infoclose", function () { ui.info = null; render(); });

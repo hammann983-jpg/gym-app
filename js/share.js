@@ -39,7 +39,7 @@
       var t1 = fitTitle(c, d.title.toUpperCase(), W - 180, 3, 200, 110); font(c, "700", t1.size, HEAD); c.fillStyle = TEXT;
       t1.lines.forEach(function (l, i) { c.fillText(l, 90, 340 + t1.size * 0.95 * (i + 1)); });
       var y0 = 340 + t1.size * 0.95 * t1.lines.length + 150, tw = (W - 180 - 30) / 2, th = 250;
-      [[L.volume, nf(d.vol, lang) , "kg"], [L.sets, nf(d.sets, lang), ""], [L.exercises, nf(d.ex, lang), ""], [L.week, d.week + "/" + d.weeks, ""]].forEach(function (s, i) {
+      (d.stats || [[L.volume, nf(d.vol, lang) , "kg"], [L.sets, nf(d.sets, lang), ""], [L.exercises, nf(d.ex, lang), ""], [L.week, d.week + "/" + d.weeks, ""]]).forEach(function (s, i) {
         var x = 90 + (i % 2) * (tw + 30), y = y0 + Math.floor(i / 2) * (th + 30);
         c.fillStyle = "rgba(255,255,255,0.05)"; rr(c, x, y, tw, th, 36); c.fill(); c.strokeStyle = LINE; c.lineWidth = 2; c.stroke();
         font(c, "500", 32, BODY); c.fillStyle = MUTED; c.fillText(s[0], x + 36, y + 70);
@@ -63,7 +63,7 @@
         font(c, "700", 58, HEAD); c.textAlign = "right"; c.fillText(e.best, W - 90, y); c.textAlign = "left";
         c.fillStyle = "rgba(26,19,0,0.35)"; c.fillRect(90, y + 32, W - 180, 2);
       });
-      font(c, "700", 54, HEAD); c.fillStyle = "#1A1300"; c.letterSpacing = "4px"; c.fillText(nf(d.vol, lang) + " KG", 90, H - 110); c.textAlign = "right"; c.fillText(d.date.toUpperCase(), W - 90, H - 110); c.textAlign = "left"; c.letterSpacing = "0px";
+      font(c, "700", 54, HEAD); c.fillStyle = "#1A1300"; c.letterSpacing = "4px"; c.fillText((d.foot || nf(d.vol, lang) + " KG").toUpperCase(), 90, H - 110); c.textAlign = "right"; c.fillText(d.date.toUpperCase(), W - 90, H - 110); c.textAlign = "left"; c.letterSpacing = "0px";
     } else if (style === "photo") {
       if (photo) { var s = Math.max(W / photo.width, H / photo.height), pw = photo.width * s, ph = photo.height * s; c.drawImage(photo, (W - pw) / 2, (H - ph) / 2, pw, ph); }
       else { var g2 = c.createLinearGradient(0, 0, 0, H); g2.addColorStop(0, "#6c7ea6"); g2.addColorStop(0.5, "#2b3556"); g2.addColorStop(1, "#0c1122"); c.fillStyle = g2; c.fillRect(0, 0, W, H); }
@@ -74,6 +74,7 @@
       var t3 = fitTitle(c, d.title.toUpperCase(), gw - 100, 2, 110, 64); font(c, "700", t3.size, HEAD); c.fillStyle = "#FFFFFF";
       t3.lines.forEach(function (l, i) { c.fillText(l, gx + 50, gy + 40 + t3.size * 0.95 * (i + 1)); });
       var ry = gy + gh - 150, cols = [[L.volume, nf(d.vol, lang), "kg"], [L.sets, nf(d.sets, lang), ""], [d.prs.length ? L.record : L.exercises, d.prs.length ? d.prs[0].split(" ").slice(-2).join(" ") : nf(d.ex, lang), ""]];
+      if (d.stats) cols = d.stats.slice(0, 3);
       var cw = (gw - 100) / 3;
       cols.forEach(function (s2, i) { var x = gx + 50 + i * cw; font(c, "500", 30, BODY); c.fillStyle = "#9AA7C7"; c.fillText(s2[0], x, ry); font(c, "700", 76, HEAD); c.fillStyle = "#FFFFFF"; c.fillText(s2[1], x, ry + 84); if (s2[2]) { var w2 = c.measureText(s2[1]).width; font(c, "600", 34, HEAD); c.fillStyle = GOLD; c.fillText(s2[2], x + w2 + 8, ry + 84); } });
     } else { // week

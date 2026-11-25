@@ -1,0 +1,92 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Run Test</title>
+<body style="font-family:system-ui;padding:20px"><h1>Lauf-Tests</h1><pre id="out">läuft…</pre>
+<script src="../js/plan.js"></script>
+<script src="../js/progress.js"></script>
+<script src="../js/run.js"></script>
+<script>
+var res = [], fails = 0;
+function ok(name, cond, info) { if (!cond) fails++; res.push((cond ? "OK   " : "FAIL ") + name + (cond ? "" : "  " + (info || ""))); }
+function sum(w) { return w.reduce(function (s, r) { return s + (r.min || 0); }, 0); }
+function get(f) { return fetch(f, { cache: "no-cache" }).then(r => r.json()); }
+Promise.all([get("../data/exercises.json"), get("../i18n/de.json"), get("../i18n/en.json"), get("../i18n/es.json"), get("../i18n/fr.json")]).then(function (all) {
+  var EX = all[0].uebungen, T = Run.TABLES, today = new Date("2026-11-25T12:00:00");
+  // Tabellen gegen die Wochensummen der Quelle
+  var sums = k => T[k].map(sum).join();
+  ok("5 km: Wochensummen 80,90,100,80,105,110,120,45", sums("5k") === "80,90,100,80,105,110,120,45", sums("5k"));
+  ok("10 km: Wochensummen", sums("10k") === "105,115,125,105,135,145,150,115,155,55", sums("10k"));
+  ok("Halbmarathon: Wochensummen", sums("hm") === "160,175,190,160,210,220,235,185,250,255,185,75", sums("hm"));
+  var km = T.m.map(w => w.reduce((s, r) => s + (r.km || 0), 0)).join();
+  ok("Marathon: Wochen-km", km === "30,33,36,28,38,41,45,35,46,50,53,40,58,46,35,22", km);
+  var lang = T.m.map(w => w.filter(r => r.k === "long")[0].km).join();
+  ok("Marathon: lange Läufe", lang === "12,14,16,12,18,20,22,16,24,26,28,20,32,24,16,10", lang);
+  ok("Stufenlängen = Plan.RUNG_WEEKS", Object.keys(Plan.RUNG_WEEKS).every(k => T[k].length === Plan.RUNG_WEEKS[k]));
+  ok("Einstieg: 3 Läufe je Woche, Woche 1 = 8x(1/2), Woche 8 = 25 Min.", T.einstieg.every(w => w.length === 3) && T.einstieg[0][0].n === 8 && T.einstieg[0][0].walk === 2 && T.einstieg[7][0].run === 25);
+
+  function prof(o) { return Object.assign({ ziele: ["laufen"], lauf_ziel: "10k", lauf_level: "gar_nicht", kraft_erfahrung: "unter_6", trainingstage: 4, dauer_min: 60, ort: "studio", verletzungen: ["keine"] }, o); }
+  var b = Run.build(prof({}), today);
+  ok("10 km ohne Basis: 8+8+10 Wochen", b.weeks.length === 26 && b.weeks[0].rung === "einstieg" && b.weeks[25].rung === "10k");
+  ok("Dauer wie planWeeks", b.weeks.length === Plan.planWeeks(prof({}), today).weeks);
+  var ev = prof({ ziele: ["marathon"], lauf_level: "m20_30", event_datum: "2027-01-28" }), be = Run.build(ev, today);
+  ok("Nahes Datum: gekürzt auf die letzten Wochen mit Rennen", be.short && be.weeks.length === Plan.planWeeks(ev, today).weeks && be.weeks[be.weeks.length - 1].runs.some(r => r.dist === "m"), be.weeks.length);
+  ok("Ohne Laufziel kein Lauf-Plan", Run.build(prof({ ziele: ["kraft"] }), today) === null);
+  var sec = Run.build(prof({ ziele: ["kraft", "laufen"], prioritaet: "kraft", lauf_ziel: "hm", lauf_level: "ueber_30" }), today, true);
+  ok("Zusatzziel: Halbmarathon mit 3 statt 4 Läufen, langer Lauf und Qualität bleiben", sec.weeks.filter(w => w.rung === "hm" && w.n === 1)[0].runs.map(r => r.k).join() === "easy,quality,long");
+  ok("Tabellen bleiben unverändert", T.hm[0].length === 4);
+  ok("Nach Planende: Haltewoche", Run.week(b, 40).flag === "hold" && Run.week(b, 40).runs.length === 3);
+
+  // Mischung: nie schwerer Beintag direkt vor Qualität, langem Lauf oder Rennen
+  var bad = [], missing = [], count = 0;
+  [["laufen", "einstieg"], ["laufen", "hm"], ["marathon", "m"]].forEach(function (z) {
+    [2, 3, 4, 5, 6].forEach(function (days) {
+      ["anfaenger", "ueber_24"].forEach(function (erf) {
+        [[z[0]], ["muskelaufbau", z[0]]].forEach(function (ziele) {
+          var a = prof({ ziele: ziele, prioritaet: ziele[0], lauf_ziel: z[1], trainingstage: days, kraft_erfahrung: erf }), p = Plan.generate(a, EX, { today: today });
+          var flat = [];
+          for (var w = 1; w <= p.weeks + 2; w++) {
+            var it = Plan.weekItems(p, w), runs = Run.week(p.run, w).runs;
+            if (it.filter(x => x.t === "gym").length !== p.sessions.length || it.filter(x => x.t === "run").length !== runs.length) missing.push(w);
+            it.forEach(x => flat.push(x.t === "gym" ? { gym: p.sessions[x.i].type } : { run: runs[x.j].k }));
+          }
+          for (var i = 1; i < flat.length; i++) if (flat[i].run && ["quality", "long", "race"].indexOf(flat[i].run) >= 0 && ["fb", "uk", "legs"].indexOf(flat[i - 1].gym) >= 0) bad.push(ziele + " " + days + " " + erf + " #" + i);
+          count++;
+        });
+      });
+    });
+  });
+  ok("Jede Woche enthält alle Einheiten (" + count + " Profile)", !missing.length, missing.join());
+  ok("Kein schwerer Beintag direkt vor hartem Lauf", !bad.length, bad.slice(0, 5).join(" | "));
+
+  var pr = Plan.generate(prof({}), EX, { today: today });
+  ok("Läufer:innen: 2x Kraft, Hinweis Lauf, kein Ausdauer-Hinweis", pr.daysPerWeek === 2 && pr.notes.indexOf("run") >= 0 && pr.notes.indexOf("endurance_pending") < 0);
+  var tri = Plan.generate(prof({ ziele: ["triathlon"], tri_distanz: "sprint" }), EX, { today: today });
+  ok("Triathlon: Ausdauer-Hinweis, noch keine Läufe", tri.notes.indexOf("endurance_pending") >= 0 && !tri.run && Plan.weekItems(tri, 1).length === tri.sessions.length);
+  var n1 = Plan.weekItems(pr, 1).length, c = Plan.cursor(pr, n1);
+  ok("Zeiger: nach Woche 1 beginnt Woche 2", c.week === 2 && c.pos === 0 && Plan.doneBefore(pr, 2) === n1);
+  var mix = Plan.generate(prof({ ziele: ["laufen"], lauf_ziel: "hm", lauf_level: "ueber_30" }), EX, { today: today });
+  var d = 0, good = true; for (var w = 1; w <= 12; w++) { var len = Plan.weekItems(mix, w).length; var cc = Plan.cursor(mix, d + len - 1); if (cc.week !== w || cc.pos !== len - 1) good = false; d += len; }
+  ok("Zeiger stimmt auch bei unterschiedlich langen Wochen", good);
+
+  // Tempo: 5 km in 25:00 = 5:00 pro km
+  var P = Run.paces({ zeit_5km: 25 }, []);
+  ok("Tempo locker = P+60..90", P.easy.join() === "360,390" && P.tempo.join() === "310,320" && P.interval.join() === "290,295" && P.r10.join() === "310,315" && P.hm.join() === "325,330", JSON.stringify(P));
+  var P2 = Run.paces({ zeit_5km: 25 }, [{ type: "run", dist: "5k", sec: 1800 }]);
+  ok("Eingetragenes Ergebnis geht vor Antwort", P2.src === "result" && Math.round(P2.time5) === 1800);
+  ok("10-km-Ergebnis wird mit Riegel umgerechnet (50:00 -> ca. 23:59)", Math.abs(Run.paces({}, [{ type: "run", dist: "10k", sec: 3000 }]).time5 - 1439) <= 1);
+  ok("Ohne Zeit kein Tempo", Run.paces({}, []) === null);
+  ok("Zonen", Run.zone({ k: "quality", q: [{ id: "tempo" }] }) === "tempo" && Run.zone({ k: "quality", q: [{ id: "km_fast" }] }) === null && Run.zone({ k: "runwalk" }) === null && Run.zone({ k: "race", dist: "m" }) === null && Run.zone({ k: "long" }) === "easy");
+
+  // Texte: gleiche Schlüssel in 4 Sprachen, alle Lauf-Texte vorhanden
+  var keys = all.slice(1).map(o => Object.keys(o).sort().join("|"));
+  ok("4 Sprachen haben gleiche Schlüssel", keys.every(x => x === keys[0]));
+  var need = [];
+  Object.keys(T).forEach(r => T[r].forEach(w => w.forEach(s => { need.push("run.how." + (s.k)); (s.q || []).forEach(q => need.push("run.q." + q.id)); if (s.k !== "race") need.push("run.kind." + s.k); })));
+  need.push("run.kind.race", "run.q.km_fast_norest", "note.run");
+  var lost = need.filter(k => !all[1][k]);
+  ok("Alle Lauf-Texte vorhanden", !lost.length, lost.join());
+
+  document.getElementById("out").textContent = (fails ? fails + " FEHLER" : "ALLE " + res.length + " TESTS GRÜN") + "\n\n" + res.join("\n");
+  document.title = fails ? "FAIL" : "PASS";
+}).catch(e => { document.getElementById("out").textContent = "FEHLER " + e.stack; });
+</script>
