@@ -162,7 +162,11 @@
   function history(id) {
     return S.log.map(function (l) { var e = l.ex.find(function (x) { return x.id === id; }); return e ? e.sets : null; }).filter(Boolean);
   }
-  function fmtRest(s) { return s >= 60 ? nf(s / 60, 1) + " " + t("today.min") : s + " s"; }
+  function fmtRest(s) {
+    if (s < 60) return s + " s";
+    var m = Math.floor(s / 60), r = s % 60;
+    return (r ? m + ":" + (r < 10 ? "0" : "") + r : m) + " " + t("today.min");
+  }
   function weekGoalDone() {
     var d = new Date(), day = (d.getDay() + 6) % 7, start = new Date(d.getFullYear(), d.getMonth(), d.getDate() - day);
     var s = iso(start);
