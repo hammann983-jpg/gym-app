@@ -224,3 +224,14 @@ a.btn.vid { display: block; text-align: center; text-decoration: none; }
 .sharecanvas { max-height: 52vh; width: auto; max-width: 100%; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
 .filebtn { display: block; text-align: center; cursor: pointer; }
 .card.hist .hr { display: flex; align-items: center; gap: 10px; }
+
+/* Gewicht eintragen und Teilen */
+.fl-lbl { font-size: 13px; color: var(--muted); font-weight: 500; margin-bottom: -6px; }
+.f.big input { font-family: var(--font-head); font-size: 34px; padding: 10px 52px 10px 14px; min-height: 64px; }
+.f.big i { font-size: 16px; right: 16px; }
+.f { position: relative; display: block; }
+.card.ci input[type="date"] { min-width: 0; -webkit-appearance: none; appearance: none; text-align: left; }
+.sharebar { display: grid; gap: 10px; margin-bottom: 18px; }
+main > .btn.ghost { box-shadow: none; }
+.card .btn { width: 100%; }
+.cirow .btn { width: auto; }

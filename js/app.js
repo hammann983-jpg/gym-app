@@ -391,8 +391,8 @@
   }
 
   function historyView() {
-    if (!S.log.length) return "";
-    var h = '<div class="sec">' + esc(t("prog.history")) + "</div>";
+    if (!S.log.length) return '<div class="card"><h3>' + esc(t("share.empty.title")) + "</h3><p>" + esc(t("share.empty.text")) + "</p></div>";
+    var h = '<div class="sharebar"><button class="btn" data-share="' + (S.log.length - 1) + '">' + esc(t("share.last")) + '</button><button class="btn ghost" data-sharekind="week">' + esc(t("share.week")) + '</button></div><div class="sec">' + esc(t("prog.history")) + "</div>";
     S.log.slice().reverse().slice(0, 30).forEach(function (l) {
       var sets = l.ex.reduce(function (a, e) { return a + e.sets.length; }, 0);
       var d = new Date(l.date + "T12:00:00");
@@ -452,13 +452,13 @@
   }
 
   function weightView() {
-    var ws = sortedWeights(), h = '<div class="card ci"><div class="cirow"><label class="f"><input type="text" inputmode="decimal" id="wkg" placeholder="' + (ws.length ? nf(ws[ws.length - 1].kg, 1) : "") + '" aria-label="' + esc(t("weight.kg")) + '"><i>kg</i></label><input type="date" id="wdate" value="' + iso(new Date()) + '" aria-label="' + esc(t("weight.date")) + '"><button class="btn" id="wsave">' + esc(t("weight.save")) + '</button></div><p class="err" id="werr" role="alert">' + esc(ui.err) + "</p></div>";
+    var ws = sortedWeights(), h = '<div class="card ci"><label class="fl-lbl" for="wkg">' + esc(t("weight.kg")) + '</label><label class="f big"><input type="text" inputmode="decimal" id="wkg" placeholder="' + (ws.length ? nf(ws[ws.length - 1].kg, 1) : nf(Number(S.answers.gewicht_kg) || 70, 1)) + '"><i>kg</i></label><label class="fl-lbl" for="wdate">' + esc(t("weight.date")) + '</label><input type="date" id="wdate" value="' + iso(new Date()) + '"><button class="btn" id="wsave">' + esc(t("weight.save")) + '</button><p class="err" id="werr" role="alert">' + esc(ui.err) + "</p></div>";
     if (ws.length) {
       var last = ws[ws.length - 1], first = ws[0], ch = Number(last.kg) - Number(first.kg), goal = Number(S.answers.zielgewicht_kg) || 0;
       h += '<div class="stats">' + '<div class="stat"><small>' + esc(t("weight.last")) + "</small><b>" + nf(last.kg, 1) + " kg</b></div>" +
         '<div class="stat"><small>' + esc(t("weight.change")) + "</small><b>" + (ch > 0 ? "+" : "") + nf(ch, 1) + " kg</b></div>" +
         '<div class="stat"><small>' + esc(t("weight.goal")) + "</small><b>" + (goal ? nf(goal, 1) + " kg" : "–") + "</b></div></div>";
-      if (ws.length >= 2) h += '<div class="card chartc">' + chartSvg(ws.slice(-24), goal) + "</div>";
+      if (ws.length >= 2) h += '<div class="card chartc">' + chartSvg(ws.slice(-24), goal) + '</div><button class="btn ghost" data-sharekind="weight">' + esc(t("share.weight")) + "</button>";
       var adv = weightAdvice();
       if (adv && adv.state === "wait") h += '<div class="note">' + esc(t("weight.wait")) + "</div>";
       else if (adv) {
@@ -480,7 +480,7 @@
       '</select><div class="cirow"><label class="f"><input type="text" inputmode="decimal" id="lkg" aria-label="' + esc(t("rs.kg")) + '"><i>kg</i></label><label class="f"><input type="text" inputmode="numeric" id="lreps" aria-label="' + esc(t("rs.reps")) + '"><i>' + esc(t("today.reps")) + '</i></label></div><button class="btn" id="lsave">' + esc(t("rs.save")) + '</button><p class="err" id="lerr" role="alert">' + esc(ui.err2 || "") + "</p></div>";
     var best = {};
     R.filter(function (r) { return r.type === "lift"; }).forEach(function (r) { var e = window.Progress.e1rm(r.kg, r.reps); if (!best[r.ex] || e > best[r.ex].e) best[r.ex] = { e: e, kg: r.kg, reps: r.reps, date: r.date }; });
-    Object.keys(best).forEach(function (id) { h += '<div class="card hist"><div><b>' + esc(exName(id)) + "</b><small>" + esc(t("rs.best")) + ": " + nf(best[id].kg, 2) + " kg × " + best[id].reps + "</small></div><span>" + esc(t("rs.e1rm")) + ": <b>" + nf(best[id].e, 1) + " kg</b></span></div>"; });
+    Object.keys(best).forEach(function (id) { h += '<div class="card hist"><div><b>' + esc(exName(id)) + "</b><small>" + esc(t("rs.best")) + ": " + nf(best[id].kg, 2) + " kg × " + best[id].reps + '</small></div><div class="hr"><span>' + esc(t("rs.e1rm")) + ": <b>" + nf(best[id].e, 1) + ' kg</b></span><button class="swap" data-sharekind="lift" data-shareid="' + id + '">' + esc(t("share.btn")) + "</button></div></div>"; });
     h += '<div class="card ci" style="margin-top:14px"><h3>' + esc(t("rs.run")) + '</h3><select id="rdist" aria-label="' + esc(t("rs.distance")) + '">' + ["5k", "10k", "hm", "m"].map(function (k) { return '<option value="' + k + '">' + esc(t("dist." + k)) + "</option>"; }).join("") +
       '</select><div class="cirow"><input type="text" id="rtime" inputmode="text" placeholder="25:30" aria-label="' + esc(t("rs.time")) + '"></div><button class="btn" id="rsave">' + esc(t("rs.save")) + '</button><p class="err" id="rerr" role="alert">' + esc(ui.err3 || "") + "</p></div>";
     var runs = R.filter(function (r) { return r.type === "run"; });
@@ -492,7 +492,7 @@
         var s = window.Progress.riegel(lr.sec, km, window.Progress.DIST[k]);
         h += '<div class="pex"><span>' + esc(t("dist." + k)) + "</span><span>" + window.Progress.fmtTime(s) + " · " + window.Progress.fmtTime(window.Progress.pace(s, window.Progress.DIST[k])) + " " + esc(t("rs.perkm")) + "</span></div>";
       });
-      h += '<p class="qhint">' + esc(t("rs.predictnote")) + "</p></div>";
+      h += '<p class="qhint">' + esc(t("rs.predictnote")) + '</p><button class="btn ghost" data-sharekind="run">' + esc(t("share.btn")) + "</button></div>";
     }
     if (!R.length) h += '<p class="qhint">' + esc(t("rs.none")) + "</p>";
     return h;
@@ -604,8 +604,36 @@
   }
 
   // ---------- Teilen ----------
-  var MARK = null, SHARE_CV = null;
+  var MARK = null, SHARE_CV = null, SHARE_FILE = null;
   function weekStartIso(s) { var d = new Date(s + "T12:00:00"), k = (d.getDay() + 6) % 7; d.setDate(d.getDate() - k); return iso(d); }
+  // Karten ohne einzelnes Training: Woche, Gewicht, Kraft-Rekord, Laufzeit
+  function resultData(sh) {
+    var lang = window.I18N.lang(), today = iso(new Date()), base = shareData(S.log.length - 1), R = S.results || [], stats, title, date = today;
+    var week = base && weekStartIso(base.rawDate) === weekStartIso(today) ? base.weekStats : { done: 0, goal: S.plan ? S.plan.sessions.length : 3, days: [0, 0, 0, 0, 0, 0, 0], streak: 0 };
+    if (sh.kind === "weight") {
+      var ws = sortedWeights(); if (!ws.length) return null;
+      var a = ws[0], b = ws[ws.length - 1], ch = Number(b.kg) - Number(a.kg); date = b.date;
+      title = t("share.weight.title");
+      stats = [[t("weight.change"), (ch > 0 ? "+" : "") + nf(ch, 1), "kg"], [t("weight.last"), nf(b.kg, 1), "kg"], [t("share.weeks.since"), String(Math.max(1, Math.round((new Date(b.date) - new Date(a.date)) / 604800000))), ""]];
+    } else if (sh.kind === "lift") {
+      var best = null; R.forEach(function (r) { if (r.type === "lift" && r.ex === sh.id) { var e = window.Progress.e1rm(r.kg, r.reps); if (!best || e > best.e) best = { e: e, kg: r.kg, reps: r.reps, date: r.date }; } });
+      if (!best) return null; date = best.date; title = exName(sh.id);
+      stats = [[t("rs.best"), nf(best.kg, 2), "kg"], [t("today.reps"), String(best.reps), "×"], [t("rs.e1rm"), nf(best.e, 1), "kg"]];
+    } else if (sh.kind === "run") {
+      var runs = R.filter(function (r) { return r.type === "run"; }); if (!runs.length) return null;
+      var lr = runs[runs.length - 1], km = window.Progress.DIST[lr.dist]; date = lr.date; title = t("dist." + lr.dist);
+      stats = [[t("run.stat.time"), window.Progress.fmtTime(lr.sec), ""], [t("rs.pace"), window.Progress.fmtTime(lr.sec / km), "/km"], [t("run.stat.dist"), nf(km, 1), "km"]];
+    } else {
+      title = t("share.week.title");
+      var mine = S.log.filter(function (l) { return weekStartIso(l.date) === weekStartIso(today); });
+      var min = mine.reduce(function (x, l) { return x + (l.min || 0); }, 0), vol = mine.reduce(function (x, l) { return x + (l.vol || 0); }, 0);
+      stats = [[t("share.sessions"), week.done + "/" + week.goal, ""], [t("today.done.vol"), nf(vol, 0), "kg"], [t("run.stat.time"), nf(min, 0), t("today.min")]];
+    }
+    var dn = []; for (var q = 0; q < 7; q++) dn.push(new Date(2024, 0, 1 + q).toLocaleDateString(lang, { weekday: "short" }).slice(0, 2));
+    return { title: title, date: new Date(date + "T12:00:00").toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" }), rawDate: date, vol: 0, sets: 0, ex: 0, prs: [], week: 1, weeks: 1, lang: lang, brand: C.APP_NAME, dayNames: dn, weekStats: week,
+      stats: stats, foot: stats[0][1] + " " + stats[0][2], exercises: stats.map(function (x) { return { name: x[0], best: x[1] + " " + x[2] }; }),
+      labels: { volume: t("today.done.vol"), sets: t("today.done.sets"), exercises: t("share.exercises"), week: t("plan.week"), record: t("today.done.pr"), done: "", weekdone: t("share.weekdone"), weekprogress: t("share.weekprogress"), sessions: t("share.sessions"), streak: t("share.streak"), weeks: t("share.weeks") } };
+  }
   function shareData(i) {
     var l = S.log[i]; if (!l) return null;
     var lang = window.I18N.lang(), ws = weekStartIso(l.date), goal = S.plan ? window.Plan.weekItems(S.plan, l.week).length : 3;
@@ -618,7 +646,7 @@
     var dn = []; for (var q = 0; q < 7; q++) dn.push(new Date(2024, 0, 1 + q).toLocaleDateString(lang, { weekday: "short" }).slice(0, 2));
     if (isRun) exs = rs.map(function (x) { return { name: x[0], best: x[1] + " " + x[2] }; });
     var weekNo = Math.min(l.week, l.weeks || (S.plan && S.plan.weeks) || l.week), weekTotal = l.weeks || (S.plan && S.plan.weeks) || 12;
-    return { stats: isRun ? rs.concat([[t("plan.week"), weekNo + "/" + weekTotal, ""]]) : null, foot: isRun ? (l.km ? nf(l.km, 2) + " km" : nf(l.min, 1) + " " + t("today.min")) : null, title: title, date: new Date(l.date + "T12:00:00").toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" }), vol: l.vol, sets: l.ex.reduce(function (a, e) { return a + e.sets.length; }, 0), ex: l.ex.length, prs: l.prs || [], week: Math.min(l.week, l.weeks || (S.plan && S.plan.weeks) || l.week), weeks: l.weeks || (S.plan && S.plan.weeks) || 12, lang: lang, brand: C.APP_NAME, exercises: exs, dayNames: dn,
+    return { rawDate: l.date, stats: isRun ? rs.concat([[t("plan.week"), weekNo + "/" + weekTotal, ""]]) : null, foot: isRun ? (l.km ? nf(l.km, 2) + " km" : nf(l.min, 1) + " " + t("today.min")) : null, title: title, date: new Date(l.date + "T12:00:00").toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" }), vol: l.vol, sets: l.ex.reduce(function (a, e) { return a + e.sets.length; }, 0), ex: l.ex.length, prs: l.prs || [], week: Math.min(l.week, l.weeks || (S.plan && S.plan.weeks) || l.week), weeks: l.weeks || (S.plan && S.plan.weeks) || 12, lang: lang, brand: C.APP_NAME, exercises: exs, dayNames: dn,
       weekStats: { done: byWeek[ws] || 0, goal: goal, days: days, streak: streak },
       labels: { volume: t("today.done.vol"), sets: t("today.done.sets"), exercises: t("share.exercises"), week: t("plan.week"), record: t("today.done.pr"), done: t("share.done"), weekdone: t("share.weekdone"), weekprogress: t("share.weekprogress"), sessions: t("share.sessions"), streak: t("share.streak"), weeks: t("share.weeks") } };
   }
@@ -626,14 +654,17 @@
     var sh = ui.share, styles = ["stats", "poster", "photo", "week"];
     return '<div class="sheet-bg" id="sharebg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(t("share.title")) + '</h2><div class="sharecv" id="sharecv"></div><p class="qhint">' + esc(t("share.hint")) + '</p><div class="chips">' +
       styles.map(function (s) { return '<button class="chip" data-sstyle="' + s + '" aria-pressed="' + (sh.style === s) + '">' + esc(t("share.style." + s)) + "</button>"; }).join("") +
-      '</div><label class="btn ghost filebtn">' + esc(t("share.photo")) + '<input type="file" accept="image/*" id="sharephoto" hidden></label><button class="btn" id="shareok">' + esc(t("share.btn")) + '</button><button class="btn ghost" id="shareclose">' + esc(t("profile.close")) + "</button></div></div>";
+      '</div><label class="btn ghost filebtn">' + esc(t("share.photo")) + '<input type="file" accept="image/*" id="sharephoto" hidden></label><button class="btn" id="shareok">' + esc(t("share.apps")) + '</button><button class="btn ghost" id="sharesave">' + esc(t("share.save")) + '</button><p class="qhint" id="sharemsg" role="status"></p><button class="btn ghost" id="shareclose">' + esc(t("profile.close")) + "</button></div></div>";
   }
   async function drawShare() {
     var host = document.getElementById("sharecv"); if (!host || !ui.share) return;
     try { await Promise.all([document.fonts.load('700 100px "Barlow Condensed"'), document.fonts.load('600 40px Inter')]); } catch (e) {}
     if (!MARK) MARK = await new Promise(function (res) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = function () { res(null); }; im.src = "icons/mark.png?v=" + C.VERSION; });
-    var d = shareData(ui.share.idx); if (!d) return;
+    var d = ui.share.kind ? resultData(ui.share) : shareData(ui.share.idx); if (!d) return;
     SHARE_CV = window.Share.draw(ui.share.style, d, MARK, ui.share.photo);
+    // Bild schon jetzt erzeugen: iPhones erlauben das Teilen nur direkt beim Antippen
+    SHARE_FILE = null; var name = "forma-" + d.rawDate + ".png";
+    SHARE_CV.toBlob(function (b) { if (b) SHARE_FILE = new File([b], name, { type: "image/png" }); }, "image/png");
     SHARE_CV.className = "sharecanvas"; host.innerHTML = ""; host.appendChild(SHARE_CV);
   }
 
@@ -744,7 +775,10 @@
       im.onload = function () { ui.share.photo = im; ui.share.style = "photo"; render(); };
       im.src = url;
     };
-    on("shareok", function () { if (SHARE_CV) window.Share.share(SHARE_CV, "forma-" + (S.log[ui.share.idx] ? S.log[ui.share.idx].date : "workout") + ".png", C.APP_NAME); });
+    var say = function (k) { var m = document.getElementById("sharemsg"); if (m) m.textContent = t(k); };
+    on("shareok", function () { if (SHARE_FILE) window.Share.share(SHARE_FILE, C.APP_NAME).then(function (r) { if (r === "saved") say("share.saved"); }); });
+    on("sharesave", function () { if (SHARE_FILE) { window.Share.save(SHARE_FILE); say("share.saved"); } });
+    $app.querySelectorAll("[data-sharekind]").forEach(function (b) { b.onclick = function () { ui.share = { kind: b.getAttribute("data-sharekind"), id: b.getAttribute("data-shareid"), style: b.getAttribute("data-sharekind") === "week" ? "week" : "stats", photo: null }; render(); }; });
     if (ui.share) drawShare();
     $app.querySelectorAll("[data-nday]").forEach(function (b) { b.onclick = function () { ui.nday = Number(b.getAttribute("data-nday")); render(); }; });
     $app.querySelectorAll("[data-mopen]").forEach(function (b) { b.onclick = function () { var k = b.getAttribute("data-mopen"); ui.nopen[k] = !ui.nopen[k]; render(); }; });

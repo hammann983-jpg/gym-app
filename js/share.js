@@ -55,7 +55,7 @@
     } else if (style === "poster") {
       c.fillStyle = GOLD; c.fillRect(0, 0, W, H);
       logo(c, 90, 110, 76, mark ? invert(mark) : null, "#1A1300", d.brand);
-      var t2 = fitTitle(c, (d.title + " " + L.done).toUpperCase(), W - 180, 4, 330, 140); font(c, "700", t2.size, HEAD); c.fillStyle = "#1A1300";
+      var t2 = fitTitle(c, (d.title + (L.done ? " " + L.done : "")).toUpperCase(), W - 180, 4, 330, 140); font(c, "700", t2.size, HEAD); c.fillStyle = "#1A1300";
       t2.lines.forEach(function (l, i) { c.fillText(l, 90, 280 + t2.size * 0.86 * (i + 1)); });
       var ly = 280 + t2.size * 0.86 * t2.lines.length + 70; c.fillStyle = "#1A1300"; c.fillRect(90, ly, W - 180, 5);
       d.exercises.slice(0, 5).forEach(function (e, i) {
@@ -108,13 +108,14 @@
     c.drawImage(img, 0, 0); c.globalCompositeOperation = "source-in"; c.fillStyle = color || "#1A1300"; c.fillRect(0, 0, cv.width, cv.height); return cv;
   }
 
-  function toBlob(cv) { return new Promise(function (res) { cv.toBlob(res, "image/png"); }); }
-  async function share(cv, name, title) {
-    var blob = await toBlob(cv), file = new File([blob], name, { type: "image/png" });
+  function save(file) {
+    var a = document.createElement("a"); a.href = URL.createObjectURL(file); a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+  }
+  // Teilen-Dialog des Handys (Instagram, WhatsApp ...). Geht das nicht, wird das Bild gespeichert.
+  async function share(file, title) {
     if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: title }); return "shared"; } catch (e) { if (e && e.name === "AbortError") return "cancel"; } }
-    var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
-    return "saved";
+    save(file); return "saved";
   }
 
-  window.Share = { draw: draw, share: share, W: W, H: H };
+  window.Share = { draw: draw, share: share, save: save, W: W, H: H };
 })();
