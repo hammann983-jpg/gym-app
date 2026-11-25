@@ -72,6 +72,12 @@
     return { state: s, kcal: delta, changed: key };
   }
 
+  // Nach längerer Pause: eine Weile leichter
+  function comeback(state, today) {
+    var s = fresh(copy(state || {}));
+    change(s, "comeback", "comeback", { sets: s.sets > -1 ? -1 - s.sets : 0, endu: s.endu > 0.9 ? 0.9 - s.endu : 0 }, today);
+    return s;
+  }
   // Letzte Änderung zurücknehmen. Gibt die Kalorien-Korrektur mit zurück.
   function undo(state) {
     var s = fresh(copy(state || {}));
@@ -128,5 +134,5 @@
     return { done: n, planned: perWeek * 2, low: n < perWeek };
   }
 
-  window.Coach = { fresh: fresh, review: review, weightStep: weightStep, undo: undo, applyRun: applyRun, lighten: lighten, adherence: adherence };
+  window.Coach = { comeback: comeback, fresh: fresh, review: review, weightStep: weightStep, undo: undo, applyRun: applyRun, lighten: lighten, adherence: adherence };
 })();

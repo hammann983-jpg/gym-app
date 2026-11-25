@@ -1,7 +1,7 @@
 // Zentrale Einstellungen.
 window.GYM_CONFIG = {
   APP_NAME: "FORMA",
-  VERSION: 26,
+  VERSION: 27,
   LANGS: [
     { code: "en", label: "English" },
     { code: "de", label: "Deutsch" },

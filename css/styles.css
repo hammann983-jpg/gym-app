@@ -308,3 +308,16 @@ main > .sec { margin-bottom: 8px; }
 .cardiochk[aria-pressed="true"] { background: var(--accent-2); color: var(--on-accent); }
 .pex.cardioline span { color: var(--accent-2); }
 .pex.cardioline span:last-child { white-space: normal; text-align: right; }
+
+/* Langzeit-Nutzung */
+.card.notice { margin-bottom: 14px; border-color: var(--accent-2); }
+.month { margin-top: 10px; }
+.month summary { cursor: pointer; padding: 10px 4px; font-weight: 600; color: var(--muted); min-height: 44px; }
+.month .card.hist { margin-top: 8px; }
+.btn.danger { color: var(--danger); }
+.sheet textarea { width: 100%; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 12px; font: 500 16px var(--font-body); }
+.ansq .chips { margin-top: 6px; }
+.ansq input[type="date"], .sheet .card.ci input[type="date"] { width: 100%; background: var(--surface-2); border: 0; border-radius: 12px; padding: 12px; min-height: 48px; color: var(--text); font: 600 16px var(--font-body); }
+.ansq .f { margin-top: 6px; }
+.fav { justify-self: start; background: transparent; border: 0; color: var(--muted); font-size: 13px; padding: 6px 0; min-height: 36px; }
+.fav[aria-pressed="true"] { color: var(--accent); }

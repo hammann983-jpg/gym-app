@@ -349,6 +349,27 @@
     });
     return order.slice(0, c.count).indexOf(index) >= 0 ? c : null;
   }
+  // Alle 8 Wochen wechseln die Zusatzübungen, Grundübungen bleiben (krafttraining-coach/hypertrophie.md §6)
+  function sessionFor(a, exercises, plan, si, week) {
+    var s = plan.sessions[si], block = (plan.cycle || 0) + Math.floor((week - 1) / 8);
+    if (!block) return s;
+    var taken = {};
+    s.exercises.forEach(function (x) { taken[x.id] = 1; });
+    var list = s.exercises.map(function (x) {
+      if (x.compound) return x;
+      var cur = exercises.filter(function (e) { return e.id === x.id; })[0];
+      if (!cur) return x;
+      var E = equipSet(a), lvl = level(a), inj = (Array.isArray(a.verletzungen) ? a.verletzungen : []).filter(function (v) { return v !== "keine"; });
+      var alts = exercises.filter(function (e) { return e.kategorie === cur.kategorie && (e.id === x.id || (!taken[e.id] && rank(e.level) <= rank(lvl))) && available(e, E) && !blocked(e, inj); });
+      if (alts.length < 2) return x;
+      var ex = alts[(alts.map(function (e) { return e.id; }).indexOf(x.id) + block) % alts.length];
+      if (ex.id === x.id) return x;
+      taken[ex.id] = 1;
+      var sc = scheme(plan.goal, plan.level, ex, Number(a.dauer_min) || 60);
+      return { id: ex.id, cat: ex.kategorie, sets: x.sets, lo: sc.lo, hi: sc.hi, text: sc.text, rest: sc.rest, timed: sc.timed, compound: !!COMPOUND[ex.kategorie], bodyweight: !loadable(ex), lower: !!LOWER[ex.kategorie], superset: x.superset };
+    });
+    return { type: s.type, letter: s.letter, exercises: list, focus: focusOf(list) };
+  }
   function volume(plan) {
     var v = {};
     plan.sessions.forEach(function (s) { s.exercises.forEach(function (x) { var g = GROUP[x.cat]; if (g) v[g] = (v[g] || 0) + x.sets; }); });
@@ -374,5 +395,5 @@
     return { kg: top, why: "same" };
   }
 
-  window.Plan = { cardio: cardio, cardioAt: cardioAt, totalWeeks: totalWeeks, weekItems: weekItems, doneBefore: doneBefore, cursor: cursor, runChain: runChain, RUNG_WEEKS: RUNG_WEEKS, planWeeks: planWeeks, prio: prio, goals: goals, focusOf: focusOf, generate: generate, volume: volume, level: level, goalType: goalType, equipSet: equipSet, available: available, blocked: blocked, isDeload: isDeload, setsFor: setsFor, suggest: suggest, split: split };
+  window.Plan = { sessionFor: sessionFor, cardio: cardio, cardioAt: cardioAt, totalWeeks: totalWeeks, weekItems: weekItems, doneBefore: doneBefore, cursor: cursor, runChain: runChain, RUNG_WEEKS: RUNG_WEEKS, planWeeks: planWeeks, prio: prio, goals: goals, focusOf: focusOf, generate: generate, volume: volume, level: level, goalType: goalType, equipSet: equipSet, available: available, blocked: blocked, isDeload: isDeload, setsFor: setsFor, suggest: suggest, split: split };
 })();

@@ -69,7 +69,7 @@
   function liked(a) { return Array.isArray(a.mag) ? a.mag : []; }
 
   // Passende Rezepte für einen Slot, beste zuerst; die Reihenfolge wechselt jede Woche
-  function pool(a, data, slot, weekKey) {
+  function pool(a, data, slot, weekKey, fav) {
     var diet = a.ernaehrungsform || "omnivor", allerg = (Array.isArray(a.allergien) ? a.allergien : []).filter(function (x) { return x !== "keine"; });
     var all = data.meals.filter(function (m) {
       return m.slot === slot && m.ernaehrung.indexOf(diet) >= 0 && !m.allergene.some(function (x) { return allerg.indexOf(x) >= 0; });
@@ -94,8 +94,8 @@
       return tags.filter(function (t) { return L.indexOf(t) >= 0; }).length / tags.length;
     }
     // Rotation pro Woche; eiweißreiche Rezepte werden leicht bevorzugt, damit das Proteinziel erreichbar bleibt
-    var ranked = list.map(function (m) { var s = score(m); return { m: m, b: s >= 1 ? 2 : s >= 0.5 ? 1 : 0, r: hash(weekKey + "|" + slot + "|" + m.id) + 0.6 * (1 - (m.p / m.kcal) / maxDens) }; });
-    var good = ranked.filter(function (x) { return x.b === 2; });
+    var ranked = list.map(function (m) { var s = score(m); return { m: m, b: fav && fav[m.id] ? 3 : s >= 1 ? 2 : s >= 0.5 ? 1 : 0, r: hash(weekKey + "|" + slot + "|" + m.id) + 0.6 * (1 - (m.p / m.kcal) / maxDens) }; });
+    var good = ranked.filter(function (x) { return x.b >= 2; });
     if (good.length >= 4) ranked = good; // genug Rezepte, die nur Gewünschtes enthalten
     ranked.sort(function (x, y) { return y.b - x.b || x.r - y.r; });
     return ranked.map(function (x) { return x.m; });
@@ -126,10 +126,10 @@
 
   // trainDays: Wochentage mit Training. An diesen Tagen kommt eine Pre-Workout-Mahlzeit dazu,
   // das Tagesziel bleibt gleich (bei 4 bis 5 Mahlzeiten ersetzt sie den ersten Snack).
-  function week(a, data, date, swaps, adjKcal, trainDays) {
+  function week(a, data, date, swaps, adjKcal, trainDays, fav) {
     var info = weekInfo(date || new Date()), tg = targets(a, adjKcal), m = Number(a.mahlzeiten) || 3;
     var split = SLOT_SPLIT[m] || SLOT_SPLIT[3], pools = {}, days = [];
-    ["fruehstueck", "mittag", "abend", "snack", "pre"].forEach(function (s) { pools[s] = pool(a, data, s, info.key); });
+    ["fruehstueck", "mittag", "abend", "snack", "pre"].forEach(function (s) { pools[s] = pool(a, data, s, info.key, fav); });
     for (var d = 0; d < 7; d++) {
       var slots = [], snackNo = 0, train = !!(trainDays && trainDays.indexOf(d) >= 0), plan = [];
       for (var i = 0; i < split.length; i++) plan.push({ slot: SLOTS[i], index: i, share: split[i] });
