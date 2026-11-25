@@ -306,6 +306,34 @@
     return { week: week, pos: rest, item: items[rest], items: items, seq: done || 0 };
   }
 
+  // Cardio nach dem Krafttraining. Anzahl und Dauer: Richtwerte (krafttraining-coach/sonderfaelle.md §5: 2x 20-40 Min. locker;
+  // gewichtsmanagement.md: zusätzliches Ausdauertraining hilft beim Fettabbau). Laufband-Werte sind Vorschläge, der Sprechtest zählt.
+  // Ausdauer-Pläne bekommen kein Extra-Cardio: dort ist es schon enthalten.
+  function cardio(a, plan, week, extra) {
+    if (!plan || plan.run) return null;
+    var G = goals(a), off = !!(window.Q && window.Q.screening(a).nutriOff);
+    var fat = !off && (G.indexOf("abnehmen") >= 0 || (G.indexOf("bodybuilding") >= 0 && a.bb_phase === "definition"));
+    var count = fat ? 3 : 2, min = fat ? (week <= 4 ? 25 : week <= 8 ? 30 : 35) : prio(a) === "fitness" ? 30 : 20;
+    if (isDeload(week)) min -= 5;
+    var n = plan.sessions.length, wanted = count + (extra || 0);
+    count = Math.min(n, wanted); min += 5 * (wanted - count);
+    var h = Number(a.groesse_cm) / 100, bmi = h > 0 ? Number(a.gewicht_kg) / (h * h) : 0;
+    var knee = Array.isArray(a.verletzungen) && a.verletzungen.indexOf("knie") >= 0;
+    var gentle = !!plan.light || Number(a.alter) >= 60 || knee || bmi >= 30;
+    var base = { anfaenger: [5, 4], fortgeschritten: [5.5, 6], erfahren: [5.5, 8] }[plan.level] || [5, 4];
+    var kmh = gentle ? 4.5 : base[0], incline = gentle ? 1 : week <= 2 ? Math.max(1, base[1] - 2) : base[1];
+    return { count: count, min: min, kmh: kmh, incline: incline, gentle: gentle, fat: fat };
+  }
+  // In welchen Einheiten? Zuerst Oberkörper-Tage, schwere Beintage nur wenn nötig
+  function cardioAt(a, plan, week, extra, index) {
+    var c = cardio(a, plan, week, extra);
+    if (!c) return null;
+    var order = plan.sessions.map(function (s, i) { return i; }).sort(function (x, y) {
+      var hx = plan.sessions[x].type === "uk" || plan.sessions[x].type === "legs" ? 1 : 0, hy = plan.sessions[y].type === "uk" || plan.sessions[y].type === "legs" ? 1 : 0;
+      return hx - hy || x - y;
+    });
+    return order.slice(0, c.count).indexOf(index) >= 0 ? c : null;
+  }
   function volume(plan) {
     var v = {};
     plan.sessions.forEach(function (s) { s.exercises.forEach(function (x) { var g = GROUP[x.cat]; if (g) v[g] = (v[g] || 0) + x.sets; }); });
@@ -331,5 +359,5 @@
     return { kg: top, why: "same" };
   }
 
-  window.Plan = { totalWeeks: totalWeeks, weekItems: weekItems, doneBefore: doneBefore, cursor: cursor, runChain: runChain, RUNG_WEEKS: RUNG_WEEKS, planWeeks: planWeeks, prio: prio, goals: goals, focusOf: focusOf, generate: generate, volume: volume, level: level, goalType: goalType, equipSet: equipSet, available: available, blocked: blocked, isDeload: isDeload, setsFor: setsFor, suggest: suggest, split: split };
+  window.Plan = { cardio: cardio, cardioAt: cardioAt, totalWeeks: totalWeeks, weekItems: weekItems, doneBefore: doneBefore, cursor: cursor, runChain: runChain, RUNG_WEEKS: RUNG_WEEKS, planWeeks: planWeeks, prio: prio, goals: goals, focusOf: focusOf, generate: generate, volume: volume, level: level, goalType: goalType, equipSet: equipSet, available: available, blocked: blocked, isDeload: isDeload, setsFor: setsFor, suggest: suggest, split: split };
 })();

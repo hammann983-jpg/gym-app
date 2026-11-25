@@ -297,3 +297,14 @@ main > .sec { margin-bottom: 8px; }
 
 .know.why { margin: 0 0 14px; }
 .know.why .tips { margin: 0; padding: 0 16px 16px 34px; color: var(--muted); }
+
+/* Cardio */
+.card.cardio { margin: 14px 0 0; }
+.card.cardio .stats { gap: 8px; }
+.card.cardio .stat { padding: 10px; background: var(--surface-2); }
+.card.cardio .stat b { font-size: 22px; }
+.cardiorow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.cardiorow .f input { padding-right: 38px; }
+.cardiochk[aria-pressed="true"] { background: var(--accent-2); color: var(--on-accent); }
+.pex.cardioline span { color: var(--accent-2); }
+.pex.cardioline span:last-child { white-space: normal; text-align: right; }

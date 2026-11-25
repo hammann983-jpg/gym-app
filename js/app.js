@@ -199,20 +199,6 @@
     c.idx = c.item.i;
     return c;
   }
-  // Vor dem allerersten Training: womit starten? Die weiteren Einheiten folgen automatisch in der Abwechslung.
-  function canChooseStart(p) {
-    var types = {}; p.sessions.forEach(function (s) { types[s.type] = 1; });
-    return !p.run && !S.done && Object.keys(types).length > 1;
-  }
-  function startBox(p) {
-    if (!canChooseStart(p)) return "";
-    var seen = {};
-    return '<div class="card start"><h3>' + esc(t("start.title")) + "</h3><p>" + esc(t("start.text")) + '</p><div class="chips">' + p.sessions.map(function (s, i) {
-      if (seen[s.type]) return ""; seen[s.type] = 1;
-      return '<button class="chip" data-start="' + i + '" aria-pressed="' + (i === 0) + '">' + esc(t("day." + s.type)) + "</button>";
-    }).join("") + "</div></div>";
-  }
-
   // ---------- Diagramme ----------
   function svgChart(kind, pts, fmt, label) {
     var W = 320, H = 160, L = 8, R = 8, T = 22, B = 22, n = pts.length;
@@ -238,7 +224,7 @@
   function trendData() {
     var weeks = [], now = weekStartIso(iso(new Date()));
     for (var i = 7; i >= 0; i--) { var d = new Date(now + "T12:00:00"); d.setDate(d.getDate() - 7 * i); weeks.push(iso(d)); }
-    var perWeek = weeks.map(function (w) { var l = S.log.filter(function (x) { return weekStartIso(x.date) === w; }); return { label: shortDate(w), n: l.length, vol: l.reduce(function (a, x) { return a + (x.vol || 0); }, 0), min: l.reduce(function (a, x) { return a + (x.min || 0); }, 0) }; });
+    var perWeek = weeks.map(function (w) { var l = S.log.filter(function (x) { return weekStartIso(x.date) === w; }); return { label: shortDate(w), n: l.length, vol: l.reduce(function (a, x) { return a + (x.vol || 0); }, 0), min: l.reduce(function (a, x) { return a + (x.min || 0) + (x.cardio ? x.cardio.min : 0); }, 0) }; });
     // Kraft: bestes geschätztes Maximum je Übung und Tag
     var lifts = {};
     var add = function (id, date, kg, reps) { var e = window.Progress.e1rm(kg, reps); if (!(e > 0) || reps > 30) return; lifts[id] = lifts[id] || {}; lifts[id][date] = Math.max(lifts[id][date] || 0, e); };
@@ -313,6 +299,18 @@
   }
   function coachState() { return window.Coach.fresh(S.coach); }
   function adj(r) { var lang = window.I18N.lang(); return window.Coach.applyRun(r, coachState(), function (i) { return window.Multi.station(i, S.answers.hyrox_division, S.answers); }); }
+  function cardioFor(week, index) { return window.Plan.cardioAt(S.answers, S.plan, week, coachState().cardio, index); }
+  function cardioLine(c) { return t("cardio.line", { min: c.min, kmh: nf(c.kmh, 1), inc: c.incline }); }
+  function cardioBox(c, d) {
+    if (!c) return "";
+    var v = d.cardio || (d.cardio = { done: false, min: "", kmh: "", incline: "" });
+    var field = function (k, label, ph, unit) { return '<label class="f"><input type="text" inputmode="decimal" data-cardio="' + k + '" value="' + esc(v[k]) + '" placeholder="' + esc(ph) + '" aria-label="' + esc(label) + '"><i>' + esc(unit) + "</i></label>"; };
+    var home = S.answers.ort === "zuhause";
+    return '<div class="card cardio"><div class="sec">' + esc(t("cardio.after")) + "</div><h3>" + esc(t(home ? "cardio.walk" : "cardio.treadmill")) + '</h3><div class="stats"><div class="stat"><small>' + esc(t("run.stat.time")) + "</small><b>" + c.min + " " + esc(t("today.min")) + '</b></div><div class="stat"><small>' + esc(t("cardio.speed")) + "</small><b>" + nf(c.kmh, 1) + ' km/h</b></div><div class="stat"><small>' + esc(t("cardio.incline")) + "</small><b>" + c.incline + " %</b></div></div>" +
+      "<p>" + esc(t(home ? "cardio.howhome" : "cardio.how")) + "</p>" + (c.gentle ? '<p class="qhint">' + esc(t("cardio.gentle")) + "</p>" : "") +
+      '<div class="cardiorow">' + field("min", t("run.log.min"), c.min, t("today.min")) + field("kmh", t("cardio.speed"), nf(c.kmh, 1), "km/h") + field("incline", t("cardio.incline"), c.incline, "%") + "</div>" +
+      '<button class="chip cardiochk" id="cardiochk" aria-pressed="' + !!v.done + '">' + esc(t("cardio.done")) + "</button></div>";
+  }
   function setsAt(x, week) { var n = window.Plan.setsFor(x, week), d = coachState().sets; return d ? Math.max(2, Math.min(5, n + d)) : n; }
   function coachReview() {
     var out = window.Coach.review(S.coach, { log: S.log, light: !!(S.plan && S.plan.light), today: iso(new Date()) });
@@ -342,7 +340,8 @@
     var P = window.Run.paces(S.answers, S.results), z = window.Run.zone(r, rung);
     if (!P || !z) return "";
     var a = window.Progress.fmtTime(P[z][0]), b = window.Progress.fmtTime(P[z][1]);
-    return t("run.pace." + z, { p: (a === b ? a : a + "–" + b) + " " + t("rs.perkm") });
+    var fast = nf(3600 / P[z][0], 1), slow = nf(3600 / P[z][1], 1);
+    return t("run.pace." + z, { p: (a === b ? a : a + "–" + b) + " " + t("rs.perkm") }) + " · " + t("run.treadmill", { v: slow === fast ? fast : slow + "–" + fast });
   }
   function weekLine(w) {
     return t("run.rungline", { d: t("run.rung." + w.rung), n: w.n, of: w.of }) + (w.flag ? " · " + t("run.flag." + w.flag) : "");
@@ -356,7 +355,7 @@
     var d = S.draft, pace = paceText(r, w.rung), zone = window.Run.zone(r, w.rung);
     var h = '<div class="sec">' + esc(t("today.next")) + " · " + esc(sportName(r)) + '</div><h2 class="big">' + esc(runTitle(r)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span>' + (hasSize(r) ? '<span class="pill">' + esc(runSize(r)) + "</span>" : "") + "</div>";
     if (c.week > p.weeks) h += '<div class="note warn">' + esc(t("today.blockdone")) + "</div>";
-    h += goalCard(weekGoalDone(), c.items.length) + cardioCard() + notesHtml();
+    h += goalCard(weekGoalDone(), c.items.length) + notesHtml();
     h += '<div class="card"><h3>' + esc(weekLine(w)) + "</h3>";
     if (hasSize(r)) h += '<div class="pex"><span>' + esc(t("run.total")) + "</span><span>" + esc(runSize(r)) + "</span></div>";
     runSteps(r).forEach(function (x) { h += "<p><b>" + esc(x) + "</b></p>"; });
@@ -394,11 +393,6 @@
     return '<div class="feel"><b>' + esc(t("feel.title")) + '</b><div class="chips">' + ["easy", "ok", "hard", "pain"].map(function (k) { return '<button class="chip" data-feel="' + k + '" data-i="' + i + '" aria-pressed="' + (l.feel === k) + '">' + esc(t("feel." + k)) + "</button>"; }).join("") + "</div>" +
       (l.feel === "pain" ? '<div class="note red">' + esc(t("feel.paintext")) + "</div>" : l.feel ? '<p class="qhint">' + esc(t("feel.thanks")) + "</p>" : "") + "</div>";
   }
-  function cardioCard() {
-    var n = coachState().cardio; if (!n) return "";
-    var today = iso(new Date()), ws = weekStartIso(today), done = (S.cardio || []).filter(function (d) { return weekStartIso(d) === ws; }).length;
-    return '<div class="card cardio"><h3>' + esc(t("cardio.title")) + "</h3><p>" + esc(t("cardio.text", { n: n })) + "</p><p><b>" + esc(t("today.of", { done: Math.min(done, n), total: n })) + "</b></p>" + (done < n ? '<button class="btn ghost" id="cardiodone">' + esc(t("cardio.done")) + "</button>" : "") + "</div>";
-  }
   function todayView() {
     if (ui.finish && ui.finish.run) {
       var rl = S.log[ui.finish.idx];
@@ -416,11 +410,11 @@
     if (c.item.t === "run") return runToday(p, c);
     var s = p.sessions[c.idx], d = ensureDraft(c), deload = window.Plan.isDeload(c.week);
     var goal = c.items.length, got = weekGoalDone();
-    var h = '<div class="sec">' + esc(t("today.next")) + (s.type === "fb" ? "" : " · " + esc(sessionTitle(s))) + '</div><h2 class="big">' + esc(headline(s)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span><span class="pill">' + esc(t("today.exercises", { n: s.exercises.length })) + "</span></div>";
+    var h = '<div class="sec">' + esc(t("today.next")) + (s.type === "fb" ? "" : " · " + esc(sessionTitle(s))) + '</div><h2 class="big">' + esc(headline(s)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span><span class="pill">' + esc(t("today.exercises", { n: s.exercises.length })) + "</span>" + (cardioFor(c.week, c.idx) ? '<span class="pill">+ ' + esc(t("cardio.pill", { min: cardioFor(c.week, c.idx).min })) + "</span>" : "") + "</div>";
     if (c.week > p.weeks) h += '<div class="note warn">' + esc(t("today.blockdone")) + "</div>";
     if (deload) h += '<div class="note warn">' + esc(t("today.deload")) + "</div>";
     h += goalCard(got, goal);
-    h += startBox(p) + cardioCard() + notesHtml();
+    h += notesHtml();
     h += '<p class="qhint">' + esc(t("today.hint")) + "</p>";
     s.exercises.forEach(function (x, i) {
       var hist = history(x.id), sug = window.Plan.suggest(x, hist), n = d.ex[x.id].length;
@@ -437,6 +431,7 @@
       });
       h += "</div>";
     });
+    h += cardioBox(cardioFor(c.week, c.idx), d);
     h += '<p class="err" id="err" role="alert">' + esc(ui.err) + '</p><button class="btn" id="finish">' + esc(t("today.finish")) + "</button>";
     return h;
   }
@@ -475,6 +470,12 @@
       entry.ex.push({ id: x.id, sets: done });
     });
     if (!sets) { ui.err = t("today.nosets"); render(); return; }
+    var cd = cardioFor(c.week, c.idx);
+    if (cd && d.cardio && d.cardio.done) {
+      var cv = { min: d.cardio.min === "" ? cd.min : num(d.cardio.min), kmh: d.cardio.kmh === "" ? cd.kmh : num(d.cardio.kmh), incline: d.cardio.incline === "" ? cd.incline : num(d.cardio.incline) };
+      if (!(cv.min >= 1 && cv.min <= 600 && cv.kmh >= 0 && cv.kmh <= 30 && cv.incline >= 0 && cv.incline <= 40)) { ui.err = t("cardio.invalid"); render(); return; }
+      entry.cardio = cv;
+    }
     entry.vol = vol; S.log.push(entry); S.done = (S.done || 0) + 1; S.draft = null; ui.err = "";
     entry.focus = s.focus || []; entry.prs = prs; entry.weeks = S.plan.weeks;
     ui.finish = { vol: vol, sets: sets, prs: prs, idx: S.log.length - 1 }; save(); render();
@@ -486,6 +487,8 @@
     if (G.length > 1) lines.push(t("why.extra", { g: G.filter(function (g) { return g !== pr; }).map(function (g) { return t("o.ziele." + g); }).join(", ") }));
     lines.push(t("why.days", { n: p.sessions.length, m: Number(a.dauer_min) || 60 }));
     lines.push(t("why.level." + p.level));
+    var cw = window.Plan.cardio(a, p, 1, coachState().cardio);
+    if (cw) lines.push(t(cw.fat ? "why.cardio.fat" : "why.cardio", { n: cw.count, min: cw.min }));
     if (a.ort) lines.push(t("why.place", { p: t("o.ort." + a.ort) }));
     var inj = (Array.isArray(a.verletzungen) ? a.verletzungen : []).filter(function (x) { return x !== "keine"; });
     if (inj.length) lines.push(t("why.injury", { l: inj.map(function (x) { return t("o.verletzungen." + x); }).join(", ") }));
@@ -510,11 +513,12 @@
         h += "</div>";
         return;
       }
-      var s = p.sessions[it.i];
+      var s = p.sessions[it.i], cp = cardioFor(w, it.i);
       h += '<div class="card psess"><div class="phead"><div><h3>' + esc(headline(s)) + "</h3><small class=\"fl\">" + esc(sessionTitle(s) + (s.type === "fb" ? " · " + focusLine(s) : "")) + "</small></div>" + tick + "</div>";
       s.exercises.forEach(function (x) {
         h += '<div class="pex"><span>' + esc(exName(x.id)) + "</span><span>" + (w >= c.week ? setsAt(x, w) : window.Plan.setsFor(x, w)) + " × " + esc(x.text) + "</span></div>";
       });
+      if (cp) h += '<div class="pex cardioline"><span>' + esc(t("cardio.after")) + "</span><span>" + esc(cardioLine(cp)) + "</span></div>";
       h += "</div>";
     });
     return h;
@@ -526,7 +530,7 @@
     S.log.slice().reverse().slice(0, 30).forEach(function (l) {
       var sets = l.ex.reduce(function (a, e) { return a + e.sets.length; }, 0);
       var d = new Date(l.date + "T12:00:00");
-      var info = l.type === "run" ? runStats(l).map(function (x) { return x[1] + " " + x[2]; }).join(" · ") : t("prog.entry", { vol: nf(l.vol, 0), sets: sets });
+      var info = l.type === "run" ? runStats(l).map(function (x) { return x[1] + " " + x[2]; }).join(" · ") : t("prog.entry", { vol: nf(l.vol, 0), sets: sets }) + (l.cardio ? " · " + t("cardio.pill", { min: nf(l.cardio.min, 0) }) : "");
       h += '<div class="card hist"><div><b>' + esc(logTitle(l)) + "</b><small>" + esc(d.toLocaleDateString(window.I18N.lang(), { weekday: "short", day: "numeric", month: "short" })) + "</small></div><div class=\"hr\"><span>" + esc(info) + '</span><button class="swap" data-share="' + S.log.indexOf(l) + '">' + esc(t("share.btn")) + "</button></div></div>";
     });
     return h;
@@ -961,6 +965,8 @@
       };
     });
     on("finish", finishSession);
+    $app.querySelectorAll("[data-cardio]").forEach(function (el) { el.oninput = function () { if (S.draft && S.draft.cardio) { S.draft.cardio[el.getAttribute("data-cardio")] = el.value; save(); } }; });
+    on("cardiochk", function () { if (!S.draft || !S.draft.cardio) return; S.draft.cardio.done = !S.draft.cardio.done; document.getElementById("cardiochk").setAttribute("aria-pressed", S.draft.cardio.done); save(); });
     on("hdshare", function () { ui.share = { kind: "week", style: "week", photo: null }; stopRest(); render(); });
     $app.querySelectorAll("[data-swhat]").forEach(function (b) {
       b.onclick = function () {
@@ -973,19 +979,11 @@
         render();
       };
     });
-    $app.querySelectorAll("[data-start]").forEach(function (b) {
-      b.onclick = function () {
-        var i = Number(b.getAttribute("data-start")); if (!i || !canChooseStart(S.plan)) return;
-        // im Kreis drehen: so bleibt die Abwechslung (z. B. Beine, dann Oberkörper) erhalten
-        S.plan.sessions = S.plan.sessions.slice(i).concat(S.plan.sessions.slice(0, i)); S.draft = null; ui.err = ""; save(); render();
-      };
-    });
     $app.querySelectorAll("[data-trend]").forEach(function (b) { b.onclick = function () { ui.trend = b.getAttribute("data-trend"); render(); }; });
     var tx = document.getElementById("trendex"); if (tx) tx.onchange = function () { ui.trendEx = tx.value; render(); };
     $app.querySelectorAll("[data-feel]").forEach(function (b) {
       b.onclick = function () { var l = S.log[Number(b.getAttribute("data-i"))]; if (!l) return; l.feel = b.getAttribute("data-feel"); save(); coachReview(); render(); };
     });
-    on("cardiodone", function () { S.cardio = (S.cardio || []).concat([iso(new Date())]); save(); render(); });
     on("coachundo", function () { var u = window.Coach.undo(S.coach); S.coach = u.state; S.kcalAdj = (S.kcalAdj || 0) + u.kcal; S.draft = null; save(); render(); });
     on("rundone", finishRun);
     on("runskip", function () { S.done = (S.done || 0) + 1; S.draft = null; ui.err = ""; save(); render(); window.scrollTo(0, 0); });
