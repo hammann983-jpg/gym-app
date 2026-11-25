@@ -170,3 +170,35 @@ a.btn.vid { display: block; text-align: center; text-decoration: none; }
 .qalist { display: grid; gap: 8px; }
 .qaitem { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; gap: 12px; align-items: center; min-height: 52px; font-weight: 500; }
 .qaitem small { color: var(--muted); font-size: 12px; text-align: right; }
+
+/* Ernährung */
+.card.target { gap: 12px; }
+.tk small, .macros small { display: block; color: var(--muted); font-size: 12px; font-weight: 500; }
+.tk b { font: 700 46px/1 var(--font-head); }
+.tk b i { font: 600 16px var(--font-body); font-style: normal; color: var(--muted); }
+.macros { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.macros b { font: 700 22px var(--font-head); }
+.days { display: flex; gap: 6px; margin: 8px 0 12px; }
+.days button { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 0; display: grid; gap: 2px; justify-items: center; color: var(--muted); min-height: 54px; }
+.days button small { font-size: 11px; text-transform: capitalize; }
+.days button b { font: 700 18px var(--font-head); color: var(--text); }
+.days button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.days button[aria-pressed="true"] b { color: var(--on-accent); }
+.card.meal { padding: 14px 16px; gap: 6px; margin-top: 10px; }
+.mhead { display: flex; justify-content: space-between; align-items: center; }
+.swap { border: 1px solid var(--line); background: var(--surface-2); color: var(--accent-2); border-radius: 999px; padding: 7px 13px; font: 600 12px var(--font-body); min-height: 36px; }
+.swap[disabled] { opacity: .4; }
+.mtitle { text-align: left; background: none; border: 0; padding: 4px 0; font-size: 17px; line-height: 1.25; min-height: 40px; }
+.card.meal small { color: var(--muted); font-size: 12.5px; }
+.ing { margin: 4px 0 0; padding-left: 18px; font-size: 14px; color: var(--text); }
+.card.daytotal { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; margin-top: 10px; color: var(--muted); font-size: 13px; }
+.card.daytotal b { color: var(--text); font-variant-numeric: tabular-nums; }
+.shoplist { padding: 6px 12px; gap: 0; }
+.shop { display: flex; align-items: center; gap: 12px; background: none; border: 0; border-top: 1px solid var(--line); padding: 12px 4px; text-align: left; min-height: 52px; }
+.shop:first-child { border-top: 0; }
+.shop .tick { width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--line); flex: none; display: grid; place-items: center; }
+.shop .sn { flex: 1; }
+.shop .sa { color: var(--muted); font-variant-numeric: tabular-nums; }
+.shop[aria-pressed="true"] .sn, .shop[aria-pressed="true"] .sa { text-decoration: line-through; opacity: .5; }
+.shop[aria-pressed="true"] .tick { background: var(--accent-2); border-color: var(--accent-2); }
+.shop[aria-pressed="true"] .tick::after { content: ""; width: 9px; height: 5px; border-left: 2px solid #00222A; border-bottom: 2px solid #00222A; transform: rotate(-45deg) translate(1px, -1px); }

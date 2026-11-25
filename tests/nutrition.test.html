@@ -1,0 +1,93 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Ernährung Test</title>
+<body style="font-family:system-ui;padding:20px"><h1>Ernährungs-Tests</h1><pre id="out">läuft…</pre>
+<script src="../js/questionnaire.js"></script>
+<script src="../js/plan.js"></script>
+<script src="../js/nutrition.js"></script>
+<script>
+var res = [], fails = 0;
+function ok(name, cond, info) { if (!cond) fails++; res.push((cond ? "OK   " : "FAIL ") + name + (cond ? "" : "  " + (info || ""))); }
+Promise.all([fetch("../data/essen.json").then(r => r.json())]).then(function (all) {
+  var D = all[0];
+  var base = { alter: 30, geschlecht: "weiblich", groesse_cm: 170, gewicht_kg: 65, ziele: ["abnehmen"], kraft_erfahrung: "unter_6", trainingstage: 3, dauer_min: 60, schritte: "sitzend", s1: "nein", s2: "nein", s3: "nein", s4: "nein", s5: "nein", s6: "nein", s7: "nein", essstoerung: "nein", ernaehrungsform: "omnivor", allergien: ["keine"], mag: ["alles"], kochzeit: "ueber_30", budget: "hoch", mahlzeiten: 3 };
+  function P(o) { return Object.assign({}, base, o); }
+  var T = Nutrition.targets;
+
+  // Handrechnung: Frau 30 J., 170 cm, 65 kg: BMR 1401,5; Faktor 1,2 + 3*0,03 = 1,29 -> TDEE 1808; -15 % = 1537 -> 1540
+  var t1 = T(P({}));
+  ok("Grundumsatz Mifflin (Frau 30/170/65) = 1402", t1.bmr === 1402, t1.bmr);
+  ok("TDEE = 1808", t1.tdee === 1808, t1.tdee);
+  ok("Abnehmen -15 %: 1540 kcal", t1.kcal === 1540, t1.kcal);
+  ok("Protein 2,0 g/kg = 130 g", t1.protein === 130, t1.protein);
+  ok("Fett 25 % = 43 g, Kohlenhydrate Rest", t1.fat === 43 && Math.abs(t1.carbs - Math.round((1540 - 520 - 387) / 4)) <= 1, JSON.stringify(t1));
+  ok("Makros ergeben ca. die Kalorien", Math.abs(t1.protein * 4 + t1.carbs * 4 + t1.fat * 9 - t1.kcal) <= 12);
+  ok("Wasser 35 ml/kg + 0,5 l", t1.water === 2.8, t1.water);
+  ok("Gewichtsverlust 0,25-0,75 % pro Woche", t1.weeklyKg / 65 * 100 >= 0.25 && t1.weeklyKg / 65 * 100 <= 0.75, t1.weeklyKg);
+  // Mindestwert
+  var t2 = T(P({ gewicht_kg: 50, groesse_cm: 160, alter: 40, ziele: ["abnehmen"] }));
+  ok("Mindestwert Frau 1400 kcal + Hinweis", t2.kcal >= 1400 && t2.notes.indexOf("min") >= 0, JSON.stringify(t2));
+  var t3 = T(P({ geschlecht: "maennlich", gewicht_kg: 60, groesse_cm: 165, alter: 50, ziele: ["abnehmen"], schritte: "sitzend" }));
+  ok("Mindestwert Mann 1700 kcal", t3.kcal >= 1700, t3.kcal);
+  // Ziele
+  var tm = T(P({ ziele: ["muskelaufbau"], kraft_erfahrung: "m6_24", schritte: "aktiv" })), tmA = T(P({ ziele: ["muskelaufbau"], schritte: "aktiv" })), th = T(P({ ziele: ["fitness"], schritte: "aktiv" }));
+  ok("Muskelaufbau fortgeschritten +7 %, Anfänger +3 %, Fitness 0 %", Math.abs(tm.adj - 0.07) < 1e-9 && Math.abs(tmA.adj - 0.03) < 1e-9 && th.adj === 0);
+  ok("Aufbau hat mehr kcal als Halten, Abbau weniger", tm.kcal > th.kcal && T(P({ ziele: ["abnehmen"], schritte: "aktiv" })).kcal < th.kcal);
+  ok("Muskelaufbau + Abnehmen (Priorität Abnehmen): -10 %", T(P({ ziele: ["muskelaufbau", "abnehmen"], prioritaet: "abnehmen" })).adj === -0.10);
+  ok("Bodybuilding Definition -15 %, Aufbau +7 %", T(P({ ziele: ["bodybuilding"], bb_phase: "definition", kraft_erfahrung: "m6_24" })).adj === -0.15 && T(P({ ziele: ["bodybuilding"], bb_phase: "aufbau", kraft_erfahrung: "m6_24" })).adj === 0.07);
+  ok("Marathon-Priorität: +3 %", T(P({ ziele: ["marathon"] })).adj === 0.03);
+  ok("Vegan: höheres Protein als Mischkost", T(P({ ernaehrungsform: "vegan" })).protein > t1.protein);
+  ok("Hoher BMI: Protein auf Referenzgewicht (BMI 25)", T(P({ gewicht_kg: 120, groesse_cm: 170 })).protein < 2.2 * 120 * 0.8);
+  // Schutzfälle
+  ok("Kein Ziel unter 18", T(P({ alter: 17 })) === null);
+  ok("Kein Ziel bei Schwangerschaft", T(P({ s6: "ja" })) === null);
+  ok("Kein Ziel bei Essstörung / keine Antwort", T(P({ essstoerung: "ja" })) === null && T(P({ essstoerung: "keine_antwort" })) === null);
+  ok("Kein Ziel bei BMI unter 18,5", T(P({ gewicht_kg: 50, groesse_cm: 175 })) === null);
+
+  // Wochenplan
+  var d1 = new Date("2026-11-30T12:00:00"), d2 = new Date("2026-12-07T12:00:00");
+  var w1 = Nutrition.week(P({ mahlzeiten: 4 }), D, d1, {}), w1b = Nutrition.week(P({ mahlzeiten: 4 }), D, new Date("2026-12-03T12:00:00"), {}), w2 = Nutrition.week(P({ mahlzeiten: 4 }), D, d2, {});
+  ok("KW 49/2026 beginnt am Montag 30.11.", w1.info.week === 49 && w1.info.monday.getDate() === 30, JSON.stringify(w1.info));
+  ok("Gleiche Woche = gleicher Plan", JSON.stringify(w1.days.map(d => d.slots.map(s => s.meal.id))) === JSON.stringify(w1b.days.map(d => d.slots.map(s => s.meal.id))));
+  var ids = w => w.days.map(d => d.slots.map(s => s.meal.id).join(",")).join("|");
+  ok("Nächste Woche = andere Vorschläge", ids(w1) !== ids(w2));
+  ok("7 Tage, 4 Mahlzeiten je Tag", w1.days.length === 7 && w1.days.every(d => d.slots.length === 4));
+  ok("3 Mahlzeiten: ohne Snack; 5: zwei Snacks", Nutrition.week(P({ mahlzeiten: 3 }), D, d1, {}).days[0].slots.length === 3 && Nutrition.week(P({ mahlzeiten: 5 }), D, d1, {}).days[0].slots.length === 5);
+  var dev = w1.days.map(d => Math.abs(d.kcal - t1.kcal) / t1.kcal);
+  ok("Tageskalorien liegen innerhalb ±10 % des Ziels", dev.every(x => x <= 0.10), dev.map(x => Math.round(x * 100)).join(","));
+  var pdev = w1.days.map(d => d.p / t1.protein);
+  var pavg = pdev.reduce((a, b) => a + b, 0) / 7;
+  ok("Protein: Wochenschnitt mindestens 85 % des Ziels, kein Tag unter 65 %", pavg >= 0.85 && pdev.every(x => x >= 0.65), Math.round(pavg * 100) + " % | " + pdev.map(x => Math.round(x * 100)).join(","));
+  ok("Frühstück, Mittag, Abend kommen in einer Woche ohne Wiederholung vor (Mischkost)", ["fruehstueck", "mittag", "abend"].every(s => { var x = w1.days.map(d => d.slots.find(y => y.slot === s).meal.id); return new Set(x).size === 7; }));
+  // Filter
+  function allMeals(w) { return [].concat.apply([], w.days.map(d => d.slots.map(s => s.meal))); }
+  var wv = Nutrition.week(P({ ernaehrungsform: "vegan", mahlzeiten: 5 }), D, d1, {});
+  ok("Vegan: nur vegane Rezepte", allMeals(wv).every(m => m.ernaehrung.indexOf("vegan") >= 0));
+  var wl = Nutrition.week(P({ allergien: ["laktose", "gluten", "nuesse"], mahlzeiten: 5 }), D, d1, {});
+  ok("Allergien werden hart gefiltert (Laktose, Gluten, Nüsse)", allMeals(wl).every(m => !m.allergene.some(x => ["laktose", "gluten", "nuesse"].indexOf(x) >= 0)));
+  var wp = Nutrition.week(P({ ernaehrungsform: "pescetarisch", mahlzeiten: 5 }), D, d1, {});
+  ok("Pescetarisch: kein Fleisch", allMeals(wp).every(m => m.ernaehrung.indexOf("pescetarisch") >= 0));
+  var wq = Nutrition.week(P({ kochzeit: "unter_15" }), D, d1, {});
+  var qs = allMeals(wq); ok("Kochzeit unter 15 Minuten: mind. 60 % schnell, nichts über 25 Min.", qs.filter(m => m.prep <= 15).length / qs.length >= 0.6 && qs.every(m => m.prep <= 25), Math.round(qs.filter(m => m.prep <= 15).length / qs.length * 100) + " %, max " + Math.max.apply(null, qs.map(m => m.prep)));
+  var wb = Nutrition.week(P({ budget: "niedrig" }), D, d1, {});
+  ok("Budget niedrig", allMeals(wb).every(m => m.budget === "niedrig"));
+  var wm = Nutrition.week(P({ mag: ["huhn", "reis", "ei", "hafer" === 1 ? "x" : "haferflocken", "skyr" === 1 ? "x" : "quark_skyr", "gemuese", "obst", "beeren", "banane"] }), D, d1, {});
+  var likedSet = ["huhn", "reis", "ei", "haferflocken", "quark_skyr", "gemuese", "obst", "beeren"];
+  var wantShare = allMeals(wm).filter(m => { var tg = m.likes.filter(t => t !== "salat" && t !== "gemuese"); return !tg.length || tg.filter(t => likedSet.indexOf(t) >= 0).length / tg.length >= 0.5; }).length / allMeals(wm).length;
+  ok("Vorlieben: mindestens 75 % der Rezepte passen zur Hälfte oder mehr", wantShare >= 0.75, Math.round(wantShare * 100) + " %");
+  var wn = Nutrition.week(P({ s6: "ja" }), D, d1, {});
+  ok("Schutzfall: Plan ohne Kalorienziel, aber mit Mahlzeiten", wn.targets === null && wn.days[0].slots.length === 3 && wn.days[0].slots.every(s => s.kcal > 0));
+  // Tausch
+  var sw = Nutrition.week(P({}), D, d1, { "0|1": 1 });
+  ok("Tausch zeigt eine andere Option", sw.days[0].slots[1].meal.id !== w1.days[0].slots[1].meal.id || w1.days[0].slots[1].pool === 1);
+  // Einkaufsliste
+  var sh = Nutrition.shopping(w1);
+  ok("Einkaufsliste hat Zutaten mit Mengen", sh.length >= 15 && sh.every(x => x.amount > 0));
+  // 12 verschiedene Profile
+  var profs = [P({}), P({ ernaehrungsform: "vegan" }), P({ ernaehrungsform: "vegetarisch" }), P({ ernaehrungsform: "pescetarisch" }), P({ allergien: ["laktose"] }), P({ allergien: ["gluten"] }), P({ kochzeit: "unter_15" }), P({ budget: "niedrig" }), P({ mahlzeiten: 5 }), P({ ziele: ["muskelaufbau"], kraft_erfahrung: "ueber_24" }), P({ geschlecht: "maennlich", ziele: ["kraft"] }), P({ mag: ["lachs_fisch", "kartoffeln", "salat"] })];
+  var sig = new Set(profs.map(p => { var w = Nutrition.week(p, D, d1, {}); return (w.targets ? w.targets.kcal : "x") + "#" + ids(w); }));
+  ok("Mindestens 12 Profile ergeben 12 verschiedene Ergebnisse", sig.size >= 12, sig.size);
+  document.getElementById("out").textContent = res.join("\n") + "\n\n" + (fails ? fails + " FEHLER" : "ALLE OK (" + res.length + ")");
+  document.title = fails ? "FAIL" : "PASS";
+});
+</script>

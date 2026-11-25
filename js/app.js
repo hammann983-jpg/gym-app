@@ -2,7 +2,7 @@
 (function () {
   var C = window.GYM_CONFIG, KEY = "gym.v1";
   var $app = document.getElementById("app");
-  var QS = [], EX = [], EXBY = {}, NAMES = {};
+  var QS = [], EX = [], EXBY = {}, NAMES = {}, FOOD = null;
 
   function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
@@ -22,7 +22,7 @@
     if (S.plan && S.plan.version !== 2) { S.plan = null; S.draft = null; changed = true; }
     if (changed) save();
   })();
-  var ui = { tab: "today", sub: { progress: "training", coach: "adjust" }, profile: false, err: "", finish: null, planWeek: null };
+  var ui = { tab: "today", sub: { progress: "training", coach: "qa", nutrition: "mealplan" }, profile: false, err: "", finish: null, planWeek: null, nday: (new Date().getDay() + 6) % 7, nopen: {}, info: null };
 
   var t = function (k, v) { return window.I18N.t(k, v); };
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -303,7 +303,54 @@
 
   // ---------- App ----------
   var TABS = ["today", "plan", "progress", "nutrition", "coach"];
-  var SUBS = { progress: ["training", "weight", "results", "races"], coach: ["qa", "goals"] };
+  var SUBS = { progress: ["training", "weight", "results", "races"], coach: ["qa", "goals"], nutrition: ["mealplan", "shopping"] };
+
+  // ---------- Ernährung ----------
+  function foodName(id) { var n = FOOD.foods[id].n; return n[window.I18N.lang()] || n.en; }
+  function mealTitle(m) { return m.t[window.I18N.lang()] || m.t.en; }
+  function itemText(it) { return (it.count > 0 ? it.count + " × " : it.amount + " g ") + foodName(it.id); }
+  function nutriWeek() { return window.Nutrition.week(S.answers, FOOD, new Date(), S.nswap && S.nswap[window.Nutrition.weekInfo(new Date()).key]); }
+
+  function nutritionView() {
+    if (!FOOD || !S.answers.ernaehrungsform) return "";
+    var w = nutriWeek(), tg = w.targets, h = "";
+    if (ui.sub.nutrition === "shopping") {
+      var done = (S.shop && S.shop[w.info.key]) || {};
+      h += '<div class="sec">' + esc(t("nutri.shop.title")) + '</div><p class="qhint">' + esc(t("nutri.shop.hint")) + '</p><div class="card shoplist">';
+      window.Nutrition.shopping(w).sort(function (x, y) { return foodName(x.id).localeCompare(foodName(y.id), window.I18N.lang()); }).forEach(function (it) {
+        h += '<button class="shop" data-shop="' + it.id + '" aria-pressed="' + !!done[it.id] + '"><span class="tick"></span><span class="sn">' + esc(foodName(it.id)) + '</span><span class="sa">' + (it.count > 0 ? it.count + " ×" : nf(it.amount, 0) + " g") + "</span></button>";
+      });
+      return h + "</div>";
+    }
+    if (tg) {
+      h += '<div class="card target"><div class="tk"><small>' + esc(t("nutri.target")) + "</small><b>" + nf(tg.kcal, 0) + " <i>" + esc(t("nutri.kcal")) + "</i></b></div><div class=\"macros\">" +
+        '<div><small>' + esc(t("nutri.protein")) + "</small><b>" + tg.protein + " g</b></div><div><small>" + esc(t("nutri.carbs")) + "</small><b>" + tg.carbs + " g</b></div><div><small>" + esc(t("nutri.fat")) + "</small><b>" + tg.fat + " g</b></div><div><small>" + esc(t("nutri.water")) + "</small><b>" + nf(tg.water, 1) + " l</b></div></div></div>";
+      if (tg.notes.indexOf("min") >= 0) h += '<div class="note warn">' + esc(t("nutri.note.min")) + "</div>";
+      else if (tg.notes.indexOf("cut") >= 0) h += '<div class="note">' + esc(t("nutri.note.cut", { kg: nf(Math.abs(tg.weeklyKg), 2) })) + "</div>";
+      else if (tg.notes.indexOf("muscle") >= 0) h += '<div class="note">' + esc(t("nutri.note.muscle")) + "</div>";
+    } else h += '<div class="note">' + esc(t("nutri.off")) + "</div>";
+    var d = w.days[ui.nday] || w.days[0], lang = window.I18N.lang();
+    var mon = w.info.monday;
+    h += '<div class="sec">' + esc(t("nutri.week", { d: mon.toLocaleDateString(lang, { day: "numeric", month: "long" }) })) + '</div><div class="days">';
+    for (var i = 0; i < 7; i++) {
+      var dd = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i);
+      h += '<button data-nday="' + i + '" aria-pressed="' + (i === ui.nday) + '"><small>' + esc(dd.toLocaleDateString(lang, { weekday: "short" })) + "</small><b>" + dd.getDate() + "</b></button>";
+    }
+    h += "</div>";
+    d.slots.forEach(function (s) {
+      var key = d.day + "|" + s.index, open = !!ui.nopen[key];
+      h += '<div class="card meal"><div class="mhead"><span class="sec">' + esc(t("slot." + s.slot)) + '</span><button class="swap" data-swap="' + key + '"' + (s.pool < 2 ? " disabled" : "") + ">" + esc(t("nutri.swap")) + "</button></div>" +
+        '<button class="mtitle" data-mopen="' + key + '" aria-expanded="' + open + '"><b>' + esc(mealTitle(s.meal)) + "</b></button><small>" +
+        (tg ? s.kcal + " " + esc(t("nutri.kcal")) + " · " + s.p + " g " + esc(t("nutri.protein")) + " · " : "") + esc(t("nutri.min", { n: s.meal.prep })) + "</small>";
+      if (open) h += '<ul class="ing">' + s.items.map(function (it) { return "<li>" + esc(itemText(it)) + "</li>"; }).join("") + "</ul>";
+      h += "</div>";
+    });
+    if (tg) {
+      h += '<div class="card daytotal"><span>' + esc(t("nutri.total")) + "</span><b>" + d.kcal + " " + esc(t("nutri.kcal")) + " · " + d.p + " g " + esc(t("nutri.protein")) + "</b></div>";
+      if (d.p < tg.protein * 0.85) h += '<div class="note warn">' + esc(t("nutri.proteinhint")) + "</div>";
+    }
+    return h + '<p class="qhint">' + esc(t("nutri.weeknote")) + " " + esc(t("nutri.disc")) + "</p>";
+  }
 
   function coachView() {
     if (ui.sub.coach === "goals") {
@@ -335,6 +382,7 @@
     else if (tab === "plan") body = planView();
     else if (tab === "progress" && ui.sub.progress === "training") body = historyView();
     else if (tab === "coach") body = coachView();
+    else if (tab === "nutrition") body = nutritionView();
     h += body || emptyCard(tab);
     h += "</main>";
     h += '<nav class="tabs"><div class="inner">' + TABS.map(function (k) {
@@ -426,6 +474,22 @@
     on("finok", function () { ui.finish = null; render(); window.scrollTo(0, 0); });
     $app.querySelectorAll("[data-info]").forEach(function (b) { b.onclick = function () { ui.info = b.getAttribute("data-info"); render(); }; });
     on("infoclose", function () { ui.info = null; render(); });
+    $app.querySelectorAll("[data-nday]").forEach(function (b) { b.onclick = function () { ui.nday = Number(b.getAttribute("data-nday")); render(); }; });
+    $app.querySelectorAll("[data-mopen]").forEach(function (b) { b.onclick = function () { var k = b.getAttribute("data-mopen"); ui.nopen[k] = !ui.nopen[k]; render(); }; });
+    $app.querySelectorAll("[data-swap]").forEach(function (b) {
+      b.onclick = function () {
+        var wk = window.Nutrition.weekInfo(new Date()).key, k = b.getAttribute("data-swap");
+        S.nswap = S.nswap || {}; S.nswap[wk] = S.nswap[wk] || {}; S.nswap[wk][k] = (S.nswap[wk][k] || 0) + 1;
+        ui.nopen[k] = false; save(); render();
+      };
+    });
+    $app.querySelectorAll("[data-shop]").forEach(function (b) {
+      b.onclick = function () {
+        var wk = window.Nutrition.weekInfo(new Date()).key, id = b.getAttribute("data-shop");
+        S.shop = S.shop || {}; S.shop[wk] = S.shop[wk] || {}; S.shop[wk][id] = !S.shop[wk][id];
+        save(); b.setAttribute("aria-pressed", !!S.shop[wk][id]);
+      };
+    });
     on("chgoals", function () { S.onboarded = false; S.qdone = false; S.qid = "ziele"; S.plan = null; S.draft = null; save(); render(); window.scrollTo(0, 0); });
     var qs = document.getElementById("qasearch");
     if (qs) qs.oninput = function () { ui.qaq = qs.value; var pos = qs.selectionStart; render(); var n = document.getElementById("qasearch"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } };
@@ -447,7 +511,8 @@
     window.I18N.init(S.lang || "en"),
     getJSON("data/questionnaire.json").then(function (d) { QS = d.questions; }),
     getJSON("data/exercises.json").then(function (d) { EX = d.uebungen; EX.forEach(function (e) { EXBY[e.id] = e; }); }),
-    getJSON("data/ex-names.json").then(function (d) { NAMES = d; })
+    getJSON("data/ex-names.json").then(function (d) { NAMES = d; }),
+    getJSON("data/essen.json").then(function (d) { FOOD = d; })
   ]).then(render, render);
 
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
