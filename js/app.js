@@ -410,7 +410,8 @@
   function foodName(id) { var n = FOOD.foods[id].n; return n[window.I18N.lang()] || n.en; }
   function mealTitle(m) { return m.t[window.I18N.lang()] || m.t.en; }
   function itemText(it) { return (it.count > 0 ? it.count + " × " : it.amount + " g ") + foodName(it.id); }
-  function nutriWeek() { runAuto(); return window.Nutrition.week(S.answers, FOOD, new Date(), S.nswap && S.nswap[window.Nutrition.weekInfo(new Date()).key], S.kcalAdj || 0); }
+  function trainDays() { return S.trainDays || window.Nutrition.defaultDays(S.answers); }
+  function nutriWeek() { runAuto(); return window.Nutrition.week(S.answers, FOOD, new Date(), S.nswap && S.nswap[window.Nutrition.weekInfo(new Date()).key], S.kcalAdj || 0, trainDays()); }
 
   // ---------- Fortschritt: Gewicht, Ergebnisse, Rennen ----------
   function sortedWeights() { return (S.weights || []).slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; }); }
@@ -539,13 +540,15 @@
     h += '<div class="sec">' + esc(t("nutri.week", { d: mon.toLocaleDateString(lang, { day: "numeric", month: "long" }) })) + '</div><div class="days">';
     for (var i = 0; i < 7; i++) {
       var dd = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i);
-      h += '<button data-nday="' + i + '" aria-pressed="' + (i === ui.nday) + '"><small>' + esc(dd.toLocaleDateString(lang, { weekday: "short" })) + "</small><b>" + dd.getDate() + "</b></button>";
+      h += '<button data-nday="' + i + '" aria-pressed="' + (i === ui.nday) + '"' + (w.days[i].train ? ' class="train"' : "") + '><small>' + esc(dd.toLocaleDateString(lang, { weekday: "short" })) + "</small><b>" + dd.getDate() + "</b></button>";
     }
     h += "</div>";
+    h += '<button class="trainbtn" data-trainday="' + d.day + '" aria-pressed="' + d.train + '"><span class="tick"></span><span><b>' + esc(t(d.train ? "nutri.trainday" : "nutri.restday")) + "</b><small>" + esc(t("nutri.traintap")) + "</small></span></button>";
+    if (d.train && window.Plan.goals(S.answers).some(function (g) { return ["laufen", "marathon", "triathlon", "hyrox"].indexOf(g) >= 0; })) h += '<div class="note">' + esc(t("nutri.during")) + "</div>";
     d.slots.forEach(function (s) {
       var key = d.day + "|" + s.index, open = !!ui.nopen[key];
-      h += '<div class="card meal"><div class="mhead"><span class="sec">' + esc(t("slot." + s.slot)) + '</span><button class="swap" data-swap="' + key + '"' + (s.pool < 2 ? " disabled" : "") + ">" + esc(t("nutri.swap")) + "</button></div>" +
-        '<button class="mtitle" data-mopen="' + key + '" aria-expanded="' + open + '"><b>' + esc(mealTitle(s.meal)) + "</b></button><small>" +
+      h += '<div class="card meal' + (s.slot === "pre" ? " pre" : "") + '"><div class="mhead"><span class="sec">' + esc(t("slot." + s.slot)) + '</span><button class="swap" data-swap="' + key + '"' + (s.pool < 2 ? " disabled" : "") + ">" + esc(t("nutri.swap")) + "</button></div>" +
+        '<button class="mtitle" data-mopen="' + key + '" aria-expanded="' + open + '"><b>' + esc(mealTitle(s.meal)) + "</b></button>" + (s.slot === "pre" ? '<small class="prewhen">' + esc(t("nutri.prewhen")) + "</small>" : "") + "<small>" +
         (tg ? s.kcal + " " + esc(t("nutri.kcal")) + " · " + s.p + " g " + esc(t("nutri.protein")) + " · " : "") + esc(t("nutri.min", { n: s.meal.prep })) + "</small>";
       if (open) h += '<ul class="ing">' + s.items.map(function (it) { return "<li>" + esc(itemText(it)) + "</li>"; }).join("") + "</ul>";
       h += "</div>";
@@ -725,7 +728,7 @@
     on("next", tryNext);
     on("skip", function () { var q = currentQ(); delete S.answers[q.id]; save(); goto(1); });
     on("redchange", function () { S.qdone = false; S.qid = "s1"; save(); render(); });
-    on("open", function () { S.onboarded = true; S.plan = null; ensurePlan(); save(); render(); });
+    on("open", function () { S.onboarded = true; S.plan = null; delete S.trainDays; ensurePlan(); save(); render(); });
     var q = !S.onboarded && S.welcomed && !S.qdone && QS.length ? currentQ() : null;
     $app.querySelectorAll("[data-opt]").forEach(function (b) { b.onclick = function () { pickOption(q, b.getAttribute("data-opt")); }; });
     var inp = document.getElementById("num");
@@ -781,6 +784,13 @@
     $app.querySelectorAll("[data-sharekind]").forEach(function (b) { b.onclick = function () { ui.share = { kind: b.getAttribute("data-sharekind"), id: b.getAttribute("data-shareid"), style: b.getAttribute("data-sharekind") === "week" ? "week" : "stats", photo: null }; render(); }; });
     if (ui.share) drawShare();
     $app.querySelectorAll("[data-nday]").forEach(function (b) { b.onclick = function () { ui.nday = Number(b.getAttribute("data-nday")); render(); }; });
+    $app.querySelectorAll("[data-trainday]").forEach(function (b) {
+      b.onclick = function () {
+        var day = Number(b.getAttribute("data-trainday")), list = trainDays().slice(), at = list.indexOf(day);
+        if (at >= 0) list.splice(at, 1); else list.push(day);
+        S.trainDays = list; ui.nopen = {}; save(); render();
+      };
+    });
     $app.querySelectorAll("[data-mopen]").forEach(function (b) { b.onclick = function () { var k = b.getAttribute("data-mopen"); ui.nopen[k] = !ui.nopen[k]; render(); }; });
     $app.querySelectorAll("[data-swap]").forEach(function (b) {
       b.onclick = function () {

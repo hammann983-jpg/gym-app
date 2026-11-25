@@ -301,7 +301,7 @@
   "nutri.weeknote": "De nouvelles idées chaque lundi. Un jour isolé n'a pas besoin d'être exact : la moyenne de la semaine compte.",
   "nutri.proteinhint": "Astuce : ajoute aujourd'hui du fromage blanc, du skyr ou un shake protéiné pour atteindre ton objectif de protéines.",
   "nutri.shop.title": "Liste de courses de cette semaine",
-  "nutri.shop.hint": "Quantités pour une personne, poids cru. Barre ce que tu as déjà à la maison.",
+  "nutri.shop.hint": "Une proposition pour la semaine selon tes objectifs, avec les en-cas d'avant séance. Change un plat et la liste suit.",
   "nutri.disc": "Ce sont des estimations, pas un avis médical.",
   "nutri.meals": "{n} repas",
   "nutri.of": "sur {t}",
@@ -514,5 +514,11 @@
   "share.weight.title": "Mes progrès",
   "share.weeks.since": "Semaines",
   "share.empty.title": "Partage",
-  "share.empty.text": "Termine ta première séance dans l'onglet « Aujourd'hui ». Tu pourras ensuite la partager ici en image : Instagram, WhatsApp ou l'enregistrer."
+  "share.empty.text": "Termine ta première séance dans l'onglet « Aujourd'hui ». Tu pourras ensuite la partager ici en image : Instagram, WhatsApp ou l'enregistrer.",
+  "slot.pre": "Avant l'entraînement",
+  "nutri.prewhen": "1 à 3 heures avant l'entraînement",
+  "nutri.trainday": "Jour d'entraînement",
+  "nutri.restday": "Jour de repos",
+  "nutri.traintap": "Touche pour changer. Les jours d'entraînement incluent un en-cas avant la séance.",
+  "nutri.during": "Séance de plus de 60 minutes : 30 à 60 g de glucides par heure (à tester à l'entraînement)."
 }

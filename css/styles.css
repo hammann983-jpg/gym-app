@@ -235,3 +235,14 @@ a.btn.vid { display: block; text-align: center; text-decoration: none; }
 main > .btn.ghost { box-shadow: none; }
 .card .btn { width: 100%; }
 .cirow .btn { width: auto; }
+
+/* Trainingstage und Pre-Workout */
+.days button.train b::after { content: ""; display: block; width: 6px; height: 6px; border-radius: 6px; background: var(--accent-2); margin: 3px auto 0; }
+.trainbtn { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; margin-top: 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); }
+.trainbtn small { display: block; color: var(--muted); font-size: 12.5px; }
+.trainbtn .tick { width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--line); flex: none; display: grid; place-items: center; }
+.trainbtn[aria-pressed="true"] .tick { border-color: var(--accent-2); background: var(--accent-2); }
+.trainbtn[aria-pressed="true"] .tick::after { content: ""; width: 9px; height: 5px; border-left: 2px solid var(--on-accent); border-bottom: 2px solid var(--on-accent); transform: rotate(-45deg) translate(1px, -1px); }
+.card.meal.pre { border-color: var(--accent-2); }
+.card.meal small.prewhen { color: var(--accent-2); font-weight: 600; }
+.trainbtn + .note { margin-top: 10px; }

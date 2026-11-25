@@ -87,6 +87,15 @@ Promise.all([fetch("../data/essen.json").then(r => r.json())]).then(function (al
   var profs = [P({}), P({ ernaehrungsform: "vegan" }), P({ ernaehrungsform: "vegetarisch" }), P({ ernaehrungsform: "pescetarisch" }), P({ allergien: ["laktose"] }), P({ allergien: ["gluten"] }), P({ kochzeit: "unter_15" }), P({ budget: "niedrig" }), P({ mahlzeiten: 5 }), P({ ziele: ["muskelaufbau"], kraft_erfahrung: "ueber_24" }), P({ geschlecht: "maennlich", ziele: ["kraft"] }), P({ mag: ["lachs_fisch", "kartoffeln", "salat"] })];
   var sig = new Set(profs.map(p => { var w = Nutrition.week(p, D, d1, {}); return (w.targets ? w.targets.kcal : "x") + "#" + ids(w); }));
   ok("Mindestens 12 Profile ergeben 12 verschiedene Ergebnisse", sig.size >= 12, sig.size);
+  var base = P({ mahlzeiten: 3 }), tw = Nutrition.week(base, D, d1, {}, 0, [0, 2, 4]), nw = Nutrition.week(base, D, d1, {}, 0, []);
+  ok("Pre-Workout nur an Trainingstagen", tw.days.every(d => d.slots.some(s => s.slot === "pre") === [0, 2, 4].indexOf(d.day) >= 0) && tw.days[0].slots.length === 4 && tw.days[1].slots.length === 3);
+  ok("Tagesziel bleibt gleich (±8 %)", Math.abs(tw.days[0].kcal - nw.days[0].kcal) / nw.days[0].kcal < 0.08, tw.days[0].kcal + " / " + nw.days[0].kcal);
+  var four = Nutrition.week(P({ mahlzeiten: 4 }), D, d1, {}, 0, [0]); ok("4 Mahlzeiten: Pre ersetzt den Snack", four.days[0].slots.length === 4 && !four.days[0].slots.some(s => s.slot === "snack"));
+  var badPre = [];
+  ["omnivor", "vegetarisch", "vegan", "pescetarisch"].forEach(diet => [[], ["laktose"], ["gluten"], ["soja"], ["laktose", "gluten", "soja", "nuesse", "ei"]].forEach(al => { if (!Nutrition.pool(P({ ernaehrungsform: diet, allergien: al }), D, "pre", "x").length) badPre.push(diet + al); }));
+  ok("Für jede Ernährungsform und Allergie gibt es ein Pre-Workout", !badPre.length, badPre.join(" "));
+  ok("Pre-Workout in der Einkaufsliste", Nutrition.shopping(tw).length > 0 && tw.days[0].slots.filter(s => s.slot === "pre")[0].items.every(it => Nutrition.shopping(tw).some(x => x.id === it.id)));
+  ok("Standardtage nach Trainingstagen", Nutrition.defaultDays({ trainingstage: 3 }).join() === "0,2,4" && Nutrition.defaultDays({ trainingstage: 5 }).length === 5);
   document.getElementById("out").textContent = res.join("\n") + "\n\n" + (fails ? fails + " FEHLER" : "ALLE OK (" + res.length + ")");
   document.title = fails ? "FAIL" : "PASS";
 });

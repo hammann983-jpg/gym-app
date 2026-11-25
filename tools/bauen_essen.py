@@ -144,6 +144,16 @@ m("tofu_edamame_bowl", "abend", "bowls", 20, "mittel", [("tofu", 150), ("edamame
 m("puten_geschnetzeltes", "abend", None, 25, "mittel", [("pute", 150), ("reis", 70), ("pilze", 150), ("oel", 8)], "Putengeschnetzeltes mit Pilzen und Reis", "Turkey strips with mushrooms and rice", "Pavo salteado con champiñones y arroz", "Émincé de dinde aux champignons et riz")
 
 # ---------------- Snacks ----------------
+# ---------------- Pre-Workout (1 bis 3 Stunden vorher: Kohlenhydrate + etwas Protein, wenig Fett) ----------------
+m("pre_banane_skyr", "pre", None, 2, "niedrig", [("banane", 120), ("skyr", 150), ("honig", 10)], "Banane mit Skyr und Honig", "Banana with skyr and honey", "Plátano con skyr y miel", "Banane, skyr et miel")
+m("pre_toast_honig_skyr", "pre", None, 5, "niedrig", [("toast", 70), ("honig", 20), ("skyr", 120)], "Toast mit Honig, dazu Skyr", "Toast with honey and a side of skyr", "Tostada con miel y skyr", "Pain grillé au miel et skyr")
+m("pre_hafer_whey", "pre", None, 5, "niedrig", [("hafer", 40), ("beeren", 80), ("whey", 20), ("banane", 60)], "Kleine Haferschale mit Obst und Whey", "Small oat bowl with fruit and whey", "Bol pequeño de avena con fruta y whey", "Petit bol d'avoine, fruits et whey")
+m("pre_quark_apfel_dattel", "pre", None, 3, "niedrig", [("magerquark", 150), ("apfel", 120), ("dattel", 30)], "Magerquark mit Apfel und Datteln", "Low-fat quark with apple and dates", "Quark desnatado con manzana y dátiles", "Fromage blanc, pomme et dattes")
+m("pre_soja_dattel", "pre", None, 3, "niedrig", [("sojajoghurt", 150), ("banane", 100), ("dattel", 30)], "Sojajoghurt mit Banane und Datteln", "Soy yoghurt with banana and dates", "Yogur de soja con plátano y dátiles", "Yaourt au soja, banane et dattes")
+m("pre_toast_banane_soja", "pre", None, 4, "niedrig", [("toast", 70), ("banane", 100), ("sojadrink", 200)], "Bananentoast mit Sojadrink", "Banana toast with soy drink", "Tostada de plátano con bebida de soja", "Tartine à la banane et boisson au soja")
+m("pre_shake_dattel", "pre", "smoothies", 3, "mittel", [("banane", 120), ("dattel", 40), ("erbsenprotein", 15)], "Bananen-Dattel-Shake (mit Wasser)", "Banana date shake (with water)", "Batido de plátano y dátil (con agua)", "Shake banane et dattes (à l'eau)")
+m("pre_apfel_dattel_erbse", "pre", "smoothies", 3, "mittel", [("apfel", 150), ("dattel", 40), ("erbsenprotein", 15)], "Apfel-Dattel-Shake (mit Wasser)", "Apple date shake (with water)", "Batido de manzana y dátil (con agua)", "Shake pomme et dattes (à l'eau)")
+
 m("snack_skyr_beeren", "snack", None, 2, "niedrig", [("skyr", 200), ("beeren", 80)], "Skyr mit Beeren", "Skyr with berries", "Skyr con frutos rojos", "Skyr aux baies")
 m("snack_quark_apfel", "snack", None, 2, "niedrig", [("magerquark", 150), ("apfel", 100)], "Magerquark mit Apfel", "Low-fat quark with apple", "Quark desnatado con manzana", "Fromage blanc à la pomme")
 m("snack_nuesse_obst", "snack", None, 1, "niedrig", [("nuesse", 30), ("apfel", 120)], "Nüsse und ein Apfel", "Nuts and an apple", "Frutos secos y una manzana", "Noix et une pomme")

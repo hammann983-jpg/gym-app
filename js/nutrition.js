@@ -118,24 +118,40 @@
   }
 
   // Wochenplan: 7 Tage mit je 3 bis 5 Mahlzeiten. swaps: { "<tag>|<slot>": anzahl } verschiebt die Auswahl.
-  function week(a, data, date, swaps, adjKcal) {
+  // Übliche Trainingstage (0 = Montag), bis die Person eigene wählt
+  function defaultDays(a) {
+    var P = [[], [0], [0, 3], [0, 2, 4], [0, 1, 3, 4], [0, 1, 2, 3, 4], [0, 1, 2, 3, 4, 5]];
+    return P[Math.max(0, Math.min(6, Math.round(num(a.trainingstage) || 3)))].slice();
+  }
+
+  // trainDays: Wochentage mit Training. An diesen Tagen kommt eine Pre-Workout-Mahlzeit dazu,
+  // das Tagesziel bleibt gleich (bei 4 bis 5 Mahlzeiten ersetzt sie den ersten Snack).
+  function week(a, data, date, swaps, adjKcal, trainDays) {
     var info = weekInfo(date || new Date()), tg = targets(a, adjKcal), m = Number(a.mahlzeiten) || 3;
     var split = SLOT_SPLIT[m] || SLOT_SPLIT[3], pools = {}, days = [];
-    ["fruehstueck", "mittag", "abend", "snack"].forEach(function (s) { pools[s] = pool(a, data, s, info.key); });
+    ["fruehstueck", "mittag", "abend", "snack", "pre"].forEach(function (s) { pools[s] = pool(a, data, s, info.key); });
     for (var d = 0; d < 7; d++) {
-      var slots = [], snackNo = 0;
-      for (var i = 0; i < split.length; i++) {
-        var slot = SLOTS[i], pl = pools[slot];
-        if (!pl.length) continue;
-        var key = d + "|" + i, off = (swaps && swaps[key]) || 0;
-        var idx = ((slot === "snack" ? d * 2 + snackNo : d) + off) % pl.length;
-        if (slot === "snack") snackNo++;
-        var meal = pl[idx], factor = 1;
-        if (tg) factor = Math.max(0.7, Math.min(1.5, tg.kcal * split[i] / meal.kcal));
-        var por = portion(meal, data, factor);
-        slots.push({ index: i, slot: slot, meal: meal, items: por.items, kcal: por.kcal, p: por.p, c: por.c, f: por.f, pool: pl.length });
+      var slots = [], snackNo = 0, train = !!(trainDays && trainDays.indexOf(d) >= 0), plan = [];
+      for (var i = 0; i < split.length; i++) plan.push({ slot: SLOTS[i], index: i, share: split[i] });
+      if (train && pools.pre.length) {
+        var sn = plan.map(function (x) { return x.slot; }).indexOf("snack");
+        if (sn >= 0) { var share = plan[sn].share; plan.splice(sn, 1); }
+        else { share = 0.12; plan.forEach(function (x) { x.share *= 0.88; }); }
+        var at = plan.map(function (x) { return x.slot; }).indexOf("abend");
+        plan.splice(at < 0 ? plan.length : at, 0, { slot: "pre", index: 9, share: share });
       }
-      days.push({ day: d, slots: slots, kcal: slots.reduce(function (x, s) { return x + s.kcal; }, 0), p: slots.reduce(function (x, s) { return x + s.p; }, 0) });
+      plan.forEach(function (x) {
+        var pl = pools[x.slot];
+        if (!pl.length) return;
+        var key = d + "|" + x.index, off = (swaps && swaps[key]) || 0;
+        var idx = ((x.slot === "snack" ? d * 2 + snackNo : d) + off) % pl.length;
+        if (x.slot === "snack") snackNo++;
+        var meal = pl[idx], factor = 1;
+        if (tg) factor = Math.max(0.7, Math.min(1.5, tg.kcal * x.share / meal.kcal));
+        var por = portion(meal, data, factor);
+        slots.push({ index: x.index, slot: x.slot, meal: meal, items: por.items, kcal: por.kcal, p: por.p, c: por.c, f: por.f, pool: pl.length });
+      });
+      days.push({ day: d, train: train, slots: slots, kcal: slots.reduce(function (x, s) { return x + s.kcal; }, 0), p: slots.reduce(function (x, s) { return x + s.p; }, 0) });
     }
     return { info: info, targets: tg, days: days };
   }
@@ -147,5 +163,5 @@
     return Object.keys(tot).map(function (k) { return tot[k]; });
   }
 
-  window.Nutrition = { targets: targets, adjust: adjust, bmr: bmr, week: week, weekInfo: weekInfo, pool: pool, shopping: shopping, portion: portion };
+  window.Nutrition = { defaultDays: defaultDays, targets: targets, adjust: adjust, bmr: bmr, week: week, weekInfo: weekInfo, pool: pool, shopping: shopping, portion: portion };
 })();
