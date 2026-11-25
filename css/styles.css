@@ -112,3 +112,46 @@ nav.tabs button[aria-current="page"]::before { content: ""; position: absolute; 
   .screen, .qbody, main > * { animation: in .22s ease-out; }
   @keyframes in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 }
+
+/* Training */
+.big { font-size: 46px; line-height: .95; margin: 4px 0 10px; }
+main .sec { margin-top: 4px; }
+main .chips { margin: 0 0 14px; }
+.pill { font: 600 12px var(--font-body); padding: 5px 11px; border-radius: 999px; background: var(--surface-2); color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+.pill.acc { background: var(--accent); color: var(--on-accent); }
+.pill svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.ringrow { display: flex; align-items: center; gap: 14px; margin: 12px 0; padding: 14px; }
+.ring { width: 64px; height: 64px; position: relative; flex: none; }
+.ring span { position: absolute; inset: 0; display: grid; place-items: center; font: 700 20px var(--font-head); }
+.ringrow h3 { font-size: 20px; }
+main .card + .card, main .note + .card, main .card + .note, main .note + .note, main .qhint + .card { margin-top: 12px; }
+.card.ex { padding: 16px; gap: 8px; }
+.exhead { display: flex; gap: 12px; align-items: flex-start; }
+.exhead b { font-weight: 600; font-size: 16px; display: block; }
+.exhead small { color: var(--muted); font-size: 12.5px; }
+.n { width: 28px; height: 28px; border-radius: 9px; background: var(--surface-2); display: grid; place-items: center; font: 700 13px var(--font-body); color: var(--muted); flex: none; }
+.sug { font-size: 13px; color: var(--accent-2); font-weight: 500; }
+.setrow { display: flex; align-items: center; gap: 8px; }
+.sl { width: 52px; font-size: 12px; color: var(--muted); font-weight: 500; flex: none; }
+.f { position: relative; flex: 1; min-width: 0; }
+.f input { width: 100%; background: var(--surface-2); border: 1px solid transparent; border-radius: 12px; padding: 12px 34px 12px 12px; font: 600 17px var(--font-body); font-variant-numeric: tabular-nums; min-height: 48px; }
+.f input:focus { outline: 2px solid var(--accent); }
+.f input::placeholder { color: var(--muted); opacity: .6; }
+.f i { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-style: normal; font-size: 11px; color: var(--muted); pointer-events: none; }
+.chk { width: 48px; height: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); display: grid; place-items: center; flex: none; color: transparent; }
+.chk svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.chk[aria-pressed="true"] { background: var(--accent-2); border-color: var(--accent-2); color: #00222A; }
+main > .btn { width: 100%; margin-top: 14px; }
+.stats.two { grid-template-columns: 1fr 1fr; }
+.card.done { gap: 14px; }
+.weeks { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 8px; }
+.weeks button { flex: none; min-width: 42px; min-height: 42px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; color: var(--muted); }
+.weeks button.now { color: var(--accent); }
+.weeks button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.psess { padding: 16px; gap: 6px; }
+.phead { display: flex; justify-content: space-between; align-items: center; }
+.pex { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; padding: 7px 0; border-top: 1px solid var(--line); }
+.pex span:last-child { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.card.hist { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; gap: 12px; }
+.card.hist small { display: block; color: var(--muted); font-size: 12px; }
+.card.hist span { color: var(--muted); font-size: 13px; text-align: right; }

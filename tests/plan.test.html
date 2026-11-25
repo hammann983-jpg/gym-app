@@ -1,0 +1,69 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Plan Test</title>
+<body style="font-family:system-ui;padding:20px"><h1>Plan-Generator-Tests</h1><pre id="out">läuft…</pre>
+<script src="../js/plan.js"></script>
+<script>
+var res = [], fails = 0;
+function ok(name, cond, info) { if (!cond) fails++; res.push((cond ? "OK   " : "FAIL ") + name + (cond ? "" : "  " + (info || ""))); }
+Promise.all([fetch("../data/exercises.json").then(r => r.json()), fetch("../data/ex-names.json").then(r => r.json())]).then(function (all) {
+  var EX = all[0].uebungen, NAMES = all[1], byId = {}; EX.forEach(e => byId[e.id] = e);
+  // Namen
+  var miss = []; EX.forEach(e => ["de", "en", "es", "fr"].forEach(l => { if (!NAMES[e.id] || !NAMES[e.id][l]) miss.push(e.id + ":" + l); }));
+  ok("Alle 59 Übungen haben Namen in 4 Sprachen", miss.length === 0 && EX.length === 59, miss.join(","));
+
+  function prof(o) { return Object.assign({ hauptziel: "muskelaufbau", kraft_erfahrung: "unter_6", trainingstage: 3, dauer_min: 60, equipment: ["gym_voll"], verletzungen: ["keine"] }, o); }
+  function allEx(p) { return [].concat.apply([], p.sessions.map(s => s.exercises)); }
+  function checkCommon(label, a) {
+    var p = Plan.generate(a, EX), E = Plan.equipSet(a), inj = (a.verletzungen || []).filter(x => x !== "keine");
+    var bad = allEx(p).filter(x => !Plan.available(byId[x.id], E) || Plan.blocked(byId[x.id], inj));
+    ok(label + ": nur passende Übungen (Equipment, Verletzung)", bad.length === 0, bad.map(x => x.id).join(","));
+    var cap = { 30: 4, 45: 5, 60: 6, 75: 7, 90: 8, 120: 8 }[a.dauer_min];
+    ok(label + ": höchstens " + cap + " Übungen je Einheit", p.sessions.every(s => s.exercises.length <= cap && s.exercises.length >= 3), p.sessions.map(s => s.exercises.length).join(","));
+    var cnt = {}; allEx(p).forEach(x => cnt[x.id] = (cnt[x.id] || 0) + 1);
+    var lim = (a.equipment.length === 1 && a.equipment[0] !== "gym_voll") ? 3 : 2; // bei wenig Equipment gibt es keine Alternativen
+    ok(label + ": keine Übung in mehr als " + lim + " Einheiten", Object.keys(cnt).every(k => cnt[k] <= lim), JSON.stringify(cnt));
+    ok(label + ": Sätze zwischen 2 und 5", allEx(p).every(x => x.sets >= 2 && x.sets <= 5));
+    var v = Plan.volume(p), mx = { anfaenger: 10, fortgeschritten: 16, erfahren: 20 }[p.level];
+    ok(label + ": Wochenvolumen je Gruppe <= " + mx, Object.keys(v).every(g => v[g] <= mx), JSON.stringify(v));
+    ok(label + ": jede Einheit hat Übungen ohne Duplikate", p.sessions.every(s => new Set(s.exercises.map(x => x.id)).size === s.exercises.length));
+    return p;
+  }
+  var p1 = checkCommon("Anfänger Studio 3T", prof({}));
+  ok("Anfänger 3 Tage = 3x Ganzkörper", p1.sessions.map(s => s.type).join() === "fb,fb,fb");
+  ok("Ganzkörper mit Buchstaben A,B,C", p1.sessions.map(s => s.letter).join() === "A,B,C");
+  var p2 = checkCommon("Fortgeschritten 4T", prof({ kraft_erfahrung: "m6_24", trainingstage: 4 }));
+  ok("4 Tage = OK/UK/OK/UK", p2.sessions.map(s => s.type).join() === "ok,uk,ok,uk");
+  var p3 = checkCommon("Erfahren 6T Kraft", prof({ hauptziel: "kraft", kraft_erfahrung: "ueber_24", trainingstage: 6, dauer_min: 90 }));
+  ok("Erfahren 6 Tage = PPL x2", p3.sessions.map(s => s.type).join() === "push,pull,legs,push,pull,legs");
+  ok("Kraft: Grundübung 4-6 Wdh, 3-4 Sätze (Volumen-Deckel kann kürzen)", allEx(p3).filter(x => x.compound && !x.timed && !x.bodyweight).every(x => x.lo === 4 && x.hi === 6 && x.sets >= 3 && x.sets <= 4));
+  var p4 = checkCommon("Knie+Schulter", prof({ kraft_erfahrung: "m6_24", trainingstage: 4, verletzungen: ["knie", "schulter"] }));
+  ok("Knie: keine tiefe Kniebeuge/Beinstrecker", !allEx(p4).some(x => ["kniebeuge_langhantel", "goblet_kniebeuge", "beinstrecker_maschine", "bulgarische_split_kniebeuge"].indexOf(x.id) >= 0));
+  var p5 = checkCommon("Nur Körper zuhause", prof({ equipment: ["koerper"], trainingstage: 3, dauer_min: 45 }));
+  ok("Nur Körpergewicht: alles Körpergewicht", allEx(p5).every(x => byId[x.id].equipment.indexOf("koerper") >= 0), allEx(p5).map(x => x.id).join());
+  var p6 = checkCommon("Nur Kurzhanteln", prof({ equipment: ["kurzhanteln"], trainingstage: 3 }));
+  ok("Kurzhanteln: keine Schrägbank/Maschine", !allEx(p6).some(x => ["schraegbank_kurzhantel", "beinpresse", "latzug"].indexOf(x.id) >= 0));
+  var p7 = checkCommon("Rücken", prof({ verletzungen: ["ruecken"], kraft_erfahrung: "ueber_24", trainingstage: 4 }));
+  ok("Rücken: kein Kreuzheben, keine Langhantel-Kniebeuge", !allEx(p7).some(x => ["kreuzheben", "kniebeuge_langhantel", "langhantel_rudern"].indexOf(x.id) >= 0));
+  var p8 = Plan.generate(prof({ hauptziel: "marathon", trainingstage: 6 }), EX);
+  ok("Marathon: Kraft auf 3 Tage begrenzt + Hinweis", p8.daysPerWeek === 3 && p8.notes.indexOf("endurance_pending") >= 0);
+  var p9 = Plan.generate(prof({ trainingstage: 6, kraft_erfahrung: "m6_24" }), EX);
+  ok("6 Tage bei Fortgeschrittenen -> 5 + Hinweis", p9.daysPerWeek === 5 && p9.notes.indexOf("cap_days") >= 0);
+  var p10 = Plan.generate(prof({ hauptziel: "bodybuilding", kraft_erfahrung: "m6_24", trainingstage: 4, dauer_min: 90 }), EX);
+  ok("Bodybuilding 90 Min hat 7-8 Übungen", p10.sessions.every(s => s.exercises.length >= 7), p10.sessions.map(s => s.exercises.length).join());
+  var p11 = checkCommon("30 Minuten", prof({ dauer_min: 30 }));
+  ok("30 Min: Superset-Markierung + kurze Pause", allEx(p11).every(x => x.superset && x.rest <= 75));
+  // Deload
+  ok("Woche 4 ist Deload, Woche 3 nicht", Plan.isDeload(4) && !Plan.isDeload(3));
+  ok("Deload: 4 Sätze -> 2 (rund 60 %)", Plan.setsFor({ sets: 4 }, 4) === 2 && Plan.setsFor({ sets: 3 }, 4) === 2 && Plan.setsFor({ sets: 4 }, 3) === 4);
+  // Steigerung
+  var x = { sets: 3, lo: 6, hi: 12, lower: false, bodyweight: false, timed: false };
+  ok("Alle Sätze am oberen Ende -> +2,5 kg (Oberkörper)", Plan.suggest(x, [[{ kg: 40, reps: 12 }, { kg: 40, reps: 12 }, { kg: 40, reps: 12 }]]).kg === 42.5);
+  ok("Unterkörper +5 kg", Plan.suggest(Object.assign({}, x, { lower: true }), [[{ kg: 60, reps: 12 }, { kg: 60, reps: 12 }, { kg: 60, reps: 12 }]]).kg === 65);
+  ok("Nicht alle Wdh geschafft -> Gewicht gleich", Plan.suggest(x, [[{ kg: 40, reps: 10 }, { kg: 40, reps: 8 }]]).kg === 40);
+  ok("2x unter Untergrenze -> ca. 8 % weniger", Plan.suggest(x, [[{ kg: 50, reps: 5 }, { kg: 50, reps: 4 }], [{ kg: 50, reps: 5 }, { kg: 50, reps: 5 }]]).kg === 46);
+  ok("Ohne Verlauf kein Vorschlag", Plan.suggest(x, []) === null);
+  document.getElementById("out").textContent = res.join("\n") + "\n\n" + (fails ? fails + " FEHLER" : "ALLE OK (" + res.length + ")");
+  document.title = fails ? "FAIL" : "PASS";
+});
+</script>
