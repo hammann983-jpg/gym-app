@@ -155,3 +155,18 @@ main > .btn { width: 100%; margin-top: 14px; }
 .card.hist { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; gap: 12px; }
 .card.hist small { display: block; color: var(--muted); font-size: 12px; }
 .card.hist span { color: var(--muted); font-size: 13px; text-align: right; }
+
+/* Tipps, Q&A, Muskelgruppen */
+.exname { flex: 1; min-width: 0; }
+.tipbtn { flex: none; border: 1px solid var(--line); background: var(--surface-2); color: var(--accent-2); border-radius: 999px; padding: 8px 14px; font: 600 13px var(--font-body); min-height: 40px; }
+.fl { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.sheet h3 { font-size: 20px; margin-top: 4px; }
+.sheet p { margin: 0; }
+.tips { margin: 6px 0 0; padding-left: 20px; color: var(--text); }
+.tips li { margin: 4px 0; }
+a.btn.vid { display: block; text-align: center; text-decoration: none; }
+.search { width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 13px 14px; font-size: 16px; min-height: 48px; margin: 4px 0 12px; }
+.search:focus { outline: 2px solid var(--accent); }
+.qalist { display: grid; gap: 8px; }
+.qaitem { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; gap: 12px; align-items: center; min-height: 52px; font-weight: 500; }
+.qaitem small { color: var(--muted); font-size: 12px; text-align: right; }

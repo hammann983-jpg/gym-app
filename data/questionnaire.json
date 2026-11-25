@@ -1,39 +1,528 @@
 {
- "version": 2,
+ "version": 3,
  "note": "Struktur ohne Texte. Texte stehen in i18n/<sprache>.json (q.<id>, h.<id>, o.<id>.<option>, sec.<abschnitt>). type: number | choice | multi | date | yesno. if: nur zeigen, wenn Antwort in Liste. screen: red = Plan stoppt bei ja/keine_antwort, yellow = Arzt-Hinweis, nutri = keine Kalorienzahlen.",
  "questions": [
-  {"id":"alter","sec":"about","type":"number","min":14,"max":90,"unit":"u.years","required":true},
-  {"id":"geschlecht","sec":"about","type":"choice","options":["weiblich","maennlich","divers","keine_angabe"],"required":true,"hint":true},
-  {"id":"groesse_cm","sec":"about","type":"number","min":120,"max":220,"unit":"cm","required":true},
-  {"id":"gewicht_kg","sec":"about","type":"number","min":35,"max":250,"unit":"kg","required":true},
-  {"id":"zielgewicht_kg","sec":"about","type":"number","min":35,"max":250,"unit":"kg","required":false,"hint":true},
-  {"id":"hauptziel","sec":"goal","type":"choice","options":["kraft","muskelaufbau","bodybuilding","abnehmen","fitness","laufen","marathon","triathlon","hyrox"],"required":true},
-  {"id":"bb_phase","sec":"goal","type":"choice","options":["aufbau","definition","erhalt"],"required":true,"hint":true,"if":{"hauptziel":["bodybuilding"]}},
-  {"id":"tri_distanz","sec":"goal","type":"choice","options":["sprint","olympisch","halb","voll"],"required":true,"if":{"hauptziel":["triathlon"]}},
-  {"id":"hyrox_division","sec":"goal","type":"choice","options":["open_frauen","open_maenner","pro_frauen","pro_maenner","doubles","weiss_nicht"],"required":true,"if":{"hauptziel":["hyrox"]}},
-  {"id":"event_datum","sec":"goal","type":"date","required":false,"if":{"hauptziel":["laufen","marathon","triathlon","hyrox"]}},
-  {"id":"lauf_level","sec":"level","type":"choice","options":["gar_nicht","unter_10","m20_30","ueber_30"],"required":true,"if":{"hauptziel":["laufen","marathon","triathlon","hyrox"]}},
-  {"id":"zeit_5km","sec":"level","type":"number","min":15,"max":70,"unit":"u.min","required":false,"if":{"hauptziel":["laufen","marathon","triathlon","hyrox"]}},
-  {"id":"kraft_erfahrung","sec":"level","type":"choice","options":["noch_nie","unter_6","m6_24","ueber_24"],"required":true},
-  {"id":"trainingstage","sec":"time","type":"choice","options":[2,3,4,5,6,7],"required":true},
-  {"id":"dauer_min","sec":"time","type":"choice","options":[30,45,60,75,90,120],"unit":"u.min","required":true},
-  {"id":"equipment","sec":"time","type":"multi","options":["gym_voll","kurzhanteln","langhantel","kettlebell","band","koerper","cardio","sled"],"required":true},
-  {"id":"schritte","sec":"time","type":"choice","options":["sitzend","leicht","aktiv","sehr_aktiv"],"required":true},
-  {"id":"schlaf","sec":"time","type":"choice","options":["unter_5","m5_6","m6_7","m7_9","ueber_9"],"required":true},
-  {"id":"s1","sec":"health","type":"yesno","required":true,"screen":"red"},
-  {"id":"s2","sec":"health","type":"yesno","required":true,"screen":"red"},
-  {"id":"s3","sec":"health","type":"yesno","required":true,"screen":"red"},
-  {"id":"s4","sec":"health","type":"yesno","required":true,"screen":"yellow"},
-  {"id":"s5","sec":"health","type":"yesno","required":true,"screen":"yellow"},
-  {"id":"s6","sec":"health","type":"yesno","required":true,"screen":"nutri"},
-  {"id":"s7","sec":"health","type":"yesno","required":true,"screen":"yellow"},
-  {"id":"verletzungen","sec":"health","type":"multi","options":["knie","schulter","ruecken","handgelenk","ellbogen","keine"],"required":true,"exclusive":"keine"},
-  {"id":"essstoerung","sec":"health","type":"yesno","required":true,"screen":"nutri","hint":true},
-  {"id":"ernaehrungsform","sec":"food","type":"choice","options":["omnivor","vegetarisch","pescetarisch","vegan"],"required":true},
-  {"id":"allergien","sec":"food","type":"multi","options":["gluten","laktose","nuesse","erdnuss","ei","soja","fisch","sesam","keine"],"required":true,"exclusive":"keine"},
-  {"id":"abneigungen","sec":"food","type":"multi","options":["fisch","ei","tofu","linsen","pilze","haferflocken","quark","kokos"],"required":false},
-  {"id":"kochzeit","sec":"food","type":"choice","options":["unter_15","m15_30","ueber_30"],"required":true},
-  {"id":"budget","sec":"food","type":"choice","options":["niedrig","mittel","hoch"],"required":true},
-  {"id":"mahlzeiten","sec":"food","type":"choice","options":[3,4,5],"required":true}
+  {
+   "id": "alter",
+   "sec": "about",
+   "type": "number",
+   "min": 14,
+   "max": 90,
+   "unit": "u.years",
+   "required": true
+  },
+  {
+   "id": "geschlecht",
+   "sec": "about",
+   "type": "choice",
+   "options": [
+    "weiblich",
+    "maennlich",
+    "divers",
+    "keine_angabe"
+   ],
+   "required": true,
+   "hint": true
+  },
+  {
+   "id": "groesse_cm",
+   "sec": "about",
+   "type": "number",
+   "min": 120,
+   "max": 220,
+   "unit": "cm",
+   "required": true
+  },
+  {
+   "id": "gewicht_kg",
+   "sec": "about",
+   "type": "number",
+   "min": 35,
+   "max": 250,
+   "unit": "kg",
+   "required": true
+  },
+  {
+   "id": "zielgewicht_kg",
+   "sec": "about",
+   "type": "number",
+   "min": 35,
+   "max": 250,
+   "unit": "kg",
+   "required": false,
+   "hint": true
+  },
+  {
+   "id": "ziele",
+   "sec": "goal",
+   "type": "multi",
+   "options": [
+    "kraft",
+    "muskelaufbau",
+    "bodybuilding",
+    "abnehmen",
+    "fitness",
+    "laufen",
+    "marathon",
+    "triathlon",
+    "hyrox"
+   ],
+   "required": true,
+   "hint": true
+  },
+  {
+   "id": "prioritaet",
+   "sec": "goal",
+   "type": "choice",
+   "optionsFrom": "ziele",
+   "textFrom": "ziele",
+   "required": true,
+   "ifCount": {
+    "ziele": 2
+   }
+  },
+  {
+   "id": "bb_phase",
+   "sec": "goal",
+   "type": "choice",
+   "options": [
+    "aufbau",
+    "definition",
+    "erhalt"
+   ],
+   "required": true,
+   "hint": true,
+   "if": {
+    "ziele": [
+     "bodybuilding"
+    ]
+   }
+  },
+  {
+   "id": "tri_distanz",
+   "sec": "goal",
+   "type": "choice",
+   "options": [
+    "sprint",
+    "olympisch",
+    "halb",
+    "voll"
+   ],
+   "required": true,
+   "if": {
+    "ziele": [
+     "triathlon"
+    ]
+   }
+  },
+  {
+   "id": "hyrox_division",
+   "sec": "goal",
+   "type": "choice",
+   "options": [
+    "open_frauen",
+    "open_maenner",
+    "pro_frauen",
+    "pro_maenner",
+    "doubles",
+    "weiss_nicht"
+   ],
+   "required": true,
+   "if": {
+    "ziele": [
+     "hyrox"
+    ]
+   }
+  },
+  {
+   "id": "event_datum",
+   "sec": "goal",
+   "type": "date",
+   "required": false,
+   "if": {
+    "ziele": [
+     "laufen",
+     "marathon",
+     "triathlon",
+     "hyrox"
+    ]
+   }
+  },
+  {
+   "id": "lauf_level",
+   "sec": "level",
+   "type": "choice",
+   "options": [
+    "gar_nicht",
+    "unter_10",
+    "m20_30",
+    "ueber_30"
+   ],
+   "required": true,
+   "if": {
+    "ziele": [
+     "laufen",
+     "marathon",
+     "triathlon",
+     "hyrox"
+    ]
+   }
+  },
+  {
+   "id": "zeit_5km",
+   "sec": "level",
+   "type": "number",
+   "min": 15,
+   "max": 70,
+   "unit": "u.min",
+   "required": false,
+   "if": {
+    "ziele": [
+     "laufen",
+     "marathon",
+     "triathlon",
+     "hyrox"
+    ]
+   }
+  },
+  {
+   "id": "kraft_erfahrung",
+   "sec": "level",
+   "type": "choice",
+   "options": [
+    "noch_nie",
+    "unter_6",
+    "m6_24",
+    "ueber_24"
+   ],
+   "required": true
+  },
+  {
+   "id": "trainingstage",
+   "sec": "time",
+   "type": "choice",
+   "options": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "required": true
+  },
+  {
+   "id": "dauer_min",
+   "sec": "time",
+   "type": "choice",
+   "options": [
+    30,
+    45,
+    60,
+    75,
+    90,
+    120
+   ],
+   "unit": "u.min",
+   "required": true
+  },
+  {
+   "id": "ort",
+   "sec": "time",
+   "type": "choice",
+   "options": [
+    "studio",
+    "studio_hyrox",
+    "zuhause"
+   ],
+   "required": true
+  },
+  {
+   "id": "heim",
+   "sec": "time",
+   "type": "multi",
+   "options": [
+    "kurzhanteln",
+    "kettlebell",
+    "band",
+    "klimmzugstange",
+    "bank",
+    "koerper"
+   ],
+   "required": true,
+   "exclusive": "koerper",
+   "if": {
+    "ort": [
+     "zuhause"
+    ]
+   }
+  },
+  {
+   "id": "schritte",
+   "sec": "time",
+   "type": "choice",
+   "options": [
+    "sitzend",
+    "leicht",
+    "aktiv",
+    "sehr_aktiv"
+   ],
+   "required": true
+  },
+  {
+   "id": "schlaf",
+   "sec": "time",
+   "type": "choice",
+   "options": [
+    "unter_5",
+    "m5_6",
+    "m6_7",
+    "m7_9",
+    "ueber_9"
+   ],
+   "required": true
+  },
+  {
+   "id": "s1",
+   "sec": "health",
+   "type": "yesno",
+   "required": true,
+   "screen": "red"
+  },
+  {
+   "id": "s2",
+   "sec": "health",
+   "type": "yesno",
+   "required": true,
+   "screen": "red"
+  },
+  {
+   "id": "s3",
+   "sec": "health",
+   "type": "yesno",
+   "required": true,
+   "screen": "red"
+  },
+  {
+   "id": "s4",
+   "sec": "health",
+   "type": "yesno",
+   "required": true,
+   "screen": "yellow"
+  },
+  {
+   "id": "s5",
+   "sec": "health",
+   "type": "yesno",
+   "required": true,
+   "screen": "yellow"
+  },
+  {
+   "id": "s6",
+   "sec": "health",
+   "type": "yesno",
+   "required": true,
+   "screen": "nutri"
+  },
+  {
+   "id": "s7",
+   "sec": "health",
+   "type": "yesno",
+   "required": true,
+   "screen": "yellow"
+  },
+  {
+   "id": "verletzungen",
+   "sec": "health",
+   "type": "multi",
+   "options": [
+    "knie",
+    "schulter",
+    "ruecken",
+    "handgelenk",
+    "ellbogen",
+    "keine"
+   ],
+   "required": true,
+   "exclusive": "keine"
+  },
+  {
+   "id": "essstoerung",
+   "sec": "health",
+   "type": "yesno",
+   "required": true,
+   "screen": "nutri",
+   "hint": true
+  },
+  {
+   "id": "ernaehrungsform",
+   "sec": "food",
+   "type": "choice",
+   "options": [
+    "omnivor",
+    "vegetarisch",
+    "pescetarisch",
+    "vegan"
+   ],
+   "required": true
+  },
+  {
+   "id": "allergien",
+   "sec": "food",
+   "type": "multi",
+   "options": [
+    "gluten",
+    "laktose",
+    "nuesse",
+    "erdnuss",
+    "ei",
+    "soja",
+    "fisch",
+    "sesam",
+    "keine"
+   ],
+   "required": true,
+   "exclusive": "keine"
+  },
+  {
+   "id": "mag",
+   "sec": "food",
+   "type": "multi",
+   "required": true,
+   "exclusive": "alles",
+   "hint": true,
+   "options": [
+    "alles",
+    "huhn",
+    "pute",
+    "rind",
+    "schwein",
+    "lachs_fisch",
+    "thunfisch",
+    "ei",
+    "quark_skyr",
+    "kaese",
+    "tofu_tempeh",
+    "linsen_bohnen",
+    "reis",
+    "kartoffeln",
+    "suesskartoffeln",
+    "nudeln",
+    "haferflocken",
+    "brot",
+    "quinoa_couscous",
+    "gemuese",
+    "salat",
+    "obst",
+    "beeren",
+    "avocado",
+    "nuesse",
+    "wraps",
+    "bowls",
+    "suppen",
+    "smoothies"
+   ],
+   "optIf": {
+    "huhn": {
+     "ernaehrungsform": [
+      "omnivor"
+     ]
+    },
+    "pute": {
+     "ernaehrungsform": [
+      "omnivor"
+     ]
+    },
+    "rind": {
+     "ernaehrungsform": [
+      "omnivor"
+     ]
+    },
+    "schwein": {
+     "ernaehrungsform": [
+      "omnivor"
+     ]
+    },
+    "lachs_fisch": {
+     "ernaehrungsform": [
+      "omnivor",
+      "pescetarisch"
+     ]
+    },
+    "thunfisch": {
+     "ernaehrungsform": [
+      "omnivor",
+      "pescetarisch"
+     ]
+    },
+    "ei": {
+     "ernaehrungsform": [
+      "omnivor",
+      "vegetarisch",
+      "pescetarisch"
+     ]
+    },
+    "quark_skyr": {
+     "ernaehrungsform": [
+      "omnivor",
+      "vegetarisch",
+      "pescetarisch"
+     ]
+    },
+    "kaese": {
+     "ernaehrungsform": [
+      "omnivor",
+      "vegetarisch",
+      "pescetarisch"
+     ]
+    }
+   },
+   "optAllergen": {
+    "ei": "ei",
+    "quark_skyr": "laktose",
+    "kaese": "laktose",
+    "tofu_tempeh": "soja",
+    "lachs_fisch": "fisch",
+    "thunfisch": "fisch",
+    "nudeln": "gluten",
+    "brot": "gluten",
+    "haferflocken": "gluten",
+    "nuesse": "nuesse",
+    "wraps": "gluten"
+   }
+  },
+  {
+   "id": "kochzeit",
+   "sec": "food",
+   "type": "choice",
+   "options": [
+    "unter_15",
+    "m15_30",
+    "ueber_30"
+   ],
+   "required": true
+  },
+  {
+   "id": "budget",
+   "sec": "food",
+   "type": "choice",
+   "options": [
+    "niedrig",
+    "mittel",
+    "hoch"
+   ],
+   "required": true
+  },
+  {
+   "id": "mahlzeiten",
+   "sec": "food",
+   "type": "choice",
+   "options": [
+    3,
+    4,
+    5
+   ],
+   "required": true
+  }
  ]
 }

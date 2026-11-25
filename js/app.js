@@ -9,6 +9,19 @@
   var S = load();
   S.answers = S.answers || {};
   S.log = S.log || [];
+  // Ältere Antworten (vor Version 6) auf das neue Schema bringen
+  (function migrate() {
+    var a = S.answers, changed = false;
+    if (a.hauptziel && !a.ziele) { a.ziele = [a.hauptziel]; delete a.hauptziel; changed = true; }
+    if (a.equipment && !a.ort) {
+      a.ort = a.equipment.indexOf("gym_voll") >= 0 ? "studio" : "zuhause";
+      if (a.ort === "zuhause") a.heim = a.equipment.map(function (k) { return k === "kurzhanteln" ? "kurzhanteln" : k === "kettlebell" ? "kettlebell" : k === "band" ? "band" : null; }).filter(Boolean).concat(a.equipment.length ? [] : ["koerper"]);
+      delete a.equipment; changed = true;
+    }
+    if (a.ort === "zuhause" && !(a.heim && a.heim.length)) { a.heim = ["koerper"]; changed = true; }
+    if (S.plan && S.plan.version !== 2) { S.plan = null; S.draft = null; changed = true; }
+    if (changed) save();
+  })();
   var ui = { tab: "today", sub: { progress: "training", coach: "adjust" }, profile: false, err: "", finish: null, planWeek: null };
 
   var t = function (k, v) { return window.I18N.t(k, v); };
@@ -30,7 +43,7 @@
   function setLang(code) { S.lang = code; save(); return window.I18N.init(code).then(render); }
 
   function optText(q, o) {
-    var k1 = "o." + q.id + "." + o, k2 = "o." + o;
+    var k1 = "o." + (q.textFrom || q.id) + "." + o, k2 = "o." + o;
     if (window.I18N.has(k1)) return t(k1);
     if (window.I18N.has(k2)) return t(k2);
     return String(o) + (q.unit ? " " + t(q.unit) : "");
@@ -73,7 +86,7 @@
     } else if (q.type === "date") {
       h += '<div class="numrow"><input class="num" id="num" type="date" style="font-size:24px" value="' + esc(v || "") + '"></div>';
     } else {
-      var opts = q.type === "yesno" ? ["ja", "nein", "keine_antwort"] : q.options;
+      var opts = q.type === "yesno" ? ["ja", "nein", "keine_antwort"] : window.Q.options(q, S.answers);
       h += '<div class="opts">' + opts.map(function (o) {
         var on = q.type === "multi" ? (Array.isArray(v) && v.indexOf(o) >= 0) : v === o;
         return '<button class="opt" data-opt="' + esc(o) + '" aria-pressed="' + on + '">' + (q.type === "multi" ? '<span class="tick"></span>' : "") + "<span>" + esc(optText(q, o)) + "</span></button>";
@@ -139,11 +152,14 @@
     if (sc.red) {
       return '<section class="screen">' + logo() + '<h1 style="font-size:36px">' + esc(t("res.red.title")) + '</h1><div class="note red">' + esc(t("res.red.text")) + '</div><button class="btn" id="redchange">' + esc(t("res.red.change")) + "</button></section>";
     }
-    var a = S.answers, goal = t("o.hauptziel." + a.hauptziel);
+    var a = S.answers, G = window.Plan.goals(a), pr = window.Plan.prio(a), pw = window.Plan.planWeeks(a);
+    var goal = t("o.ziele." + pr);
     var h = '<section class="screen">' + logo() + "<h1>" + esc(t("res.title")) + "</h1><p>" + esc(t("res.sub")) + '</p><div class="stats">' +
       '<div class="stat"><small>' + esc(t("res.goal")) + "</small><b>" + esc(goal) + "</b></div>" +
+      '<div class="stat"><small>' + esc(t("res.weeks")) + "</small><b>" + pw.weeks + " " + esc(t("u.weeks")) + "</b></div>" +
       '<div class="stat"><small>' + esc(t("res.bmi")) + "</small><b>" + (sc.bmi ? sc.bmi.toLocaleString(window.I18N.lang(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "–") + "</b></div>" +
       '<div class="stat"><small>' + esc(t("res.days")) + "</small><b>" + esc(a.trainingstage) + "</b></div></div>";
+    if (G.length > 1) h += '<div class="note">' + esc(t("res.goals")) + ": " + esc(G.map(function (g) { return t("o.ziele." + g); }).join(", ")) + "</div>";
     if (sc.yellow) h += '<div class="note warn">' + esc(t("res.flag.yellow")) + "</div>";
     if (sc.nutriOff) h += '<div class="note">' + esc(t("res.flag.nutri")) + "</div>";
     return h + '<button class="btn" id="open">' + esc(t("res.open")) + "</button></section>";
@@ -151,10 +167,16 @@
 
   // ---------- Plan und Training ----------
   function ensurePlan() {
-    if (!S.plan && EX.length && S.answers.hauptziel) { S.plan = window.Plan.generate(S.answers, EX); S.done = 0; S.draft = null; save(); }
+    if (!S.plan && EX.length && window.Plan.prio(S.answers)) { S.plan = window.Plan.generate(S.answers, EX); S.done = 0; S.draft = null; save(); }
     return S.plan;
   }
   function sessionTitle(s) { return t("day." + s.type) + (s.letter ? " " + s.letter : ""); }
+  // Große Überschrift: die trainierten Muskelgruppen (Ganzkörper behält seinen Namen)
+  function headline(s) {
+    if (s.type === "fb" || !s.focus || !s.focus.length) return sessionTitle(s);
+    return s.focus.map(function (f) { return t("focus." + f); }).join(" · ");
+  }
+  function focusLine(s) { return (s.focus || []).map(function (f) { return t("focus." + f); }).join(" · "); }
   function cur() {
     var n = S.plan.sessions.length, seq = S.done || 0;
     return { idx: seq % n, week: Math.floor(seq / n) + 1, seq: seq };
@@ -178,7 +200,7 @@
   }
   function notesHtml() {
     return (S.plan.notes || []).map(function (n) {
-      var txt = n === "cap_days" ? t("note.cap_days", { n: S.plan.daysPerWeek }) : n === "endurance_pending" ? t("note.endurance") : "";
+      var txt = n === "cap_days" ? t("note.cap_days", { n: S.plan.daysPerWeek }) : n === "endurance_pending" ? t("note.endurance") : n === "recomp" ? t("note.recomp") : n === "endu_conflict" ? t("note.endu_conflict") : n === "event_soon" ? t("note.event_soon") : "";
       return txt ? '<div class="note">' + esc(txt) + "</div>" : "";
     }).join("");
   }
@@ -206,7 +228,7 @@
     if (!p) return "";
     var c = cur(), s = p.sessions[c.idx], d = ensureDraft(c), deload = window.Plan.isDeload(c.week);
     var goal = p.sessions.length, got = weekGoalDone();
-    var h = '<div class="sec">' + esc(t("today.next")) + '</div><h2 class="big">' + esc(sessionTitle(s)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span><span class="pill">' + esc(t("today.exercises", { n: s.exercises.length })) + "</span></div>";
+    var h = '<div class="sec">' + esc(t("today.next")) + " · " + esc(sessionTitle(s)) + '</div><h2 class="big">' + esc(headline(s)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span><span class="pill">' + esc(t("today.exercises", { n: s.exercises.length })) + "</span></div>";
     if (c.week > p.weeks) h += '<div class="note warn">' + esc(t("today.blockdone")) + "</div>";
     if (deload) h += '<div class="note warn">' + esc(t("today.deload")) + "</div>";
     h += '<div class="card ringrow">' + ring(got, goal) + "<div><h3>" + esc(t("today.goal")) + "</h3><p>" + esc(t("today.of", { done: got, total: goal })) + "</p></div></div>";
@@ -214,8 +236,8 @@
     h += '<p class="qhint">' + esc(t("today.hint")) + "</p>";
     s.exercises.forEach(function (x, i) {
       var hist = history(x.id), sug = window.Plan.suggest(x, hist), n = d.ex[x.id].length;
-      h += '<div class="card ex"><div class="exhead"><span class="n">' + (i + 1) + '</span><div><b>' + esc(exName(x.id)) + "</b><small>" +
-        esc(t("today.setsline", { sets: n, reps: x.text, rest: fmtRest(x.rest) })) + "</small></div></div>";
+      h += '<div class="card ex"><div class="exhead"><span class="n">' + (i + 1) + '</span><div class="exname"><b>' + esc(exName(x.id)) + "</b><small>" +
+        esc(t("today.setsline", { sets: n, reps: x.text, rest: fmtRest(x.rest) })) + '</small></div><button class="tipbtn" data-info="' + x.id + '">' + esc(t("info.btn")) + "</button></div>";
       if (sug) h += '<div class="sug">' + esc(t("today.sug." + sug.why, { kg: nf(sug.kg, 2) })) + "</div>";
       if (x.superset && i === 0) h += '<div class="sug">' + esc(t("today.superset")) + "</div>";
       d.ex[x.id].forEach(function (r, j) {
@@ -259,7 +281,7 @@
     h += notesHtml();
     p.sessions.forEach(function (s, i) {
       var isDone = (S.done || 0) > (w - 1) * n + i;
-      h += '<div class="card psess"><div class="phead"><h3>' + esc(sessionTitle(s)) + "</h3>" + (isDone ? '<span class="pill acc">' + icon("check") + "</span>" : "") + "</div>";
+      h += '<div class="card psess"><div class="phead"><div><h3>' + esc(headline(s)) + "</h3><small class=\"fl\">" + esc(sessionTitle(s) + (s.type === "fb" ? " · " + focusLine(s) : "")) + "</small></div>" + (isDone ? '<span class="pill acc">' + icon("check") + "</span>" : "") + "</div>";
       s.exercises.forEach(function (x) {
         h += '<div class="pex"><span>' + esc(exName(x.id)) + "</span><span>" + window.Plan.setsFor(x, w) + " × " + esc(x.text) + "</span></div>";
       });
@@ -281,7 +303,19 @@
 
   // ---------- App ----------
   var TABS = ["today", "plan", "progress", "nutrition", "coach"];
-  var SUBS = { progress: ["training", "weight", "results", "races"], coach: ["adjust", "knowledge", "questions"] };
+  var SUBS = { progress: ["training", "weight", "results", "races"], coach: ["qa", "goals"] };
+
+  function coachView() {
+    if (ui.sub.coach === "goals") {
+      var G = window.Plan.goals(S.answers);
+      return '<div class="card"><h3>' + esc(t("coach.goals.title")) + "</h3><p>" + esc(G.map(function (g) { return t("o.ziele." + g); }).join(", ")) + "</p><p>" + esc(t("coach.goals.text")) + '</p><button class="btn" id="chgoals">' + esc(t("coach.goals.change")) + "</button></div>";
+    }
+    var f = (ui.qaq || "").toLowerCase();
+    var items = EX.filter(function (e) { return e.kategorie !== "hyrox" && (!f || exName(e.id).toLowerCase().indexOf(f) >= 0); });
+    var h = '<p class="qhint">' + esc(t("coach.qa.hint")) + '</p><input class="search" id="qasearch" type="search" placeholder="' + esc(t("coach.qa.search")) + '" value="' + esc(ui.qaq || "") + '" aria-label="' + esc(t("coach.qa.search")) + '"><div class="qalist">';
+    h += items.map(function (e) { return '<button class="qaitem" data-info="' + e.id + '"><span>' + esc(exName(e.id)) + "</span><small>" + esc((e.muskeln || []).slice(0, 2).join(", ")) + "</small></button>"; }).join("");
+    return h + (items.length ? "" : "<p>" + esc(t("coach.qa.none")) + "</p>") + "</div>";
+  }
 
   function emptyCard(tab) {
     return '<div class="card"><h3>' + esc(t("empty." + tab + ".title")) + "</h3><p>" + esc(t("empty." + tab + ".text")) + "</p></div>";
@@ -300,12 +334,31 @@
     if (tab === "today") body = todayView();
     else if (tab === "plan") body = planView();
     else if (tab === "progress" && ui.sub.progress === "training") body = historyView();
+    else if (tab === "coach") body = coachView();
     h += body || emptyCard(tab);
     h += "</main>";
     h += '<nav class="tabs"><div class="inner">' + TABS.map(function (k) {
       return '<button data-tab="' + k + '"' + (k === tab ? ' aria-current="page"' : "") + ">" + icon(k) + "<span>" + esc(t("tab." + k)) + "</span></button>";
     }).join("") + "</div></nav>";
     if (ui.profile) h += profileSheet();
+    if (ui.info) h += infoSheet(ui.info);
+    return h;
+  }
+
+  function list(arr) { return '<ul class="tips">' + arr.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>"; }
+  function infoSheet(id) {
+    var e = EXBY[id]; if (!e) return "";
+    var lang = window.I18N.lang(), q = encodeURIComponent(exName(id) + (lang === "de" ? " Technik" : lang === "es" ? " técnica" : lang === "fr" ? " technique" : " form technique"));
+    var h = '<div class="sheet-bg" id="infobg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(exName(id)) + "</h2>";
+    if (lang !== "de" && t("info.de_only")) h += '<div class="note">' + esc(t("info.de_only")) + "</div>";
+    h += '<div class="lbl">' + esc(t("info.muscles")) + ": " + esc((e.muskeln || []).join(", ")) + "</div>";
+    h += "<h3>" + esc(t("info.cues")) + "</h3>" + list(e.cues || []);
+    if ((e.fehler || []).length) h += "<h3>" + esc(t("info.mistakes")) + "</h3>" + list(e.fehler);
+    if (e.atmung) h += "<h3>" + esc(t("info.breath")) + "</h3><p>" + esc(e.atmung) + "</p>";
+    if (e.sicherheit) h += "<h3>" + esc(t("info.safety")) + '</h3><p>' + esc(e.sicherheit) + "</p>";
+    if (e.leichter) h += '<p class="lbl">' + esc(t("info.easier")) + ": " + esc(e.leichter) + "</p>";
+    if (e.schwerer) h += '<p class="lbl">' + esc(t("info.harder")) + ": " + esc(e.schwerer) + "</p>";
+    h += '<a class="btn vid" target="_blank" rel="noopener noreferrer" href="https://www.youtube.com/results?search_query=' + q + '">' + esc(t("info.video")) + '</a><button class="btn ghost" id="infoclose">' + esc(t("info.close")) + "</button></div></div>";
     return h;
   }
 
@@ -371,6 +424,13 @@
     });
     on("finish", finishSession);
     on("finok", function () { ui.finish = null; render(); window.scrollTo(0, 0); });
+    $app.querySelectorAll("[data-info]").forEach(function (b) { b.onclick = function () { ui.info = b.getAttribute("data-info"); render(); }; });
+    on("infoclose", function () { ui.info = null; render(); });
+    on("chgoals", function () { S.onboarded = false; S.qdone = false; S.qid = "ziele"; S.plan = null; S.draft = null; save(); render(); window.scrollTo(0, 0); });
+    var qs = document.getElementById("qasearch");
+    if (qs) qs.oninput = function () { ui.qaq = qs.value; var pos = qs.selectionStart; render(); var n = document.getElementById("qasearch"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } };
+    var ibg = document.getElementById("infobg");
+    if (ibg) ibg.onclick = function (e) { if (e.target === ibg) { ui.info = null; render(); } };
     on("prof", function () { ui.profile = true; render(); });
     on("close", function () { ui.profile = false; render(); });
     on("redo", function () {

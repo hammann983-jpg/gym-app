@@ -27,32 +27,87 @@
     return "anfaenger";
   }
 
+  var ENDU = ["laufen", "marathon", "triathlon", "hyrox"];
+  var BAR_IDS = { klimmzug: 1, dead_hang: 1, haengen_beinheben: 1 }; // brauchen eine Stange
+
+  function goals(a) {
+    if (Array.isArray(a.ziele) && a.ziele.length) return a.ziele;
+    return a.hauptziel ? [a.hauptziel] : [];
+  }
+  // wichtigstes Ziel
+  function prio(a) {
+    var z = goals(a);
+    if (z.length <= 1) return z[0] || null;
+    return z.indexOf(a.prioritaet) >= 0 ? a.prioritaet : z[0];
+  }
   function goalType(a) {
-    var g = a.hauptziel;
+    var g = prio(a);
     if (g === "kraft") return "kraft";
     if (g === "muskelaufbau" || g === "bodybuilding") return "hyp";
+    // Muskelaufbau als Zusatzziel zu Abnehmen: Muskeln halten mit Hypertrophie-Training
+    if (g === "abnehmen" && goals(a).indexOf("muskelaufbau") >= 0) return "hyp";
     return "fitness"; // abnehmen, fitness und (vorerst) alle Ausdauer-Ziele
   }
-  function isEndurance(a) { return ["laufen", "marathon", "triathlon", "hyrox"].indexOf(a.hauptziel) >= 0; }
+  function isEndurance(a) { return ENDU.indexOf(prio(a)) >= 0; }
+  function hasEndurance(a) { return goals(a).some(function (g) { return ENDU.indexOf(g) >= 0; }); }
 
-  // Verfügbares Equipment aus den Antworten
+  // Verfügbares Equipment aus Ort (studio, studio_hyrox, zuhause) und Heim-Ausstattung
   function equipSet(a) {
-    var e = {}, have = Array.isArray(a.equipment) ? a.equipment : [];
-    e.koerper = 1;
-    have.forEach(function (k) {
-      if (k === "gym_voll") ["maschine", "kabel", "kurzhantel", "langhantel", "rack", "bank", "kettlebell", "band", "cardio-geraet", "sled", "wallball"].forEach(function (x) { e[x] = 1; });
-      if (k === "kurzhanteln") e.kurzhantel = 1;
-      if (k === "langhantel") { e.langhantel = 1; e.rack = 1; e.bank = 1; }
-      if (k === "kettlebell") e.kettlebell = 1;
-      if (k === "band") e.band = 1;
-      if (k === "cardio") e["cardio-geraet"] = 1;
-      if (k === "sled") e.sled = 1;
-    });
+    var e = { koerper: 1 };
+    var gym = ["maschine", "kabel", "kurzhantel", "langhantel", "rack", "bank", "kettlebell", "band", "cardio-geraet", "stange"];
+    if (a.ort === "studio" || a.ort === "studio_hyrox") gym.forEach(function (x) { e[x] = 1; });
+    if (a.ort === "studio_hyrox") { e.sled = 1; e.wallball = 1; }
+    if (a.ort === "zuhause") {
+      (Array.isArray(a.heim) ? a.heim : []).forEach(function (k) {
+        if (k === "kurzhanteln") e.kurzhantel = 1;
+        if (k === "kettlebell") e.kettlebell = 1;
+        if (k === "band") e.band = 1;
+        if (k === "klimmzugstange") e.stange = 1;
+        if (k === "bank") e.bank = 1;
+      });
+    }
     return e;
+  }
+
+  // Zuordnung Kategorie -> Muskelgruppe für die Anzeige
+  var FOCUS = { kniebeuge: "quads", beinstrecker: "quads", ausfall: "legs", hinge: "posterior", beinbeuger: "posterior", waden: "calves", push_h: "chest", push_schraeg: "chest", push_v: "shoulders", schulter_seitlich: "shoulders", schulter_hinten: "shoulders", pull_v: "back", pull_h: "back", trizeps: "triceps", bizeps: "biceps", rumpf: "core", griff: "grip" };
+  function focusOf(exs) {
+    var tot = {}, order = [];
+    exs.forEach(function (x) {
+      var f = FOCUS[x.cat]; if (!f) return;
+      if (!(f in tot)) { tot[f] = 0; order.push(f); }
+      tot[f] += x.sets;
+    });
+    var main = order.filter(function (f) { return f !== "core" && f !== "grip"; });
+    if (!main.length) main = order;
+    main.sort(function (p, q) { return tot[q] - tot[p] || order.indexOf(p) - order.indexOf(q); });
+    return main.slice(0, 3);
+  }
+
+  // Realistische Dauer des Plans in Wochen (immer durch 4 teilbar außer bei Wettkampf-Datum)
+  function planWeeks(a, today) {
+    var g = prio(a), lvl = level(a), notes = [], w = 12;
+    var rounds4 = function (n) { return Math.max(4, Math.ceil(n / 4) * 4); };
+    if (g === "kraft") w = lvl === "erfahren" ? 16 : 12;
+    else if (g === "muskelaufbau" || g === "bodybuilding") w = lvl === "erfahren" ? 16 : 12;
+    else if (g === "abnehmen") {
+      var cur = Number(a.gewicht_kg), tgt = Number(a.zielgewicht_kg);
+      if (cur > 0 && tgt > 0 && tgt < cur) w = Math.min(40, Math.max(8, rounds4((cur - tgt) / (cur * 0.005)))); // ca. 0,5 % Körpergewicht pro Woche
+      else w = 12;
+    } else if (g === "laufen") w = 10;
+    else if (g === "marathon") w = (a.lauf_level === "gar_nicht" || a.lauf_level === "unter_10") ? 30 : 18;
+    else if (g === "triathlon") w = { sprint: 12, olympisch: 16, halb: 24, voll: 30 }[a.tri_distanz] || 16;
+    else if (g === "hyrox") w = 12;
+    if (ENDU.indexOf(g) >= 0 && a.event_datum) {
+      var days = Math.ceil((new Date(a.event_datum + "T12:00:00") - (today || new Date())) / 86400000), ew = Math.ceil(days / 7);
+      if (ew >= 2) { if (ew < w) notes.push("event_soon"); w = Math.min(w, ew); }
+    }
+    return { weeks: w, notes: notes };
   }
 
   function available(ex, E) {
     var eq = ex.equipment;
+    if (BAR_IDS[ex.id] && !E.stange) return false;
     if (eq.indexOf("koerper") >= 0) return true;
     var primary = eq.filter(function (x) { return x !== "bank" && x !== "rack"; });
     if (!primary.some(function (x) { return E[x]; })) return false;
@@ -105,14 +160,20 @@
     var lvl = level(a), goal = goalType(a), E = equipSet(a), endurance = isEndurance(a);
     var injuries = (Array.isArray(a.verletzungen) ? a.verletzungen : []).filter(function (x) { return x !== "keine"; });
     var wanted = Number(a.trainingstage) || 3;
-    var notes = [];
+    var notes = [], G = goals(a);
     var days = endurance ? Math.min(wanted, 3) : Math.min(wanted, lvl === "erfahren" ? 6 : 5);
     if (!endurance && wanted > days) notes.push("cap_days");
-    if (endurance) notes.push("endurance_pending");
+    if (hasEndurance(a)) notes.push("endurance_pending");
+    var muscle = G.indexOf("muskelaufbau") >= 0 || (G.indexOf("bodybuilding") >= 0 && a.bb_phase === "aufbau");
+    var cut = G.indexOf("abnehmen") >= 0 || (G.indexOf("bodybuilding") >= 0 && a.bb_phase === "definition");
+    if (muscle && G.indexOf("abnehmen") >= 0) notes.push("recomp");
+    if ((G.indexOf("muskelaufbau") >= 0 || G.indexOf("bodybuilding") >= 0) && (G.indexOf("marathon") >= 0 || G.indexOf("triathlon") >= 0)) notes.push("endu_conflict");
+    var pw = planWeeks(a, opts.today);
+    pw.notes.forEach(function (n) { notes.push(n); });
     var types = split(days, lvl);
     var dauer = Number(a.dauer_min) || 60;
     var maxEx = MAXEX[dauer] || 6;
-    var bb = a.hauptziel === "bodybuilding" && dauer >= 75;
+    var bb = G.indexOf("bodybuilding") >= 0 && dauer >= 75;
     var usage = {}, typeCount = {}, typeIdx = {};
     types.forEach(function (t) { typeCount[t] = (typeCount[t] || 0) + 1; });
     var pool = exercises.filter(function (ex) { return ex.kategorie !== "hyrox" && available(ex, E) && !blocked(ex, injuries) && rank(ex.level) <= rank(lvl); });
@@ -169,7 +230,8 @@
       }
     });
 
-    return { version: 1, goal: goal, level: lvl, daysPerWeek: days, weeks: 12, sessions: sessions, notes: notes, injuries: injuries };
+    sessions.forEach(function (s) { s.focus = focusOf(s.exercises); });
+    return { version: 2, goal: goal, level: lvl, daysPerWeek: days, weeks: pw.weeks, sessions: sessions, notes: notes, injuries: injuries, priority: prio(a), cut: cut, muscle: muscle };
   }
 
   function volume(plan) {
@@ -197,5 +259,5 @@
     return { kg: top, why: "same" };
   }
 
-  window.Plan = { generate: generate, volume: volume, level: level, goalType: goalType, equipSet: equipSet, available: available, blocked: blocked, isDeload: isDeload, setsFor: setsFor, suggest: suggest, split: split };
+  window.Plan = { planWeeks: planWeeks, prio: prio, goals: goals, focusOf: focusOf, generate: generate, volume: volume, level: level, goalType: goalType, equipSet: equipSet, available: available, blocked: blocked, isDeload: isDeload, setsFor: setsFor, suggest: suggest, split: split };
 })();

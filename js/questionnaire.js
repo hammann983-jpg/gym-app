@@ -5,12 +5,37 @@
   function has(list, v) { return list.indexOf(v) >= 0; }
 
   function showIf(q, a) {
+    if (q.ifCount) {
+      var ok = Object.keys(q.ifCount).every(function (k) { return Array.isArray(a[k]) && a[k].length >= q.ifCount[k]; });
+      if (!ok) return false;
+    }
     if (!q.if) return true;
     return Object.keys(q.if).every(function (k) {
       var v = a[k];
       if (Array.isArray(v)) return v.some(function (x) { return has(q.if[k], x); });
       return v != null && has(q.if[k], v);
     });
+  }
+
+  // Optionen einer Frage für diese Antworten: dynamische Liste, Ernährungsform und Allergien filtern.
+  function options(q, a) {
+    var list = q.optionsFrom ? (Array.isArray(a[q.optionsFrom]) ? a[q.optionsFrom] : []) : (q.options || []);
+    var allergies = Array.isArray(a.allergien) ? a.allergien : [];
+    return list.filter(function (o) {
+      if (q.optIf && q.optIf[o]) {
+        var ok = Object.keys(q.optIf[o]).every(function (k) { return has(q.optIf[o][k], a[k]); });
+        if (!ok) return false;
+      }
+      if (q.optAllergen && q.optAllergen[o] && has(allergies, q.optAllergen[o])) return false;
+      return true;
+    });
+  }
+
+  // Wichtigstes Ziel: Auswahl bei mehreren, sonst das einzige (oder leer)
+  function priority(a) {
+    var z = Array.isArray(a.ziele) ? a.ziele : [];
+    if (z.length === 1) return z[0];
+    return has(z, a.prioritaet) ? a.prioritaet : (z[0] || null);
   }
 
   function visible(questions, a) {
@@ -43,5 +68,5 @@
     return { red: red, yellow: yellow, nutriOff: nutriOff, bmi: b };
   }
 
-  window.Q = { visible: visible, valid: valid, screening: screening, bmi: bmi, num: num };
+  window.Q = { visible: visible, valid: valid, screening: screening, bmi: bmi, num: num, options: options, priority: priority };
 })();

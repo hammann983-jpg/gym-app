@@ -10,11 +10,26 @@ Promise.all([fetch("../data/questionnaire.json").then(r => r.json()), ...["en","
   var Qs = all[0].questions, langs = { en: all[1], de: all[2], es: all[3], fr: all[4] };
   // Sichtbarkeit
   var ids = a => Q.visible(Qs, a).map(q => q.id);
-  eq("Kraft: keine Hyrox-Fragen", ids({ hauptziel: "kraft" }).indexOf("hyrox_division"), -1);
-  eq("Hyrox: Division sichtbar", ids({ hauptziel: "hyrox" }).indexOf("hyrox_division") >= 0, true);
-  eq("Triathlon: Distanz + Lauf-Level", [ids({ hauptziel: "triathlon" }).indexOf("tri_distanz") >= 0, ids({ hauptziel: "triathlon" }).indexOf("lauf_level") >= 0], [true, true]);
-  eq("Bodybuilding: Phase sichtbar", ids({ hauptziel: "bodybuilding" }).indexOf("bb_phase") >= 0, true);
-  eq("Marathon: kein bb_phase", ids({ hauptziel: "marathon" }).indexOf("bb_phase"), -1);
+  eq("Kraft: keine Hyrox-Fragen", ids({ ziele: ["kraft"] }).indexOf("hyrox_division"), -1);
+  eq("Hyrox: Division sichtbar", ids({ ziele: ["hyrox"] }).indexOf("hyrox_division") >= 0, true);
+  eq("Triathlon: Distanz + Lauf-Level", [ids({ ziele: ["triathlon"] }).indexOf("tri_distanz") >= 0, ids({ ziele: ["triathlon"] }).indexOf("lauf_level") >= 0], [true, true]);
+  eq("Bodybuilding: Phase sichtbar", ids({ ziele: ["bodybuilding"] }).indexOf("bb_phase") >= 0, true);
+  eq("Marathon: kein bb_phase", ids({ ziele: ["marathon"] }).indexOf("bb_phase"), -1);
+  eq("Ein Ziel: keine Prioritätsfrage", ids({ ziele: ["kraft"] }).indexOf("prioritaet"), -1);
+  eq("Zwei Ziele: Prioritätsfrage sichtbar", ids({ ziele: ["kraft", "abnehmen"] }).indexOf("prioritaet") >= 0, true);
+  eq("Prioritäts-Optionen = gewählte Ziele", Q.options(Qs.find(x => x.id === "prioritaet"), { ziele: ["kraft", "abnehmen"] }), ["kraft", "abnehmen"]);
+  eq("Priorität bei einem Ziel", Q.priority({ ziele: ["hyrox"] }), "hyrox");
+  eq("Priorität bei mehreren Zielen", Q.priority({ ziele: ["kraft", "abnehmen"], prioritaet: "abnehmen" }), "abnehmen");
+  eq("Ungültige Priorität -> erstes Ziel", Q.priority({ ziele: ["kraft", "abnehmen"], prioritaet: "marathon" }), "kraft");
+  eq("Heim-Frage nur zuhause", [ids({ ort: "studio" }).indexOf("heim"), ids({ ort: "zuhause" }).indexOf("heim") >= 0], [-1, true]);
+  var MAG = Qs.find(x => x.id === "mag");
+  var vegan = Q.options(MAG, { ernaehrungsform: "vegan", allergien: ["keine"] });
+  eq("Vegan: kein Fleisch, Fisch, Ei, Käse in der Auswahl", ["huhn", "rind", "lachs_fisch", "ei", "kaese", "quark_skyr"].filter(x => vegan.indexOf(x) >= 0), []);
+  eq("Vegan: Tofu, Linsen und Alles bleiben", ["tofu_tempeh", "linsen_bohnen", "alles"].every(x => vegan.indexOf(x) >= 0), true);
+  var lak = Q.options(MAG, { ernaehrungsform: "omnivor", allergien: ["laktose", "gluten"] });
+  eq("Laktose+Gluten: kein Quark, Käse, Nudeln, Brot, Hafer", ["quark_skyr", "kaese", "nudeln", "brot", "haferflocken"].filter(x => lak.indexOf(x) >= 0), []);
+  var pes = Q.options(MAG, { ernaehrungsform: "pescetarisch", allergien: [] });
+  eq("Pescetarisch: Fisch ja, Fleisch nein", [pes.indexOf("lachs_fisch") >= 0, pes.indexOf("huhn") >= 0], [true, false]);
   // Prüfung
   var q = id => Qs.find(x => x.id === id);
   eq("Alter 13 ungültig", Q.valid(q("alter"), 13), false);
@@ -22,7 +37,7 @@ Promise.all([fetch("../data/questionnaire.json").then(r => r.json()), ...["en","
   eq("Alter leer ungültig (Pflicht)", Q.valid(q("alter"), ""), false);
   eq("Zielgewicht leer ok (freiwillig)", Q.valid(q("zielgewicht_kg"), null), true);
   eq("Komma-Zahl", Q.num("65,5"), 65.5);
-  eq("Multi leer ungültig", Q.valid(q("equipment"), []), false);
+  eq("Multi leer ungültig", Q.valid(q("ziele"), []), false);
   // Sicherheit
   var base = { alter: 30, gewicht_kg: 65, groesse_cm: 170, s1: "nein", s2: "nein", s3: "nein", s4: "nein", s5: "nein", s6: "nein", s7: "nein", essstoerung: "nein" };
   eq("Alles nein: grün", [Q.screening(base).red, Q.screening(base).yellow, Q.screening(base).nutriOff], [false, false, false]);
@@ -42,8 +57,9 @@ Promise.all([fetch("../data/questionnaire.json").then(r => r.json()), ...["en","
       if (!d["q." + x.id]) miss.push(L + " q." + x.id);
       if (x.hint && !d["h." + x.id]) miss.push(L + " h." + x.id);
       if (!d["sec." + x.sec]) miss.push(L + " sec." + x.sec);
-      var opts = x.type === "yesno" ? ["ja", "nein", "keine_antwort"] : (x.options || []);
-      opts.forEach(function (o) { if (typeof o === "number") return; if (!d["o." + x.id + "." + o] && !d["o." + o]) miss.push(L + " o." + x.id + "." + o); });
+      var opts = x.type === "yesno" ? ["ja", "nein", "keine_antwort"] : (x.optionsFrom ? Qs.find(y => y.id === x.optionsFrom).options : (x.options || []));
+      var tf = x.textFrom || x.id;
+      opts.forEach(function (o) { if (typeof o === "number") return; if (!d["o." + tf + "." + o] && !d["o." + o]) miss.push(L + " o." + tf + "." + o); });
       if (x.unit && x.unit.indexOf("u.") === 0 && !d[x.unit]) miss.push(L + " " + x.unit);
     });
   });
