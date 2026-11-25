@@ -84,6 +84,16 @@
     return main.slice(0, 3);
   }
 
+  // Lauf-Leiter nach lauf-coach/marathon-coach: jede Stufe setzt die vorige voraus
+  var RUNG_WEEKS = { einstieg: 8, "5k": 8, "10k": 10, hm: 12, m: 16 };
+  function runChain(a, g) {
+    var goalRung = g === "marathon" ? "m" : (a.lauf_ziel || "5k");
+    var ladder = goalRung === "m" ? ["einstieg", "5k", "10k", "m"] : ["einstieg", "5k", "10k", "hm"].slice(0, ["einstieg", "5k", "10k", "hm"].indexOf(goalRung) + 1);
+    var skip = a.lauf_level === "ueber_30" ? 2 : a.lauf_level === "m20_30" ? 1 : 0;
+    var chain = ladder.slice(Math.min(skip, ladder.length - 1));
+    return chain;
+  }
+
   // Realistische Dauer des Plans in Wochen (immer durch 4 teilbar außer bei Wettkampf-Datum)
   function planWeeks(a, today) {
     var g = prio(a), lvl = level(a), notes = [], w = 12;
@@ -94,11 +104,18 @@
       var cur = Number(a.gewicht_kg), tgt = Number(a.zielgewicht_kg);
       if (cur > 0 && tgt > 0 && tgt < cur) w = Math.min(40, Math.max(8, rounds4((cur - tgt) / (cur * 0.005)))); // ca. 0,5 % Körpergewicht pro Woche
       else w = 12;
-    } else if (g === "laufen") w = 10;
-    else if (g === "marathon") w = (a.lauf_level === "gar_nicht" || a.lauf_level === "unter_10") ? 30 : 18;
-    else if (g === "triathlon") w = { sprint: 12, olympisch: 16, halb: 24, voll: 30 }[a.tri_distanz] || 16;
+    } else if (g === "laufen" || g === "marathon") {
+      var ch = runChain(a, g), dropped = false;
+      w = ch.reduce(function (s, k) { return s + RUNG_WEEKS[k]; }, 0);
+      if (a.event_datum) {
+        var ew0 = Math.ceil((new Date(a.event_datum + "T12:00:00") - (today || new Date())) / 86400000 / 7);
+        while (ch.length > 1 && w > ew0 && ew0 >= 2) { w -= RUNG_WEEKS[ch.shift()]; dropped = true; }
+        if (w > ew0 && ew0 >= 2) { w = ew0; dropped = true; } // nur die letzten Wochen des Plans, mit Taper
+        if (dropped && ew0 >= 2) notes.push("event_soon");
+      }
+    } else if (g === "triathlon") w = { sprint: 12, olympisch: 16, halb: 24, voll: 30 }[a.tri_distanz] || 16;
     else if (g === "hyrox") w = 12;
-    if (ENDU.indexOf(g) >= 0 && a.event_datum) {
+    if ((g === "triathlon" || g === "hyrox") && a.event_datum) {
       var days = Math.ceil((new Date(a.event_datum + "T12:00:00") - (today || new Date())) / 86400000), ew = Math.ceil(days / 7);
       if (ew >= 2) { if (ew < w) notes.push("event_soon"); w = Math.min(w, ew); }
     }
@@ -259,5 +276,5 @@
     return { kg: top, why: "same" };
   }
 
-  window.Plan = { planWeeks: planWeeks, prio: prio, goals: goals, focusOf: focusOf, generate: generate, volume: volume, level: level, goalType: goalType, equipSet: equipSet, available: available, blocked: blocked, isDeload: isDeload, setsFor: setsFor, suggest: suggest, split: split };
+  window.Plan = { runChain: runChain, RUNG_WEEKS: RUNG_WEEKS, planWeeks: planWeeks, prio: prio, goals: goals, focusOf: focusOf, generate: generate, volume: volume, level: level, goalType: goalType, equipSet: equipSet, available: available, blocked: blocked, isDeload: isDeload, setsFor: setsFor, suggest: suggest, split: split };
 })();

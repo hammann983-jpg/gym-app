@@ -378,5 +378,10 @@
   "share.sessions": "Séances",
   "share.streak": "Série",
   "share.weeks": "{n} semaines",
-  "share.saved": "Image enregistrée."
+  "share.saved": "Image enregistrée.",
+  "q.lauf_ziel": "Quel est ton objectif de course ?",
+  "o.lauf_ziel.einstieg": "Apprendre à courir (course-marche)",
+  "o.lauf_ziel.5k": "5 km",
+  "o.lauf_ziel.10k": "10 km",
+  "o.lauf_ziel.hm": "Semi-marathon"
 }

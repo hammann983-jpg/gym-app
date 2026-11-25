@@ -79,12 +79,16 @@ Promise.all([fetch("../data/exercises.json").then(r => r.json()), fetch("../data
   ok("Abnehmen 70 -> 62 kg: ca. 0,5 % pro Woche = 24 Wochen", W({ ziele: ["abnehmen"], gewicht_kg: 70, zielgewicht_kg: 62 }).weeks === 24, W({ ziele: ["abnehmen"], gewicht_kg: 70, zielgewicht_kg: 62 }).weeks);
   ok("Abnehmen ohne Zielgewicht: 12 Wochen", W({ ziele: ["abnehmen"], gewicht_kg: 70 }).weeks === 12);
   ok("Abnehmen 100 -> 60 kg: höchstens 40 Wochen", W({ ziele: ["abnehmen"], gewicht_kg: 100, zielgewicht_kg: 60 }).weeks === 40);
-  ok("Marathon ohne Laufbasis: 30 Wochen, mit Basis: 18", W({ ziele: ["marathon"], lauf_level: "gar_nicht" }).weeks === 30 && W({ ziele: ["marathon"], lauf_level: "m20_30" }).weeks === 18);
+  ok("Marathon: ohne Basis 42, mit 20-30 Min. 34, mit über 30 Min. 26 Wochen", W({ ziele: ["marathon"], lauf_level: "gar_nicht" }).weeks === 42 && W({ ziele: ["marathon"], lauf_level: "m20_30" }).weeks === 34 && W({ ziele: ["marathon"], lauf_level: "ueber_30" }).weeks === 26, [42, 34, 26].join());
+  ok("Laufen 5 km: ohne Basis 16, mit Basis 8; 10 km mit Basis 10; Halbmarathon mit Basis 22", W({ ziele: ["laufen"], lauf_ziel: "5k", lauf_level: "gar_nicht" }).weeks === 16 && W({ ziele: ["laufen"], lauf_ziel: "5k", lauf_level: "m20_30" }).weeks === 8 && W({ ziele: ["laufen"], lauf_ziel: "10k", lauf_level: "ueber_30" }).weeks === 10 && W({ ziele: ["laufen"], lauf_ziel: "hm", lauf_level: "ueber_30" }).weeks === 22);
+  ok("Laufen lernen: 8 Wochen", W({ ziele: ["laufen"], lauf_ziel: "einstieg", lauf_level: "gar_nicht" }).weeks === 8);
   ok("Triathlon: Sprint 12, Ironman 30", W({ ziele: ["triathlon"], tri_distanz: "sprint" }).weeks === 12 && W({ ziele: ["triathlon"], tri_distanz: "voll" }).weeks === 30);
   var ev = W({ ziele: ["marathon"], lauf_level: "m20_30", event_datum: "2027-01-28" });
-  ok("Marathon in 9 Wochen: Plan gekürzt + Hinweis", ev.weeks === 9 && ev.notes.indexOf("event_soon") >= 0, JSON.stringify(ev));
-  var ev2 = W({ ziele: ["marathon"], lauf_level: "m20_30", event_datum: "2027-09-01" });
-  ok("Wettkampf weit weg: normale Länge ohne Hinweis", ev2.weeks === 18 && ev2.notes.length === 0, JSON.stringify(ev2));
+  ok("Marathon in 9 Wochen: nur die letzten 9 Wochen + Hinweis", ev.weeks === 9 && ev.notes.indexOf("event_soon") >= 0, JSON.stringify(ev));
+  var ev2 = W({ ziele: ["marathon"], lauf_level: "ueber_30", event_datum: "2027-09-01" });
+  ok("Wettkampf weit weg: volle Länge ohne Hinweis", ev2.weeks === 26 && ev2.notes.length === 0, JSON.stringify(ev2));
+  var ev3 = W({ ziele: ["laufen"], lauf_ziel: "10k", lauf_level: "gar_nicht", event_datum: "2027-02-15" });
+  ok("10 km in 11 Wochen ohne Basis: frühe Stufen entfallen, Hinweis", ev3.weeks <= 11 && ev3.notes.indexOf("event_soon") >= 0, JSON.stringify(ev3));
   // Deload
   ok("Woche 4 ist Deload, Woche 3 nicht", Plan.isDeload(4) && !Plan.isDeload(3));
   ok("Deload: 4 Sätze -> 2 (rund 60 %)", Plan.setsFor({ sets: 4 }, 4) === 2 && Plan.setsFor({ sets: 3 }, 4) === 2 && Plan.setsFor({ sets: 4 }, 3) === 4);

@@ -1,5 +1,5 @@
 {
- "version": 3,
+ "version": 4,
  "note": "Struktur ohne Texte. Texte stehen in i18n/<sprache>.json (q.<id>, h.<id>, o.<id>.<option>, sec.<abschnitt>). type: number | choice | multi | date | yesno. if: nur zeigen, wenn Antwort in Liste. screen: red = Plan stoppt bei ja/keine_antwort, yellow = Arzt-Hinweis, nutri = keine Kalorienzahlen.",
  "questions": [
   {
@@ -131,6 +131,23 @@
    "if": {
     "ziele": [
      "hyrox"
+    ]
+   }
+  },
+  {
+   "id": "lauf_ziel",
+   "sec": "goal",
+   "type": "choice",
+   "options": [
+    "einstieg",
+    "5k",
+    "10k",
+    "hm"
+   ],
+   "required": true,
+   "if": {
+    "ziele": [
+     "laufen"
     ]
    }
   },

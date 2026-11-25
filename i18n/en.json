@@ -378,5 +378,10 @@
   "share.sessions": "Sessions",
   "share.streak": "Streak",
   "share.weeks": "{n} weeks",
-  "share.saved": "Image saved."
+  "share.saved": "Image saved.",
+  "q.lauf_ziel": "What is your running goal?",
+  "o.lauf_ziel.einstieg": "Learn to run (run-walk)",
+  "o.lauf_ziel.5k": "5 km",
+  "o.lauf_ziel.10k": "10 km",
+  "o.lauf_ziel.hm": "Half marathon"
 }

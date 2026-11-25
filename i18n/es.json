@@ -378,5 +378,10 @@
   "share.sessions": "Sesiones",
   "share.streak": "Racha",
   "share.weeks": "{n} semanas",
-  "share.saved": "Imagen guardada."
+  "share.saved": "Imagen guardada.",
+  "q.lauf_ziel": "¿Cuál es tu objetivo de carrera?",
+  "o.lauf_ziel.einstieg": "Aprender a correr (correr-caminar)",
+  "o.lauf_ziel.5k": "5 km",
+  "o.lauf_ziel.10k": "10 km",
+  "o.lauf_ziel.hm": "Media maratón"
 }
