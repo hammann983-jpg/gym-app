@@ -83,12 +83,12 @@
       var ws = d.weekStats, reached = ws.done >= ws.goal;
       var t4 = fitTitle(c, (reached ? L.weekdone : L.weekprogress).toUpperCase(), W - 180, 3, 200, 100); font(c, "700", t4.size, HEAD); c.fillStyle = "#10141F";
       t4.lines.forEach(function (l, i) { c.fillText(l, 90, 300 + t4.size * 0.95 * (i + 1)); });
-      var cy = 300 + t4.size * 0.95 * t4.lines.length + 340, R = 250;
+      var R = t4.lines.length > 2 ? 200 : 250, cy = 300 + t4.size * 0.95 * t4.lines.length + R + 140;
       c.lineWidth = 46; c.lineCap = "round"; c.strokeStyle = "#E6E0D9"; c.beginPath(); c.arc(W / 2, cy, R, 0, Math.PI * 2); c.stroke();
       var frac = Math.min(1, ws.done / Math.max(1, ws.goal)); c.strokeStyle = "#10233F"; c.beginPath(); c.arc(W / 2, cy, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac); c.stroke();
       font(c, "700", 210, HEAD); c.fillStyle = "#10141F"; c.textAlign = "center"; c.fillText(ws.done + "/" + ws.goal, W / 2, cy + 40);
       font(c, "600", 36, BODY); c.fillStyle = "#6E6A66"; c.letterSpacing = "5px"; c.fillText(L.sessions.toUpperCase(), W / 2, cy + 150); c.letterSpacing = "0px";
-      var dy = cy + R + 140, step = (W - 180) / 7;
+      var dy = cy + R + 110, step = (W - 180) / 7;
       for (var i = 0; i < 7; i++) {
         var x = 90 + step * i + step / 2; font(c, "600", 32, BODY); c.fillStyle = "#6E6A66"; c.fillText(d.dayNames[i], x, dy);
         c.beginPath(); c.arc(x, dy + 70, 42, 0, Math.PI * 2); c.fillStyle = ws.days[i] ? "#10233F" : "#E6E0D9"; c.fill();
@@ -96,7 +96,7 @@
       }
       c.textAlign = "left"; c.fillStyle = "#10233F"; rr(c, 90, H - 330, W - 180, 190, 44); c.fill();
       font(c, "600", 44, BODY); c.fillStyle = "#FFFFFF"; c.fillText(L.streak, 140, H - 215);
-      font(c, "700", 110, HEAD); c.fillStyle = GOLD; c.textAlign = "right"; c.fillText(L.weeks.replace("{n}", ws.streak), W - 140, H - 190); c.textAlign = "left";
+      font(c, "700", 110, HEAD); c.fillStyle = GOLD; c.textAlign = "right"; c.fillText(L.weeks.replace("{n}", ws.streak), W - 140, H - 198); c.textAlign = "left";
     }
     return cv;
   }

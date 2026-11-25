@@ -282,3 +282,18 @@ main > .sec { margin-bottom: 8px; }
 #rest.over { border-color: var(--accent); }
 #rest.over b { color: var(--accent); }
 .note + .qhint { margin-top: 12px; }
+
+/* Wählen, tauschen, Diagramme, Teilen */
+.hdbtns { display: flex; gap: 8px; }
+.icon-btn svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; width: 24px; height: 24px; }
+.card.ringrow .grow { flex: 1; }
+.trendchips { margin-bottom: 12px !important; }
+.chartc select { width: 100%; background: var(--surface-2); border: 0; border-radius: 12px; padding: 12px; font: 600 15px var(--font-body); color: var(--text); min-height: 46px; margin-bottom: 8px; }
+.chartc .qhint { padding: 6px 4px 2px; }
+.sheet .chips.what { margin: 0; }
+
+
+.card.start { margin-bottom: 14px; border-color: var(--accent); }
+
+.know.why { margin: 0 0 14px; }
+.know.why .tips { margin: 0; padding: 0 16px 16px 34px; color: var(--muted); }

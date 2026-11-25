@@ -21,7 +21,9 @@
       delete a.equipment; changed = true;
     }
     if (a.ort === "zuhause" && !(a.heim && a.heim.length)) { a.heim = ["koerper"]; changed = true; }
-    if (S.plan && S.plan.version !== 2) { S.plan = null; S.draft = null; changed = true; }
+    if (S.plan && !(S.plan.version >= 2)) { S.plan = null; S.draft = null; changed = true; }
+    // Wiederherstellen: steht der Zähler nach dem früheren Fehler auf 0, zählt der gespeicherte Verlauf
+    if (S.log.length && !S.done && S.plan) { var last = S.log.filter(function (l) { return l.seq >= 0 && l.seq !== null; }).reduce(function (m, l) { return Math.max(m, l.seq + 1); }, 0); if (last) { S.done = last; changed = true; } }
     if (changed) save();
   })();
   var ui = { tab: "today", sub: { progress: "training", coach: "check", nutrition: "mealplan" }, profile: false, err: "", finish: null, planWeek: null, nday: (new Date().getDay() + 6) % 7, nopen: {}, info: null };
@@ -37,6 +39,7 @@
     progress: '<path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/>',
     nutrition: '<path d="M7 3v8a3 3 0 0 0 6 0V3M10 3v18M17 3c-2 2-2 6 0 8v10"/>',
     coach: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+    share: '<path d="M12 15V4M8 8l4-4 4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
     check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>'
   };
@@ -170,11 +173,13 @@
   // ---------- Plan und Training ----------
   function ensurePlan() {
     if (!S.plan && EX.length && window.Plan.prio(S.answers)) { S.plan = window.Plan.generate(S.answers, EX); S.done = 0; S.draft = null; save(); }
-    else if (S.plan && !(S.plan.version >= 5) && EX.length) upgradePlan();
+    else if (S.plan && !(S.plan.version >= 7) && EX.length) upgradePlan();
     return S.plan;
   }
   // Alter Plan: neu erzeugen, volle erledigte Wochen bleiben erledigt
   function upgradePlan() {
+    // Ab Version 5 ist der Aufbau gleich: der Stand bleibt genau erhalten
+    if (S.plan.version >= 5) { var done = S.done; S.plan = window.Plan.generate(S.answers, EX); S.done = done; S.draft = null; save(); return; }
     var weeks = window.Plan.cursor(S.plan, S.done || 0).week - 1;
     S.plan = window.Plan.generate(S.answers, EX); S.done = window.Plan.doneBefore(S.plan, weeks + 1); S.draft = null; save();
   }
@@ -193,6 +198,74 @@
     var c = window.Plan.cursor(S.plan, S.done || 0);
     c.idx = c.item.i;
     return c;
+  }
+  // Vor dem allerersten Training: womit starten? Die weiteren Einheiten folgen automatisch in der Abwechslung.
+  function canChooseStart(p) {
+    var types = {}; p.sessions.forEach(function (s) { types[s.type] = 1; });
+    return !p.run && !S.done && Object.keys(types).length > 1;
+  }
+  function startBox(p) {
+    if (!canChooseStart(p)) return "";
+    var seen = {};
+    return '<div class="card start"><h3>' + esc(t("start.title")) + "</h3><p>" + esc(t("start.text")) + '</p><div class="chips">' + p.sessions.map(function (s, i) {
+      if (seen[s.type]) return ""; seen[s.type] = 1;
+      return '<button class="chip" data-start="' + i + '" aria-pressed="' + (i === 0) + '">' + esc(t("day." + s.type)) + "</button>";
+    }).join("") + "</div></div>";
+  }
+
+  // ---------- Diagramme ----------
+  function svgChart(kind, pts, fmt, label) {
+    var W = 320, H = 160, L = 8, R = 8, T = 22, B = 22, n = pts.length;
+    var vals = pts.map(function (p) { return p.v; }), hi = Math.max.apply(null, vals), lo = kind === "bar" ? 0 : Math.min.apply(null, vals);
+    if (kind !== "bar") { var pad = (hi - lo) * 0.15 || Math.max(1, hi * 0.05); hi += pad; lo -= pad; }
+    if (hi === lo) hi = lo + 1;
+    var Y = function (v) { return H - B - (v - lo) / (hi - lo) * (H - T - B); };
+    var s = '<svg class="chart" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(label) + '">';
+    s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + (H - B) + '" y2="' + (H - B) + '" stroke="var(--line)"/>';
+    var step = (W - L - R) / n, X = function (i) { return kind === "bar" ? L + step * i + step / 2 : n === 1 ? W / 2 : 24 + i * (W - 48) / (n - 1); };
+    if (kind !== "bar" && n > 1) s += '<path d="' + pts.map(function (p, i) { return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(p.v).toFixed(1); }).join(" ") + '" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+    var every = Math.max(1, Math.ceil(n / 6));
+    pts.forEach(function (p, i) {
+      var show = (n - 1 - i) % every === 0;
+      if (kind === "bar") { var bw = Math.min(30, step * 0.6), y = Y(p.v); s += '<rect x="' + (X(i) - bw / 2).toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.max(p.v ? 2 : 0, H - B - y).toFixed(1) + '" rx="4" fill="' + (i === n - 1 ? "var(--accent)" : "var(--accent-2)") + '"/>'; }
+      else s += '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(p.v).toFixed(1) + '" r="4" fill="var(--accent)"/>';
+      if (kind === "bar" ? p.v : show) s += '<text x="' + X(i).toFixed(1) + '" y="' + (Y(p.v) - 8).toFixed(1) + '" text-anchor="middle" fill="var(--text)" font-size="10">' + esc(fmt(p.v)) + "</text>";
+      if (show) s += '<text x="' + X(i).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" fill="var(--muted)" font-size="10">' + esc(p.label) + "</text>";
+    });
+    return s + "</svg>";
+  }
+  function shortDate(d) { return new Date(d + "T12:00:00").toLocaleDateString(window.I18N.lang(), { day: "numeric", month: "numeric" }); }
+  function trendData() {
+    var weeks = [], now = weekStartIso(iso(new Date()));
+    for (var i = 7; i >= 0; i--) { var d = new Date(now + "T12:00:00"); d.setDate(d.getDate() - 7 * i); weeks.push(iso(d)); }
+    var perWeek = weeks.map(function (w) { var l = S.log.filter(function (x) { return weekStartIso(x.date) === w; }); return { label: shortDate(w), n: l.length, vol: l.reduce(function (a, x) { return a + (x.vol || 0); }, 0), min: l.reduce(function (a, x) { return a + (x.min || 0); }, 0) }; });
+    // Kraft: bestes geschätztes Maximum je Übung und Tag
+    var lifts = {};
+    var add = function (id, date, kg, reps) { var e = window.Progress.e1rm(kg, reps); if (!(e > 0) || reps > 30) return; lifts[id] = lifts[id] || {}; lifts[id][date] = Math.max(lifts[id][date] || 0, e); };
+    S.log.forEach(function (l) { l.ex.forEach(function (x) { x.sets.forEach(function (r) { add(x.id, l.date, r.kg, r.reps); }); }); });
+    (S.results || []).forEach(function (r) { if (r.type === "lift") add(r.ex, r.date, r.kg, r.reps); });
+    var pace = S.log.filter(function (l) { return l.type === "run" && (l.sport || "run") === "run" && l.km > 0; }).map(function (l) { return { date: l.date, v: l.min * 60 / l.km }; });
+    return { perWeek: perWeek, lifts: lifts, pace: pace };
+  }
+  function trendView() {
+    var D = trendData(), opts = [["n", t("trend.n")], ["vol", t("trend.vol")], ["min", t("trend.min")], ["lift", t("trend.lift")], ["pace", t("trend.pace")]];
+    var k = ui.trend || "n", h = '<div class="sec">' + esc(t("trend.title")) + '</div><div class="chips trendchips">' + opts.map(function (o) { return '<button class="chip" data-trend="' + o[0] + '" aria-pressed="' + (k === o[0]) + '">' + esc(o[1]) + "</button>"; }).join("") + '</div><div class="card chartc">';
+    var empty = '<p class="qhint">' + esc(t("trend.empty." + k)) + "</p>";
+    if (k === "lift") {
+      var ids = Object.keys(D.lifts).sort(function (a, b) { return Object.keys(D.lifts[b]).length - Object.keys(D.lifts[a]).length; });
+      if (!ids.length) h += empty;
+      else {
+        var id = ids.indexOf(ui.trendEx) >= 0 ? ui.trendEx : ids[0], pts = Object.keys(D.lifts[id]).sort().slice(-12).map(function (d) { return { label: shortDate(d), v: D.lifts[id][d] }; });
+        h += '<select id="trendex" aria-label="' + esc(t("rs.exercise")) + '">' + ids.map(function (x) { return '<option value="' + x + '"' + (x === id ? " selected" : "") + ">" + esc(exName(x)) + "</option>"; }).join("") + "</select>" + svgChart("line", pts, function (v) { return nf(v, 0); }, exName(id)) + '<p class="qhint">' + esc(pts.length < 2 ? t("trend.one") : t("trend.liftnote", { d: (pts[pts.length - 1].v >= pts[0].v ? "+" : "") + nf(pts[pts.length - 1].v - pts[0].v, 1) })) + "</p>";
+      }
+    } else if (k === "pace") {
+      if (!D.pace.length) h += empty;
+      else h += svgChart("line", D.pace.slice(-12).map(function (p) { return { label: shortDate(p.date), v: p.v }; }), window.Progress.fmtTime, t("trend.pace")) + '<p class="qhint">' + esc(t("trend.pacenote")) + "</p>";
+    } else {
+      var bars = D.perWeek.map(function (w) { return { label: w.label, v: Math.round(w[k]) }; });
+      h += svgChart("bar", bars, function (v) { return nf(v, 0); }, t("trend." + k)) + (bars.some(function (b) { return b.v; }) ? '<p class="qhint">' + esc(t("trend.weeknote")) + "</p>" : empty);
+    }
+    return h + "</div>";
   }
   function history(id) {
     return S.log.map(function (l) { var e = l.ex.find(function (x) { return x.id === id; }); return e ? e.sets : null; }).filter(Boolean);
@@ -214,7 +287,7 @@
   function notesHtml() {
     var bb = window.Plan.goals(S.answers).indexOf("bodybuilding") >= 0 && S.answers.bb_phase && !S.plan.light ? '<div class="note">' + esc(t("bb." + S.answers.bb_phase)) + "</div>" : "";
     return bb + (S.plan.notes || []).map(function (n) {
-      var txt = n === "cap_days" ? t("note.cap_days", { n: S.plan.daysPerWeek }) : n === "endurance_pending" ? t("note.endurance") : n === "recomp" ? t("note.recomp") : n === "endu_conflict" ? t("note.endu_conflict") : n === "event_soon" ? t("note.event_soon") : n === "run" || n === "tri" || n === "hyrox" || n === "one_endurance" || n === "light" ? t("note." + n) : "";
+      var txt = n === "cap_days" ? t("note.cap_days", { n: S.plan.daysPerWeek }) : n === "endurance_pending" ? t("note.endurance") : n === "recomp" ? t("note.recomp") : n === "endu_conflict" ? t("note.endu_conflict") : n === "event_soon" ? t("note.event_soon") : n === "run" || n === "tri" || n === "hyrox" || n === "one_endurance" || n === "light" || n === "hx_alt" || n === "teen" || n === "age60" || n === "sleep" ? t("note." + n) : "";
       return txt ? '<div class="note">' + esc(txt) + "</div>" : "";
     }).join("");
   }
@@ -239,7 +312,7 @@
     return t("run.kind." + r.k);
   }
   function coachState() { return window.Coach.fresh(S.coach); }
-  function adj(r) { var lang = window.I18N.lang(); return window.Coach.applyRun(r, coachState(), function (i) { return window.Multi.station(i, S.answers.hyrox_division); }); }
+  function adj(r) { var lang = window.I18N.lang(); return window.Coach.applyRun(r, coachState(), function (i) { return window.Multi.station(i, S.answers.hyrox_division, S.answers); }); }
   function setsAt(x, week) { var n = window.Plan.setsFor(x, week), d = coachState().sets; return d ? Math.max(2, Math.min(5, n + d)) : n; }
   function coachReview() {
     var out = window.Coach.review(S.coach, { log: S.log, light: !!(S.plan && S.plan.light), today: iso(new Date()) });
@@ -263,7 +336,7 @@
       return t("run.q." + id, q);
     });
     if (r.k === "brick") out.unshift(t("run.brick", { bike: r.bike, run: r.run }));
-    return out.concat((r.stations || []).map(function (s, i) { return (i + 1) + ". " + s; }));
+    return out.concat((r.stations || []).map(function (s, i) { return (i + 1) + ". " + (s.indexOf("alt:") === 0 ? t("alt." + s.slice(4)) : s); }));
   }
   function paceText(r, rung) {
     var P = window.Run.paces(S.answers, S.results), z = window.Run.zone(r, rung);
@@ -275,7 +348,7 @@
     return t("run.rungline", { d: t("run.rung." + w.rung), n: w.n, of: w.of }) + (w.flag ? " · " + t("run.flag." + w.flag) : "");
   }
   function goalCard(got, goal) {
-    return '<div class="card ringrow">' + ring(got, goal) + "<div><h3>" + esc(t("today.goal")) + "</h3><p>" + esc(t("today.of", { done: got, total: goal })) + "</p></div></div>";
+    return '<div class="card ringrow">' + ring(got, goal) + '<div class="grow"><h3>' + esc(t("today.goal")) + "</h3><p>" + esc(got > goal ? t("today.more", { done: got, total: goal }) : t("today.of", { done: got, total: goal })) + '</p></div><button class="swap" data-sharekind="week">' + esc(t("share.btn")) + "</button></div>";
   }
   function runToday(p, c) {
     var w = window.Run.week(p.run, c.week), r = adj(w.runs[c.item.j]);
@@ -347,7 +420,7 @@
     if (c.week > p.weeks) h += '<div class="note warn">' + esc(t("today.blockdone")) + "</div>";
     if (deload) h += '<div class="note warn">' + esc(t("today.deload")) + "</div>";
     h += goalCard(got, goal);
-    h += cardioCard() + notesHtml();
+    h += startBox(p) + cardioCard() + notesHtml();
     h += '<p class="qhint">' + esc(t("today.hint")) + "</p>";
     s.exercises.forEach(function (x, i) {
       var hist = history(x.id), sug = window.Plan.suggest(x, hist), n = d.ex[x.id].length;
@@ -407,11 +480,22 @@
     ui.finish = { vol: vol, sets: sets, prs: prs, idx: S.log.length - 1 }; save(); render();
   }
 
+  function whyBox() {
+    var p = S.plan, a = S.answers, G = window.Plan.goals(a), pr = window.Plan.prio(a), lines = [];
+    lines.push(t("why.goal." + pr));
+    if (G.length > 1) lines.push(t("why.extra", { g: G.filter(function (g) { return g !== pr; }).map(function (g) { return t("o.ziele." + g); }).join(", ") }));
+    lines.push(t("why.days", { n: p.sessions.length, m: Number(a.dauer_min) || 60 }));
+    lines.push(t("why.level." + p.level));
+    if (a.ort) lines.push(t("why.place", { p: t("o.ort." + a.ort) }));
+    var inj = (Array.isArray(a.verletzungen) ? a.verletzungen : []).filter(function (x) { return x !== "keine"; });
+    if (inj.length) lines.push(t("why.injury", { l: inj.map(function (x) { return t("o.verletzungen." + x); }).join(", ") }));
+    return '<details class="know why"' + (S.done ? "" : " open") + "><summary>" + esc(t("why.title")) + '</summary><ul class="tips">' + lines.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></details>";
+  }
   function planView() {
     var p = ensurePlan();
     if (!p) return "";
     var c = cur(), w = ui.planWeek || Math.min(c.week, p.weeks), before = window.Plan.doneBefore(p, w), rw = p.run ? window.Run.week(p.run, w) : null;
-    var h = '<div class="weeks">' + Array.from({ length: p.weeks }, function (_, i) { var k = i + 1; return '<button data-week="' + k + '" aria-pressed="' + (k === w) + '"' + (k === Math.min(c.week, p.weeks) ? ' class="now"' : "") + ">" + k + (window.Plan.isDeload(k) ? "·" : "") + "</button>"; }).join("") + "</div>";
+    var h = whyBox() + '<div class="weeks">' + Array.from({ length: p.weeks }, function (_, i) { var k = i + 1; return '<button data-week="' + k + '" aria-pressed="' + (k === w) + '"' + (k === Math.min(c.week, p.weeks) ? ' class="now"' : "") + ">" + k + (window.Plan.isDeload(k) ? "·" : "") + "</button>"; }).join("") + "</div>";
     h += '<div class="sec">' + esc(t("plan.week")) + " " + w + (window.Plan.isDeload(w) ? " · " + esc(t("plan.deloadnote")) : "") + "</div>";
     if (window.Plan.isDeload(w)) h += '<div class="note warn">' + esc(t("today.deload")) + "</div>";
     if (rw) h += '<div class="note">' + esc(weekLine(rw)) + "</div>";
@@ -438,7 +522,7 @@
 
   function historyView() {
     if (!S.log.length) return '<div class="card"><h3>' + esc(t("share.empty.title")) + "</h3><p>" + esc(t("share.empty.text")) + "</p></div>";
-    var h = '<div class="sharebar"><button class="btn" data-share="' + (S.log.length - 1) + '">' + esc(t("share.last")) + '</button><button class="btn ghost" data-sharekind="week">' + esc(t("share.week")) + '</button></div><div class="sec">' + esc(t("prog.history")) + "</div>";
+    var h = '<div class="sharebar" style="margin-top:18px"><button class="btn" data-share="' + (S.log.length - 1) + '">' + esc(t("share.last")) + '</button><button class="btn ghost" data-sharekind="week">' + esc(t("share.week")) + '</button></div><div class="sec">' + esc(t("prog.history")) + "</div>";
     S.log.slice().reverse().slice(0, 30).forEach(function (l) {
       var sets = l.ex.reduce(function (a, e) { return a + e.sets.length; }, 0);
       var d = new Date(l.date + "T12:00:00");
@@ -673,7 +757,7 @@
 
   function shell() {
     var tab = ui.tab, h = '<header class="top"><span class="brand"><img src="icons/mark-256.png?v=' + C.VERSION + '" alt="">' + esc(C.APP_NAME) +
-      '</span><button class="icon-btn" id="prof" aria-label="' + esc(t("profile.title")) + '">' + icon("user") + "</button></header><main>";
+      '</span><span class="hdbtns"><button class="icon-btn" id="hdshare" aria-label="' + esc(t("share.btn")) + '">' + icon("share") + '</button><button class="icon-btn" id="prof" aria-label="' + esc(t("profile.title")) + '">' + icon("user") + "</button></span></header><main>";
     if (tab !== "today" || ui.finish) h += "<h2>" + esc(t("tab." + tab)) + "</h2>";
     if (SUBS[tab]) {
       h += '<div class="seg" role="tablist">' + SUBS[tab].map(function (s) {
@@ -683,7 +767,7 @@
     var body = "";
     if (tab === "today") body = todayView();
     else if (tab === "plan") body = planView();
-    else if (tab === "progress" && ui.sub.progress === "training") body = historyView();
+    else if (tab === "progress" && ui.sub.progress === "training") body = trendView() + historyView();
     else if (tab === "progress" && ui.sub.progress === "weight") body = weightView();
     else if (tab === "progress" && ui.sub.progress === "results") body = resultsView();
     else if (tab === "progress" && ui.sub.progress === "races") body = racesView();
@@ -750,7 +834,15 @@
   }
   function shareSheet() {
     var sh = ui.share, styles = ["stats", "poster", "photo", "week"];
-    return '<div class="sheet-bg" id="sharebg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(t("share.title")) + '</h2><div class="sharecv" id="sharecv"></div><p class="qhint">' + esc(t("share.hint")) + '</p><div class="chips">' +
+    var R = S.results || [], what = [["week", t("share.what.week")]];
+    if (S.log.length) what.push(["last", t("share.what.last")]);
+    if ((S.weights || []).length) what.push(["weight", t("sub.weight")]);
+    var lift = R.filter(function (r) { return r.type === "lift"; }).pop();
+    if (lift) what.push(["lift", t("rs.strength")]);
+    if (R.some(function (r) { return r.type === "run"; })) what.push(["run", t("rs.run")]);
+    var active = sh.kind || (sh.idx === S.log.length - 1 ? "last" : "");
+    var chooser = what.length > 1 ? '<div class="chips what">' + what.map(function (w) { return '<button class="chip" data-swhat="' + w[0] + '" aria-pressed="' + (active === w[0]) + '">' + esc(w[1]) + "</button>"; }).join("") + "</div>" : "";
+    return '<div class="sheet-bg" id="sharebg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(t("share.title")) + "</h2>" + chooser + '<div class="sharecv" id="sharecv"></div><p class="qhint">' + esc(t("share.hint")) + '</p><div class="chips">' +
       styles.map(function (s) { return '<button class="chip" data-sstyle="' + s + '" aria-pressed="' + (sh.style === s) + '">' + esc(t("share.style." + s)) + "</button>"; }).join("") +
       '</div><label class="btn ghost filebtn">' + esc(t("share.photo")) + '<input type="file" accept="image/*" id="sharephoto" hidden></label><button class="btn" id="shareok">' + esc(t("share.apps")) + '</button><button class="btn ghost" id="sharesave">' + esc(t("share.save")) + '</button><p class="qhint" id="sharemsg" role="status"></p><button class="btn ghost" id="shareclose">' + esc(t("profile.close")) + "</button></div></div>";
   }
@@ -798,8 +890,13 @@
     var x = d && d.app === "forma" && d.data;
     if (!x || typeof x !== "object" || typeof x.answers !== "object" || !Array.isArray(x.log)) return false;
     if (!C.LANGS.some(function (l) { return l.code === x.lang; })) return false;
-    // keine HTML-Zeichen aus fremden Dateien übernehmen
-    return !/[<>]/.test(JSON.stringify(x));
+    // keine HTML-Zeichen aus fremden Dateien übernehmen (auch keine Anführungszeichen)
+    var safe = function (v) {
+      if (typeof v === "string") return !/[<>"]/.test(v);
+      if (v && typeof v === "object") return Object.keys(v).every(function (k) { return safe(k) && safe(v[k]); });
+      return true;
+    };
+    return safe(x);
   }
   function profileSheet() {
     return '<div class="sheet-bg" id="bg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(t("profile.title")) + "</h2>" +
@@ -864,6 +961,27 @@
       };
     });
     on("finish", finishSession);
+    on("hdshare", function () { ui.share = { kind: "week", style: "week", photo: null }; stopRest(); render(); });
+    $app.querySelectorAll("[data-swhat]").forEach(function (b) {
+      b.onclick = function () {
+        var k = b.getAttribute("data-swhat"), ph = ui.share.photo;
+        if (k === "last") ui.share = { idx: S.log.length - 1, style: "stats", photo: ph };
+        else {
+          var lift = (S.results || []).filter(function (r) { return r.type === "lift"; }).pop();
+          ui.share = { kind: k, id: k === "lift" && lift ? lift.ex : null, style: k === "week" ? "week" : "stats", photo: ph };
+        }
+        render();
+      };
+    });
+    $app.querySelectorAll("[data-start]").forEach(function (b) {
+      b.onclick = function () {
+        var i = Number(b.getAttribute("data-start")); if (!i || !canChooseStart(S.plan)) return;
+        // im Kreis drehen: so bleibt die Abwechslung (z. B. Beine, dann Oberkörper) erhalten
+        S.plan.sessions = S.plan.sessions.slice(i).concat(S.plan.sessions.slice(0, i)); S.draft = null; ui.err = ""; save(); render();
+      };
+    });
+    $app.querySelectorAll("[data-trend]").forEach(function (b) { b.onclick = function () { ui.trend = b.getAttribute("data-trend"); render(); }; });
+    var tx = document.getElementById("trendex"); if (tx) tx.onchange = function () { ui.trendEx = tx.value; render(); };
     $app.querySelectorAll("[data-feel]").forEach(function (b) {
       b.onclick = function () { var l = S.log[Number(b.getAttribute("data-i"))]; if (!l) return; l.feel = b.getAttribute("data-feel"); save(); coachReview(); render(); };
     });
@@ -978,7 +1096,7 @@
     on("prof", function () { ui.profile = true; render(); });
     on("close", function () { ui.profile = false; render(); });
     on("redo", function () {
-      if (!window.confirm(t("profile.redo") + "?")) return;
+      if (!window.confirm(t("profile.redoask"))) return;
       S.answers = {}; S.qid = null; S.qdone = false; S.onboarded = false; S.plan = null; S.draft = null; ui.profile = false; save(); render();
     });
     var bg = document.getElementById("bg");

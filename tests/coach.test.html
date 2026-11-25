@@ -51,6 +51,16 @@ fetch("../data/exercises.json", { cache: "no-cache" }).then(r => r.json()).then(
   });
   var gp = Plan.generate(Object.assign({}, prof, { ziele: ["kraft"] }), EX);
   ok("Gelb Kraft: leichtes Schema, höchstens 3 Sätze, mindestens 8 Wiederholungen", gp.light && gp.sessions.every(s => s.exercises.every(x => x.sets <= 3 && (x.timed || x.bodyweight || x.lo >= 8))));
+  var bp = { ziele: ["muskelaufbau"], kraft_erfahrung: "ueber_24", trainingstage: 4, dauer_min: 60, ort: "studio", verletzungen: ["keine"], alter: 30, schlaf: "m7_9" };
+  var sets = p => p.sessions.reduce((n, s) => n + s.exercises.reduce((m, x) => m + x.sets, 0), 0);
+  var normal = Plan.generate(bp, EX), tired = Plan.generate(Object.assign({}, bp, { schlaf: "unter_5" }), EX), old = Plan.generate(Object.assign({}, bp, { alter: 65 }), EX), young = Plan.generate(Object.assign({}, bp, { alter: 16 }), EX);
+  ok("Wenig Schlaf: weniger Sätze", sets(tired) < sets(normal) && tired.notes.indexOf("sleep") >= 0);
+  ok("Ab 60: eine Stufe tiefer", old.level === "fortgeschritten" && normal.level === "erfahren" && old.notes.indexOf("age60") >= 0);
+  ok("Unter 18: leichter Plan", young.light && young.notes.indexOf("teen") >= 0 && young.goal === "fitness");
+  var goalsig = ["kraft", "muskelaufbau", "fitness"].map(g => { var p = Plan.generate(Object.assign({}, bp, { ziele: [g] }), EX), x = p.sessions[0].exercises.filter(e => e.compound && !e.bodyweight && !e.timed)[0]; return x.lo + "-" + x.hi + "/" + x.rest; });
+  ok("Ziele ergeben verschiedene Vorgaben", new Set(goalsig).size === 3, goalsig.join(" "));
+  var four = Plan.generate(bp, EX).sessions.map(s => s.type), rot = four.slice(1).concat(four.slice(0, 1));
+  ok("Drehen behält die Abwechslung", rot.join() === "uk,ok,uk,ok");
   ok("Adhärenz", Coach.adherence([L("fb", null, "2026-11-01"), L("fb", null, "2026-11-20")], 3, "2026-11-25").low === true && Coach.adherence([L("fb", null, "2026-11-20")], 3, "2026-11-25") === null);
   document.getElementById("out").textContent = (fails ? fails + " FEHLER" : "ALLE " + res.length + " TESTS GRÜN") + "\n\n" + res.join("\n");
 }).catch(e => { document.getElementById("out").textContent = "FEHLER " + e.stack; });

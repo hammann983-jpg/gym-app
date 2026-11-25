@@ -17,7 +17,18 @@
     { name: "Sandbag Lunges", size: "100 m", kg: [10, 20, 20, 30] },
     { name: "Wall Balls", size: "100 ×", kg: [4, 6, 6, 9] }
   ];
-  function station(i, division) {
+  // Ersatz, wenn ein Gerät fehlt (Vorschläge): "alt:<schlüssel>" wird in der App übersetzt
+  function alternative(i, a) {
+    var place = a && a.ort;
+    if (!place || place === "studio_hyrox") return null;
+    if (place === "studio") return { 0: "ski_gym", 1: "push_gym", 2: "pull_gym", 6: "lunge_gym", 7: "wall_gym" }[i] || null;
+    var h = Array.isArray(a.heim) ? a.heim : [], weights = h.indexOf("kurzhanteln") >= 0 || h.indexOf("kettlebell") >= 0;
+    return [h.indexOf("band") >= 0 ? "ski_band" : "ski_home", "push_home", weights ? "pull_weights" : h.indexOf("band") >= 0 ? "pull_band" : "pull_home", null, "row_home",
+      weights ? "carry_weights" : "carry_home", weights ? "lunge_gym" : "lunge_home", weights ? "wall_gym" : "wall_home"][i];
+  }
+  function station(i, division, a) {
+    var alt = alternative(i, a);
+    if (alt) return "alt:" + alt;
     var s = STATIONS[i], d = W[division], kg = s.kg && d !== undefined ? (s.two ? "2 × " : "") + s.kg[d] + " kg" : "";
     return s.name + " " + s.size + (kg ? " (" + kg + ")" : "");
   }
@@ -38,7 +49,7 @@
       // jede 4. Woche vor der Entlastung: Rennsimulation (nicht in der Aufbauphase)
       var sim = n % 4 === 3 && ph !== "base" && ph !== "taper";
       var from = (n % 2 === 1) ? 0 : 4, reps = light ? 2 : 4, st = [];
-      for (var i = 0; i < (sim && ph === "specific" ? 8 : reps); i++) st.push(station(sim && ph === "specific" ? i : from + i, div));
+      for (var i = 0; i < (sim && ph === "specific" ? 8 : reps); i++) st.push(station(sim && ph === "specific" ? i : from + i, div, a));
       var hy = { k: sim ? "sim" : "hybrid", sport: "hyrox", q: [] };
       hy.q.push(sim ? { id: ph === "specific" ? "sim_full" : "sim_half" } : { id: "hybrid", n: st.length });
       if (ph === "endurance" && !sim) hy.q.push({ id: "hx_weight" });

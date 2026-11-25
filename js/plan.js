@@ -175,8 +175,10 @@
   function generate(a, exercises, opts) {
     opts = opts || {};
     // Gesundheits-Hinweis "gelb": nur leicht (sicherheit.md)
-    var light = !!(window.Q && window.Q.screening(a).yellow);
-    var lvl = level(a), goal = light ? "fitness" : goalType(a), E = equipSet(a), endurance = isEndurance(a);
+    var age = Number(a.alter) || 0, teen = age > 0 && age < 18;
+    var light = teen || !!(window.Q && window.Q.screening(a).yellow);
+    var shortSleep = a.schlaf === "unter_5" || a.schlaf === "m5_6";
+    var lvl = age >= 60 ? LEVELS[Math.max(0, rank(level(a)) - 1)] : level(a), goal = light ? "fitness" : goalType(a), E = equipSet(a), endurance = isEndurance(a);
     var injuries = (Array.isArray(a.verletzungen) ? a.verletzungen : []).filter(function (x) { return x !== "keine"; });
     var wanted = Number(a.trainingstage) || 3;
     var notes = [], G = goals(a);
@@ -229,6 +231,7 @@
         used.push(ex.id); usage[ex.id] = (usage[ex.id] || 0) + 1;
         var s = scheme(goal, lvl, ex, dauer);
         if (light) s.sets = Math.min(s.sets, 3);
+        if (shortSleep && !s.timed) s.sets = Math.max(2, s.sets - 1);
         list.push({ id: ex.id, cat: ex.kategorie, sets: s.sets, lo: s.lo, hi: s.hi, text: s.text, rest: s.rest, timed: s.timed, compound: !!COMPOUND[ex.kategorie], bodyweight: !loadable(ex), lower: !!LOWER[ex.kategorie], superset: dauer < 40 });
       });
       return { type: type, letter: typeCount[type] > 1 ? String.fromCharCode(65 + n) : "", exercises: list };
@@ -251,17 +254,20 @@
     });
 
     sessions.forEach(function (s) { s.focus = focusOf(s.exercises); });
-    var plan = { version: 5, goal: goal, level: lvl, daysPerWeek: days, weeks: pw.weeks, sessions: sessions, notes: notes, injuries: injuries, priority: prio(a), cut: cut, muscle: muscle };
+    var plan = { version: 7, goal: goal, level: lvl, daysPerWeek: days, weeks: pw.weeks, sessions: sessions, notes: notes, injuries: injuries, priority: prio(a), cut: cut, muscle: muscle };
     var run = endurancePlan(a, opts.today);
     if (run) {
       if (light && window.Coach) run = window.Coach.lighten(run);
       plan.run = run; plan.weeks = Math.max(pw.weeks, run.weeks.length);
       notes.push(run.goal === "triathlon" ? "tri" : run.goal === "hyrox" ? "hyrox" : "run");
+      if (run.goal === "hyrox" && a.ort && a.ort !== "studio_hyrox") notes.push("hx_alt");
       if (run.short && notes.indexOf("event_soon") < 0) notes.push("event_soon");
       var families = {}; G.forEach(function (g) { if (ENDU.indexOf(g) >= 0) families[g === "marathon" ? "laufen" : g] = 1; });
       if (Object.keys(families).length > 1) notes.push("one_endurance");
     }
-    if (light) { plan.light = true; notes.push("light"); }
+    if (light) { plan.light = true; notes.push(teen ? "teen" : "light"); }
+    if (age >= 60) notes.push("age60");
+    if (shortSleep) notes.push("sleep");
     return plan;
   }
 

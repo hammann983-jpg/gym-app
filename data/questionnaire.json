@@ -247,6 +247,7 @@
    "id": "ort",
    "sec": "time",
    "type": "choice",
+   "hint": true,
    "options": [
     "studio",
     "studio_hyrox",
