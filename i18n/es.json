@@ -497,5 +497,12 @@
   "run.flag.specific": "específica de carrera",
   "note.tri": "Triatlón: deja al menos 1 día de descanso total y no juntes días duros. Los volúmenes fuera de la fase de desarrollo son estimaciones. El sprint requiere: nadar 400 m, 20 km en bici y correr 5 km. Hazte antes un chequeo médico.",
   "note.hyrox": "Hyrox: los pesos y repeticiones aún no están verificados oficialmente (en Open femenino quizá 75 wall balls). Compruébalo en hyrox.com.",
-  "note.one_endurance": "Tienes varios objetivos de resistencia. El plan entrena solo uno para no sobrecargarte: el más importante."
+  "note.one_endurance": "Tienes varios objetivos de resistencia. El plan entrena solo uno para no sobrecargarte: el más importante.",
+  "priv.title": "Privacidad",
+  "priv.local": "Tus respuestas, entrenamientos, pesos y resultados se guardan solo en este navegador, en tu dispositivo. No hay cuenta, ni servidor propio, ni publicidad, ni seguimiento.",
+  "priv.photo": "Las fotos de las tarjetas para compartir se quedan en tu dispositivo. Solo salen si tocas Compartir y eliges una app.",
+  "priv.fonts": "Las tipografías se cargan desde Google Fonts. Al hacerlo, Google recibe técnicamente tu dirección IP.",
+  "priv.host": "La app está alojada en GitHub Pages. GitHub puede registrar datos técnicos como tu dirección IP al abrirla.",
+  "priv.links": "Los enlaces a vídeos llevan a YouTube, donde se aplican sus normas.",
+  "priv.delete": "Para borrar todo, elimina los datos de este sitio en los ajustes del navegador. Tus registros desaparecerán."
 }

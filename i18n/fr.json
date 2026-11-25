@@ -497,5 +497,12 @@
   "run.flag.specific": "spécifique course",
   "note.tri": "Triathlon : garde au moins 1 jour de repos complet et n'enchaîne pas les jours difficiles. Les volumes hors phase de développement sont des estimations. Le sprint demande : nager 400 m, 20 km à vélo, courir 5 km. Fais d'abord un bilan médical.",
   "note.hyrox": "Hyrox : les charges et répétitions ne sont pas encore vérifiées officiellement (peut-être 75 wall balls en Open femmes). Vérifie sur hyrox.com.",
-  "note.one_endurance": "Tu as plusieurs objectifs d'endurance. Le plan n'en travaille qu'un pour éviter la surcharge : le plus important."
+  "note.one_endurance": "Tu as plusieurs objectifs d'endurance. Le plan n'en travaille qu'un pour éviter la surcharge : le plus important.",
+  "priv.title": "Confidentialité",
+  "priv.local": "Tes réponses, entraînements, poids et résultats sont enregistrés uniquement dans ce navigateur, sur ton appareil. Pas de compte, pas de serveur à nous, pas de publicité ni de suivi.",
+  "priv.photo": "Les photos des cartes à partager restent sur ton appareil. Elles n'en sortent que si tu touches Partager et choisis une application.",
+  "priv.fonts": "Les polices sont chargées depuis Google Fonts. Google reçoit alors techniquement ton adresse IP.",
+  "priv.host": "L'application est hébergée sur GitHub Pages. GitHub peut enregistrer des données techniques comme ton adresse IP à l'ouverture.",
+  "priv.links": "Les liens vidéo mènent à YouTube, où ses règles s'appliquent.",
+  "priv.delete": "Pour tout effacer, supprime les données de ce site dans les réglages du navigateur. Tes saisies disparaissent alors."
 }

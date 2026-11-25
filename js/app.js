@@ -2,6 +2,7 @@
 (function () {
   var C = window.GYM_CONFIG, KEY = "gym.v1";
   var $app = document.getElementById("app");
+  var TIPS = {};
   var QS = [], EX = [], EXBY = {}, NAMES = {}, FOOD = null;
 
   function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
@@ -564,7 +565,7 @@
     var f = (ui.qaq || "").toLowerCase();
     var items = EX.filter(function (e) { return e.kategorie !== "hyrox" && (!f || exName(e.id).toLowerCase().indexOf(f) >= 0); });
     var h = '<p class="qhint">' + esc(t("coach.qa.hint")) + '</p><input class="search" id="qasearch" type="search" placeholder="' + esc(t("coach.qa.search")) + '" value="' + esc(ui.qaq || "") + '" aria-label="' + esc(t("coach.qa.search")) + '"><div class="qalist">';
-    h += items.map(function (e) { return '<button class="qaitem" data-info="' + e.id + '"><span>' + esc(exName(e.id)) + "</span><small>" + esc(window.I18N.lang() === "de" ? (e.muskeln || []).slice(0, 2).join(", ") : "") + "</small></button>"; }).join("");
+    h += items.map(function (e) { return '<button class="qaitem" data-info="' + e.id + '"><span>' + esc(exName(e.id)) + "</span><small>" + esc(muscles(e).slice(0, 2).join(", ")) + "</small></button>"; }).join("");
     return h + (items.length ? "" : "<p>" + esc(t("coach.qa.none")) + "</p>") + "</div>";
   }
 
@@ -596,6 +597,7 @@
       return '<button data-tab="' + k + '"' + (k === tab ? ' aria-current="page"' : "") + ">" + icon(k) + "<span>" + esc(t("tab." + k)) + "</span></button>";
     }).join("") + "</div></nav>";
     if (ui.profile) h += profileSheet();
+    if (ui.privacy) h += privacySheet();
     if (ui.info) h += infoSheet(ui.info);
     if (ui.share) h += shareSheet();
     return h;
@@ -635,13 +637,19 @@
     SHARE_CV.className = "sharecanvas"; host.innerHTML = ""; host.appendChild(SHARE_CV);
   }
 
+  function muscles(e) {
+    var lang = window.I18N.lang();
+    if (lang === "de") return e.muskeln || [];
+    return TIPS[lang] && TIPS[lang][e.id] ? TIPS[lang][e.id].muskeln : [];
+  }
   function list(arr) { return '<ul class="tips">' + arr.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>"; }
   function infoSheet(id) {
     var e = EXBY[id]; if (!e) return "";
-    var lang = window.I18N.lang(), q = encodeURIComponent(exName(id) + (lang === "de" ? " Technik" : lang === "es" ? " técnica" : lang === "fr" ? " technique" : " form technique"));
+    var lang = window.I18N.lang(), tr = TIPS[lang] && TIPS[lang][id], q = encodeURIComponent(exName(id) + (lang === "de" ? " Technik" : lang === "es" ? " técnica" : lang === "fr" ? " technique" : " form technique"));
     var h = '<div class="sheet-bg" id="infobg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(exName(id)) + "</h2>";
-    if (lang !== "de" && t("info.de_only")) h += '<div class="note">' + esc(t("info.de_only")) + "</div>";
-    if (lang === "de") h += '<div class="lbl">' + esc(t("info.muscles")) + ": " + esc((e.muskeln || []).join(", ")) + "</div>";
+    if (lang !== "de" && !tr) h += '<div class="note">' + esc(t("info.de_only")) + "</div>";
+    if (tr) e = tr;
+    if (lang === "de" || tr) h += '<div class="lbl">' + esc(t("info.muscles")) + ": " + esc((e.muskeln || []).join(", ")) + "</div>";
     h += "<h3>" + esc(t("info.cues")) + "</h3>" + list(e.cues || []);
     if ((e.fehler || []).length) h += "<h3>" + esc(t("info.mistakes")) + "</h3>" + list(e.fehler);
     if (e.atmung) h += "<h3>" + esc(t("info.breath")) + "</h3><p>" + esc(e.atmung) + "</p>";
@@ -652,11 +660,16 @@
     return h;
   }
 
+  function privacySheet() {
+    return '<div class="sheet-bg" id="privbg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(t("priv.title")) + "</h2>" +
+      ["local", "photo", "fonts", "host", "links", "delete"].map(function (k) { return "<p>" + esc(t("priv." + k)) + "</p>"; }).join("") +
+      '<button class="btn ghost" id="privclose">' + esc(t("profile.close")) + "</button></div></div>";
+  }
   function profileSheet() {
     return '<div class="sheet-bg" id="bg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(t("profile.title")) + "</h2>" +
       '<div><div class="lbl">' + esc(t("profile.language")) + '</div><div class="chips">' +
       C.LANGS.map(function (l) { return '<button class="chip" data-lang="' + l.code + '" lang="' + l.code + '" aria-pressed="' + (S.lang === l.code) + '">' + esc(l.label) + "</button>"; }).join("") +
-      '</div></div><button class="btn ghost" id="redo">' + esc(t("profile.redo")) + '</button><p class="ver">' + esc(t("profile.disclaimer")) + '</p><div class="ver">' + esc(t("profile.version")) + " " + C.VERSION + '</div><button class="btn ghost" id="close">' + esc(t("profile.close")) + "</button></div></div>";
+      '</div></div><button class="btn ghost" id="redo">' + esc(t("profile.redo")) + '</button><button class="btn ghost" id="privopen">' + esc(t("priv.title")) + '</button><p class="ver">' + esc(t("profile.disclaimer")) + '</p><div class="ver">' + esc(t("profile.version")) + " " + C.VERSION + '</div><button class="btn ghost" id="close">' + esc(t("profile.close")) + "</button></div></div>";
   }
 
   function render() {
@@ -787,6 +800,10 @@
     if (qs) qs.oninput = function () { ui.qaq = qs.value; var pos = qs.selectionStart; render(); var n = document.getElementById("qasearch"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } };
     var ibg = document.getElementById("infobg");
     if (ibg) ibg.onclick = function (e) { if (e.target === ibg) { ui.info = null; render(); } };
+    on("privopen", function () { ui.profile = false; ui.privacy = true; render(); });
+    on("privclose", function () { ui.privacy = false; render(); });
+    var pbg = document.getElementById("privbg");
+    if (pbg) pbg.onclick = function (e) { if (e.target === pbg) { ui.privacy = false; render(); } };
     on("prof", function () { ui.profile = true; render(); });
     on("close", function () { ui.profile = false; render(); });
     on("redo", function () {
@@ -804,7 +821,8 @@
     getJSON("data/questionnaire.json").then(function (d) { QS = d.questions; }),
     getJSON("data/exercises.json").then(function (d) { EX = d.uebungen; EX.forEach(function (e) { EXBY[e.id] = e; }); }),
     getJSON("data/ex-names.json").then(function (d) { NAMES = d; }),
-    getJSON("data/essen.json").then(function (d) { FOOD = d; })
+    getJSON("data/essen.json").then(function (d) { FOOD = d; }),
+    getJSON("data/tips.json").then(function (d) { TIPS = d; })
   ]).then(render, render);
 
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
