@@ -70,6 +70,14 @@ fetch("../data/exercises.json", { cache: "no-cache" }).then(r => r.json()).then(
   ok("Knie: sanft, kaum Steigung", ck.gentle && ck.incline === 1 && ck.kmh === 4.5);
   var yo = Object.assign({}, cp, { alter: 16 }); ok("Unter 18: kein Fettabbau-Cardio", !Plan.cardio(yo, Plan.generate(yo, EX), 1, 0).fat);
   var rp = Object.assign({}, bp, { ziele: ["marathon"] }); ok("Ausdauer-Plan: kein Extra-Cardio", Plan.cardio(rp, Plan.generate(rp, EX), 1, 0) === null);
+  var base = Plan.cardio(bp, mp, 5, 0), done = (kmh, incline, feel) => [{ cardio: { min: 20, kmh: kmh, incline: incline }, feel: feel }], C = log => Plan.cardio(bp, mp, 5, 0, log);
+  ok("Ohne Eintrag: Richtwert", C([]).kmh === base.kmh && !C([]).why);
+  var l1 = C(done(6, 7, "ok")); ok("Passt: letzte Werte übernommen", l1.kmh === 6 && l1.incline === 7 && l1.why === "last" && l1.min === base.min);
+  ok("Zu leicht: +1 % Steigung", C(done(6, 7, "easy")).incline === 8 && C(done(6, 7, "easy")).why === "more");
+  ok("Zu hart: -1 %", C(done(6, 7, "hard")).incline === 6 && C(done(6, 7, "hard")).why === "less");
+  var pa = C(done(6.5, 9, "pain")); ok("Schmerz: unter den Richtwert", pa.kmh <= base.kmh - 0.5 && pa.incline <= base.incline - 2, pa.kmh + "/" + pa.incline);
+  var hi = C(done(14, 30, "easy")); ok("Obergrenze", hi.kmh === base.kmh + 1.5 && hi.incline <= 15 && hi.why === "capped", hi.kmh + "/" + hi.incline);
+  var kg = Plan.cardio(kn, Plan.generate(kn, EX), 5, 0, done(5, 1, "easy")); ok("Sanft: nie automatisch steigern", kg.incline === 1 && kg.why === "last");
   ok("Adhärenz", Coach.adherence([L("fb", null, "2026-11-01"), L("fb", null, "2026-11-20")], 3, "2026-11-25").low === true && Coach.adherence([L("fb", null, "2026-11-20")], 3, "2026-11-25") === null);
   document.getElementById("out").textContent = (fails ? fails + " FEHLER" : "ALLE " + res.length + " TESTS GRÜN") + "\n\n" + res.join("\n");
 }).catch(e => { document.getElementById("out").textContent = "FEHLER " + e.stack; });

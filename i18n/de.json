@@ -660,5 +660,9 @@
   "cardio.invalid": "Bitte prüf deine Cardio-Werte (Minuten, km/h, Steigung).",
   "why.cardio": "{n}-mal pro Woche {min} Minuten lockeres Cardio nach dem Krafttraining, für Herz und Erholung.",
   "why.cardio.fat": "Zum Fettabbau {n}-mal pro Woche {min} Minuten Cardio nach dem Krafttraining, später etwas länger.",
-  "run.treadmill": "Laufband: {v} km/h, 1 % Steigung"
+  "run.treadmill": "Laufband: {v} km/h, 1 % Steigung",
+  "cardio.adapt.last": "Angepasst an deine zuletzt eingetragenen Werte.",
+  "cardio.adapt.more": "Letztes Mal zu leicht: 1 % mehr Steigung (bis zur Obergrenze).",
+  "cardio.adapt.less": "Letztes Mal zu hart oder mit Schmerzen: heute etwas weniger.",
+  "cardio.adapt.capped": "An deine Werte angepasst, aber zur Sicherheit begrenzt. Steigere dich langsam."
 }

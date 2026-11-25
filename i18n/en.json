@@ -660,5 +660,9 @@
   "cardio.invalid": "Please check your cardio values (minutes, km/h, incline).",
   "why.cardio": "{n} times a week {min} minutes of easy cardio after lifting, for heart health and recovery.",
   "why.cardio.fat": "For fat loss, {n} times a week {min} minutes of cardio after lifting, a bit longer later.",
-  "run.treadmill": "Treadmill: {v} km/h, 1% incline"
+  "run.treadmill": "Treadmill: {v} km/h, 1% incline",
+  "cardio.adapt.last": "Adjusted to the values you logged last.",
+  "cardio.adapt.more": "Too easy last time: 1% more incline (up to the limit).",
+  "cardio.adapt.less": "Too hard or painful last time: a bit less today.",
+  "cardio.adapt.capped": "Adjusted to your values but limited for safety. Build up gradually."
 }

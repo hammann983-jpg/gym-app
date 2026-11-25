@@ -299,7 +299,7 @@
   }
   function coachState() { return window.Coach.fresh(S.coach); }
   function adj(r) { var lang = window.I18N.lang(); return window.Coach.applyRun(r, coachState(), function (i) { return window.Multi.station(i, S.answers.hyrox_division, S.answers); }); }
-  function cardioFor(week, index) { return window.Plan.cardioAt(S.answers, S.plan, week, coachState().cardio, index); }
+  function cardioFor(week, index) { return window.Plan.cardioAt(S.answers, S.plan, week, coachState().cardio, index, S.log); }
   function cardioLine(c) { return t("cardio.line", { min: c.min, kmh: nf(c.kmh, 1), inc: c.incline }); }
   function cardioBox(c, d) {
     if (!c) return "";
@@ -307,6 +307,7 @@
     var field = function (k, label, ph, unit) { return '<label class="f"><input type="text" inputmode="decimal" data-cardio="' + k + '" value="' + esc(v[k]) + '" placeholder="' + esc(ph) + '" aria-label="' + esc(label) + '"><i>' + esc(unit) + "</i></label>"; };
     var home = S.answers.ort === "zuhause";
     return '<div class="card cardio"><div class="sec">' + esc(t("cardio.after")) + "</div><h3>" + esc(t(home ? "cardio.walk" : "cardio.treadmill")) + '</h3><div class="stats"><div class="stat"><small>' + esc(t("run.stat.time")) + "</small><b>" + c.min + " " + esc(t("today.min")) + '</b></div><div class="stat"><small>' + esc(t("cardio.speed")) + "</small><b>" + nf(c.kmh, 1) + ' km/h</b></div><div class="stat"><small>' + esc(t("cardio.incline")) + "</small><b>" + c.incline + " %</b></div></div>" +
+      (c.why ? '<div class="note">' + esc(t("cardio.adapt." + c.why)) + "</div>" : "") +
       "<p>" + esc(t(home ? "cardio.howhome" : "cardio.how")) + "</p>" + (c.gentle ? '<p class="qhint">' + esc(t("cardio.gentle")) + "</p>" : "") +
       '<div class="cardiorow">' + field("min", t("run.log.min"), c.min, t("today.min")) + field("kmh", t("cardio.speed"), nf(c.kmh, 1), "km/h") + field("incline", t("cardio.incline"), c.incline, "%") + "</div>" +
       '<button class="chip cardiochk" id="cardiochk" aria-pressed="' + !!v.done + '">' + esc(t("cardio.done")) + "</button></div>";

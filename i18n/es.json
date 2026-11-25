@@ -660,5 +660,9 @@
   "cardio.invalid": "Revisa los valores de cardio (minutos, km/h, inclinación).",
   "why.cardio": "{n} veces por semana {min} minutos de cardio suave tras la fuerza, para el corazón y la recuperación.",
   "why.cardio.fat": "Para perder grasa, {n} veces por semana {min} minutos de cardio tras la fuerza, luego algo más.",
-  "run.treadmill": "Cinta: {v} km/h, 1 % de inclinación"
+  "run.treadmill": "Cinta: {v} km/h, 1 % de inclinación",
+  "cardio.adapt.last": "Ajustado a tus últimos valores.",
+  "cardio.adapt.more": "La última vez fue fácil: 1 % más de inclinación (hasta el límite).",
+  "cardio.adapt.less": "La última vez fue dura o con dolor: hoy un poco menos.",
+  "cardio.adapt.capped": "Ajustado a tus valores, pero limitado por seguridad. Sube poco a poco."
 }

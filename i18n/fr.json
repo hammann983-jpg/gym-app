@@ -660,5 +660,9 @@
   "cardio.invalid": "Vérifie tes valeurs de cardio (minutes, km/h, pente).",
   "why.cardio": "{n} fois par semaine {min} minutes de cardio facile après la musculation, pour le cœur et la récupération.",
   "why.cardio.fat": "Pour perdre du gras, {n} fois par semaine {min} minutes de cardio après la musculation, un peu plus ensuite.",
-  "run.treadmill": "Tapis : {v} km/h, 1 % de pente"
+  "run.treadmill": "Tapis : {v} km/h, 1 % de pente",
+  "cardio.adapt.last": "Ajusté à tes dernières valeurs.",
+  "cardio.adapt.more": "Trop facile la dernière fois : 1 % de pente en plus (jusqu'à la limite).",
+  "cardio.adapt.less": "Trop dur ou douloureux la dernière fois : un peu moins aujourd'hui.",
+  "cardio.adapt.capped": "Ajusté à tes valeurs mais limité par sécurité. Progresse doucement."
 }

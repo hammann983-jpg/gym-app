@@ -309,7 +309,7 @@
   // Cardio nach dem Krafttraining. Anzahl und Dauer: Richtwerte (krafttraining-coach/sonderfaelle.md §5: 2x 20-40 Min. locker;
   // gewichtsmanagement.md: zusätzliches Ausdauertraining hilft beim Fettabbau). Laufband-Werte sind Vorschläge, der Sprechtest zählt.
   // Ausdauer-Pläne bekommen kein Extra-Cardio: dort ist es schon enthalten.
-  function cardio(a, plan, week, extra) {
+  function cardio(a, plan, week, extra, log) {
     if (!plan || plan.run) return null;
     var G = goals(a), off = !!(window.Q && window.Q.screening(a).nutriOff);
     var fat = !off && (G.indexOf("abnehmen") >= 0 || (G.indexOf("bodybuilding") >= 0 && a.bb_phase === "definition"));
@@ -322,11 +322,26 @@
     var gentle = !!plan.light || Number(a.alter) >= 60 || knee || bmi >= 30;
     var base = { anfaenger: [5, 4], fortgeschritten: [5.5, 6], erfahren: [5.5, 8] }[plan.level] || [5, 4];
     var kmh = gentle ? 4.5 : base[0], incline = gentle ? 1 : week <= 2 ? Math.max(1, base[1] - 2) : base[1];
-    return { count: count, min: min, kmh: kmh, incline: incline, gentle: gentle, fat: fat };
+    return adaptCardio({ count: count, min: min, kmh: kmh, incline: incline, gentle: gentle, fat: fat }, log);
+  }
+  // Tempo und Steigung folgen den zuletzt eingetragenen Werten und der Rückmeldung zur Einheit.
+  // Kleine Schritte, mit Obergrenze über dem Richtwert (sanfte Variante: enger, nie automatisch steigern).
+  function adaptCardio(c, log) {
+    var done = (log || []).filter(function (l) { return l.cardio && l.cardio.kmh > 0; });
+    if (!done.length) return c;
+    var l = done[done.length - 1], kmh = l.cardio.kmh, inc = l.cardio.incline, why = "last";
+    if (l.feel === "pain") { kmh = Math.min(kmh, c.kmh) - 0.5; inc = Math.min(inc, c.incline) - 2; why = "less"; }
+    else if (l.feel === "hard") { if (inc >= 1) inc -= 1; else kmh -= 0.3; why = "less"; }
+    else if (l.feel === "easy" && !c.gentle) { inc += 1; why = "more"; }
+    var maxK = c.kmh + (c.gentle ? 0.5 : 1.5), maxI = c.incline + (c.gentle ? 2 : 6);
+    c.kmh = Math.round(Math.max(3, Math.min(maxK, kmh)) * 10) / 10;
+    c.incline = Math.round(Math.max(0, Math.min(maxI, 15, inc)));
+    c.why = (kmh > maxK + 0.05 || inc > maxI) ? "capped" : why;
+    return c;
   }
   // In welchen Einheiten? Zuerst Oberkörper-Tage, schwere Beintage nur wenn nötig
-  function cardioAt(a, plan, week, extra, index) {
-    var c = cardio(a, plan, week, extra);
+  function cardioAt(a, plan, week, extra, index, log) {
+    var c = cardio(a, plan, week, extra, log);
     if (!c) return null;
     var order = plan.sessions.map(function (s, i) { return i; }).sort(function (x, y) {
       var hx = plan.sessions[x].type === "uk" || plan.sessions[x].type === "legs" ? 1 : 0, hy = plan.sessions[y].type === "uk" || plan.sessions[y].type === "legs" ? 1 : 0;
