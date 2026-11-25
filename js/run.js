@@ -3,7 +3,7 @@
 (function () {
   var RACE_KM = { "5k": 5, "10k": 10, hm: 21.0975, m: 42.195 };
   var HEAVY = { fb: 1, uk: 1, legs: 1 };
-  var HARD = { quality: 1, long: 1, race: 1 };
+  var HARD = { quality: 1, long: 1, race: 1, hybrid: 1, sim: 1, brick: 1, bikehard: 1, hyroxrace: 1, trirace: 1 };
 
   function E(min) { return { k: "easy", min: min }; }
   function Qy(min, q) { return q ? { k: "quality", min: min, q: [q] } : { k: "easy", min: min }; }
@@ -111,6 +111,7 @@
   // Woche n (ab 1). Nach dem Ende: leichte Woche der letzten Stufe zum Halten.
   function week(run, n) {
     if (n <= run.weeks.length) return run.weeks[n - 1];
+    if (run.hold) return run.hold;
     var r = run.weeks[run.weeks.length - 1].rung, i = r === "einstieg" ? 7 : 3, runs = copy(TABLES[r][i]);
     if (run.secondary && runs.length > 3) runs.splice(2, 1);
     return { rung: r, n: i + 1, of: TABLES[r].length, flag: "hold", runs: runs };
@@ -145,15 +146,16 @@
     } else if (Number((answers || {}).zeit_5km) > 0) { t5 = Number(answers.zeit_5km) * 60; src = "answer"; }
     if (!t5) return null;
     var p = t5 / 5, r = function (a, b) { return [p + a, p + b]; };
-    return { src: src, time5: t5, easy: r(60, 90), tempo: r(10, 20), interval: r(-10, -5), r5: r(0, 0), r10: r(10, 15), hm: r(25, 30) };
+    return { src: src, time5: t5, easy: r(60, 90), tempo: r(10, 20), interval: r(-10, -5), hyrox: r(20, 40), r5: r(0, 0), r10: r(10, 15), hm: r(25, 30) };
   }
 
   // Welche Tempo-Zone passt zur Einheit? null = nach Gefühl
   function zone(s, rung) {
-    if (s.k === "runwalk" || s.k === "cont") return null;
+    if ((s.sport && s.sport !== "run" && s.k !== "hybrid") || s.k === "runwalk" || s.k === "cont") return null;
+    if (s.k === "hybrid") return "hyrox";
     if (s.k === "race") return { "5k": "r5", "10k": "r10", hm: "hm" }[s.dist] || null;
     if (s.k !== "quality") return "easy";
-    var id = s.q[0].id;
+    var id = s.q && s.q[0] ? s.q[0].id : "";
     if (id === "tempo" || id === "km_tempo" || id === "mtempo") return "tempo";
     if (id === "fast" || id === "fast_norest") return "interval";
     if (id === "strides" || id === "strides_n" || id === "surges") return "easy";

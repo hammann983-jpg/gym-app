@@ -5,6 +5,7 @@
 <script src="../js/plan.js"></script>
 <script src="../js/progress.js"></script>
 <script src="../js/run.js"></script>
+<script src="../js/multi.js"></script>
 <script>
 var res = [], fails = 0;
 function ok(name, cond, info) { if (!cond) fails++; res.push((cond ? "OK   " : "FAIL ") + name + (cond ? "" : "  " + (info || ""))); }
@@ -61,7 +62,26 @@ Promise.all([get("../data/exercises.json"), get("../i18n/de.json"), get("../i18n
   var pr = Plan.generate(prof({}), EX, { today: today });
   ok("Läufer:innen: 2x Kraft, Hinweis Lauf, kein Ausdauer-Hinweis", pr.daysPerWeek === 2 && pr.notes.indexOf("run") >= 0 && pr.notes.indexOf("endurance_pending") < 0);
   var tri = Plan.generate(prof({ ziele: ["triathlon"], tri_distanz: "sprint" }), EX, { today: today });
-  ok("Triathlon: Ausdauer-Hinweis, noch keine Läufe", tri.notes.indexOf("endurance_pending") >= 0 && !tri.run && Plan.weekItems(tri, 1).length === tri.sessions.length);
+  ok("Triathlon: eigener Plan, 1x Kraft", tri.run.goal === "triathlon" && tri.sessions.length === 1 && tri.notes.indexOf("tri") >= 0 && tri.weeks === 12);
+  var minutes = w => w.reduce((s, x) => s + (x.min || 0), 0), tm = d => minutes(Multi.WEEKS[d]);
+  ok("Triathlon-Beispielwochen: Minuten ohne Kraft 350/440/645/840", [tm("sprint"), tm("olympisch"), tm("halb"), tm("voll")].join() === "350,440,645,840", [tm("sprint"), tm("olympisch"), tm("halb"), tm("voll")].join());
+  var badT = [];
+  ["sprint", "olympisch", "halb", "voll"].forEach(d => [2, 4, 8, 12, 16, 24, 30].forEach(n => {
+    var r = Multi.triathlon({ tri_distanz: d }, n);
+    if (r.weeks.length !== n || !r.weeks[n - 1].runs.some(x => x.k === "trirace") || r.weeks[n - 1].flag !== "taper") badT.push(d + n);
+    r.weeks.forEach(w => { if (w.runs.some(x => x.k !== "trirace" && !(x.min >= 15))) badT.push(d + n + " min"); if ((w.flag === "base" || w.flag === "deload") && w.runs.some(x => ["brick", "quality", "bikehard"].indexOf(x.k) >= 0)) badT.push(d + n + " hart"); });
+  }));
+  ok("Triathlon: jede Länge endet mit Taper und Rennen, Basis/Entlastung ohne harte Einheiten", !badT.length, badT.slice(0, 6).join());
+  var hx = Plan.generate(prof({ ziele: ["hyrox"], hyrox_division: "open_frauen", trainingstage: 3 }), EX, { today: today });
+  ok("Hyrox 3 Tage: 1x Kraft + locker + Hybrid", hx.sessions.length === 1 && Plan.weekItems(hx, 1).length === 3 && hx.run.weeks.length === 12 && hx.notes.indexOf("hyrox") >= 0);
+  var hx5 = Plan.generate(prof({ ziele: ["hyrox"], hyrox_division: "pro_maenner", trainingstage: 5 }), EX, { today: today });
+  ok("Hyrox 5 Tage: 2x Kraft + 3 Ausdauer", hx5.sessions.length === 2 && Plan.weekItems(hx5, 1).length === 5);
+  ok("Hyrox-Gewichte je Division, ohne Angabe keine", Multi.station(1, "open_frauen").indexOf("102 kg") > 0 && Multi.station(5, "pro_maenner").indexOf("2 × 32 kg") > 0 && Multi.station(1, "weiss_nicht").indexOf("kg") < 0);
+  ok("Hyrox: letzte Woche Taper mit Rennen, Simulation vor Entlastung", hx.run.weeks[11].runs.some(x => x.k === "hyroxrace") && hx.run.weeks[6].runs.some(x => x.k === "sim") && hx.run.weeks[3].flag === "deload");
+  var both = Plan.generate(prof({ ziele: ["triathlon", "marathon"], prioritaet: "marathon", tri_distanz: "sprint" }), EX, { today: today });
+  ok("Nur ein Ausdauer-Plan: Priorität gewinnt, mit Hinweis", both.run.goal === "marathon" && both.notes.indexOf("one_endurance") >= 0);
+  [tri, hx, hx5].forEach(p => { var flat = []; for (var w = 1; w <= p.weeks + 1; w++) { var runs = Run.week(p.run, w).runs; Plan.weekItems(p, w).forEach(x => flat.push(x.t === "gym" ? { gym: p.sessions[x.i].type } : { run: runs[x.j].k })); }
+    ok(p.run.goal + " " + p.sessions.length + "x Kraft: kein Beintag vor harter Einheit", !flat.some((x, i) => i && ["quality", "long", "hybrid", "sim", "brick", "bikehard", "trirace", "hyroxrace"].indexOf(x.run) >= 0 && ["fb", "uk", "legs"].indexOf(flat[i - 1].gym) >= 0)); });
   var n1 = Plan.weekItems(pr, 1).length, c = Plan.cursor(pr, n1);
   ok("Zeiger: nach Woche 1 beginnt Woche 2", c.week === 2 && c.pos === 0 && Plan.doneBefore(pr, 2) === n1);
   var mix = Plan.generate(prof({ ziele: ["laufen"], lauf_ziel: "hm", lauf_level: "ueber_30" }), EX, { today: today });
@@ -82,7 +102,11 @@ Promise.all([get("../data/exercises.json"), get("../i18n/de.json"), get("../i18n
   ok("4 Sprachen haben gleiche Schlüssel", keys.every(x => x === keys[0]));
   var need = [];
   Object.keys(T).forEach(r => T[r].forEach(w => w.forEach(s => { need.push("run.how." + (s.k)); (s.q || []).forEach(q => need.push("run.q." + q.id)); if (s.k !== "race") need.push("run.kind." + s.k); })));
-  need.push("run.kind.race", "run.q.km_fast_norest", "note.run");
+  need.push("run.kind.race", "run.q.km_fast_norest", "note.run", "note.tri", "note.hyrox", "note.one_endurance", "run.kind.trirace", "run.brick", "run.pace.hyrox", "run.safe.swim", "run.safe.bike", "sport.run", "sport.swim", "sport.bike", "sport.hyrox", "sport.tri");
+  var more = [];
+  ["sprint", "olympisch", "halb", "voll"].forEach(d => more = more.concat(Multi.triathlon({ tri_distanz: d }, 24).weeks));
+  more = more.concat(Multi.hyrox({}, 16, 3).weeks);
+  more.forEach(w => { need.push("run.flag." + w.flag); w.runs.forEach(s => { if (s.k !== "trirace") need.push("run.kind." + s.k, "run.how." + s.k); else need.push("run.how.trirace"); (s.q || []).forEach(q => need.push("run.q." + q.id)); }); });
   var lost = need.filter(k => !all[1][k]);
   ok("Alle Lauf-Texte vorhanden", !lost.length, lost.join());
 

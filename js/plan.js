@@ -179,16 +179,15 @@
     var wanted = Number(a.trainingstage) || 3;
     var notes = [], G = goals(a);
     var runPrio = prio(a) === "laufen" || prio(a) === "marathon"; // Läufer:innen: 2x Kraft pro Woche
-    var days = runPrio ? Math.min(wanted, 2) : endurance ? Math.min(wanted, 3) : Math.min(wanted, lvl === "erfahren" ? 6 : 5);
+    var days = runPrio ? Math.min(wanted, 2) : prio(a) === "triathlon" ? 1 : prio(a) === "hyrox" ? (wanted >= 5 ? 2 : 1) : Math.min(wanted, lvl === "erfahren" ? 6 : 5);
     if (!endurance && wanted > days) notes.push("cap_days");
-    if (G.indexOf("triathlon") >= 0 || G.indexOf("hyrox") >= 0) notes.push("endurance_pending");
     var muscle = G.indexOf("muskelaufbau") >= 0 || (G.indexOf("bodybuilding") >= 0 && a.bb_phase === "aufbau");
     var cut = G.indexOf("abnehmen") >= 0 || (G.indexOf("bodybuilding") >= 0 && a.bb_phase === "definition");
     if (muscle && G.indexOf("abnehmen") >= 0) notes.push("recomp");
     if ((G.indexOf("muskelaufbau") >= 0 || G.indexOf("bodybuilding") >= 0) && (G.indexOf("marathon") >= 0 || G.indexOf("triathlon") >= 0)) notes.push("endu_conflict");
     var pw = planWeeks(a, opts.today);
     pw.notes.forEach(function (n) { notes.push(n); });
-    var types = split(days, lvl);
+    var types = split(days, lvl).slice(0, days);
     var dauer = Number(a.dauer_min) || 60;
     var maxEx = MAXEX[dauer] || 6;
     var bb = G.indexOf("bodybuilding") >= 0 && dauer >= 75;
@@ -249,21 +248,35 @@
     });
 
     sessions.forEach(function (s) { s.focus = focusOf(s.exercises); });
-    var plan = { version: 3, goal: goal, level: lvl, daysPerWeek: days, weeks: pw.weeks, sessions: sessions, notes: notes, injuries: injuries, priority: prio(a), cut: cut, muscle: muscle };
-    var run = window.Run ? window.Run.build(a, opts.today, !runPrio) : null;
+    var plan = { version: 4, goal: goal, level: lvl, daysPerWeek: days, weeks: pw.weeks, sessions: sessions, notes: notes, injuries: injuries, priority: prio(a), cut: cut, muscle: muscle };
+    var run = endurancePlan(a, opts.today);
     if (run) {
       plan.run = run; plan.weeks = Math.max(pw.weeks, run.weeks.length);
-      notes.push("run");
+      notes.push(run.goal === "triathlon" ? "tri" : run.goal === "hyrox" ? "hyrox" : "run");
       if (run.short && notes.indexOf("event_soon") < 0) notes.push("event_soon");
+      var families = {}; G.forEach(function (g) { if (ENDU.indexOf(g) >= 0) families[g === "marathon" ? "laufen" : g] = 1; });
+      if (Object.keys(families).length > 1) notes.push("one_endurance");
     }
     return plan;
   }
 
   // Dauer inklusive Lauf-Plan (Laufen als Zusatzziel kann länger sein als der Kraft-Block)
   function totalWeeks(a, today) {
-    var w = planWeeks(a, today).weeks, p = prio(a);
-    var run = window.Run ? window.Run.build(a, today, p !== "laufen" && p !== "marathon") : null;
+    var w = planWeeks(a, today).weeks, run = endurancePlan(a, today);
     return run ? Math.max(w, run.weeks.length) : w;
+  }
+  // Es gibt immer nur einen Ausdauer-Plan: das wichtigste Ziel, sonst Triathlon vor Marathon, Hyrox, Laufen
+  function endurancePlan(a, today) {
+    var G = goals(a), p = prio(a);
+    var pick = ENDU.indexOf(p) >= 0 ? p : ["triathlon", "marathon", "hyrox", "laufen"].filter(function (g) { return G.indexOf(g) >= 0; })[0];
+    if (!pick) return null;
+    var main = pick === p, one = Object.assign({}, a, { ziele: [pick], prioritaet: pick });
+    if (pick === "laufen" || pick === "marathon") return window.Run ? window.Run.build(main ? a : one, today, !main) : null;
+    if (!window.Multi) return null;
+    var pw = planWeeks(one, today);
+    var r = pick === "triathlon" ? window.Multi.triathlon(a, pw.weeks) : window.Multi.hyrox(a, pw.weeks, main && Number(a.trainingstage) >= 4 ? 3 : 2);
+    r.short = pw.notes.indexOf("event_soon") >= 0; r.secondary = !main;
+    return r;
   }
   // Einheiten einer Woche in Reihenfolge: {t:"gym", i} oder {t:"run", j}
   function weekItems(plan, week) {

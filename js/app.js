@@ -168,12 +168,12 @@
   // ---------- Plan und Training ----------
   function ensurePlan() {
     if (!S.plan && EX.length && window.Plan.prio(S.answers)) { S.plan = window.Plan.generate(S.answers, EX); S.done = 0; S.draft = null; save(); }
-    else if (S.plan && !(S.plan.version >= 3) && EX.length) upgradePlan();
+    else if (S.plan && !(S.plan.version >= 4) && EX.length) upgradePlan();
     return S.plan;
   }
   // Alter Plan: neu erzeugen, volle erledigte Wochen bleiben erledigt
   function upgradePlan() {
-    var weeks = Math.floor((S.done || 0) / S.plan.sessions.length);
+    var weeks = window.Plan.cursor(S.plan, S.done || 0).week - 1;
     S.plan = window.Plan.generate(S.answers, EX); S.done = window.Plan.doneBefore(S.plan, weeks + 1); S.draft = null; save();
   }
   function sessionTitle(s) { return t("day." + s.type) + (s.letter ? " " + s.letter : ""); }
@@ -207,7 +207,7 @@
   }
   function notesHtml() {
     return (S.plan.notes || []).map(function (n) {
-      var txt = n === "cap_days" ? t("note.cap_days", { n: S.plan.daysPerWeek }) : n === "endurance_pending" ? t("note.endurance") : n === "recomp" ? t("note.recomp") : n === "endu_conflict" ? t("note.endu_conflict") : n === "event_soon" ? t("note.event_soon") : n === "run" ? t("note.run") : "";
+      var txt = n === "cap_days" ? t("note.cap_days", { n: S.plan.daysPerWeek }) : n === "endurance_pending" ? t("note.endurance") : n === "recomp" ? t("note.recomp") : n === "endu_conflict" ? t("note.endu_conflict") : n === "event_soon" ? t("note.event_soon") : n === "run" || n === "tri" || n === "hyrox" || n === "one_endurance" ? t("note." + n) : "";
       return txt ? '<div class="note">' + esc(txt) + "</div>" : "";
     }).join("");
   }
@@ -226,18 +226,28 @@
   }
 
   // ---------- Lauf-Einheiten ----------
-  function runTitle(r) { return r.k === "race" ? t("run.kind.race", { d: t("dist." + r.dist) }) : t("run.kind." + r.k); }
+  function runTitle(r) {
+    if (r.k === "race") return t("run.kind.race", { d: t("dist." + r.dist) });
+    if (r.k === "trirace") return t("run.kind.trirace", { d: t("o.tri_distanz." + r.dist) });
+    return t("run.kind." + r.k);
+  }
+  function sportName(r) { return t("sport." + (r.sport || "run")); }
   function runSize(r) {
     if (r.k === "race") return nf(window.Run.RACE_KM[r.dist], 1) + " km";
-    return r.km ? nf(r.km, 0) + " km" : r.min + " " + t("today.min");
+    if (r.km) return nf(r.km, 0) + " km";
+    if (r.size) return r.size + " " + t("today.min");
+    return r.min ? r.min + " " + t("today.min") : sportName(r);
   }
+  function hasSize(r) { return !!(r.km || r.size || r.min || r.k === "race"); }
   function runSteps(r) {
     if (r.k === "runwalk") return [t("run.rw", { n: r.n, run: nf(r.run, 1), walk: nf(r.walk, 1) })];
     if (r.k === "cont") return [t("run.cont", { m: r.run })];
-    return (r.q || []).map(function (q) {
+    var out = (r.q || []).map(function (q) {
       var id = q.id === "km_fast" && !q.r ? "km_fast_norest" : q.id;
       return t("run.q." + id, q);
     });
+    if (r.k === "brick") out.unshift(t("run.brick", { bike: r.bike, run: r.run }));
+    return out.concat((r.stations || []).map(function (s, i) { return (i + 1) + ". " + s; }));
   }
   function paceText(r, rung) {
     var P = window.Run.paces(S.answers, S.results), z = window.Run.zone(r, rung);
@@ -255,16 +265,18 @@
     var w = window.Run.week(p.run, c.week), r = w.runs[c.item.j];
     if (!(S.draft && S.draft.seq === c.seq && S.draft.run)) { S.draft = { seq: c.seq, run: true, min: "", km: "" }; save(); }
     var d = S.draft, pace = paceText(r, w.rung), zone = window.Run.zone(r, w.rung);
-    var h = '<div class="sec">' + esc(t("today.next")) + " · " + esc(t("run.title")) + '</div><h2 class="big">' + esc(runTitle(r)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span><span class="pill">' + esc(runSize(r)) + "</span></div>";
+    var h = '<div class="sec">' + esc(t("today.next")) + " · " + esc(sportName(r)) + '</div><h2 class="big">' + esc(runTitle(r)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span>' + (hasSize(r) ? '<span class="pill">' + esc(runSize(r)) + "</span>" : "") + "</div>";
     if (c.week > p.weeks) h += '<div class="note warn">' + esc(t("today.blockdone")) + "</div>";
     h += goalCard(weekGoalDone(), c.items.length) + notesHtml();
     h += '<div class="card"><h3>' + esc(weekLine(w)) + "</h3>";
-    h += '<div class="pex"><span>' + esc(t("run.total")) + "</span><span>" + esc(runSize(r)) + "</span></div>";
+    if (hasSize(r)) h += '<div class="pex"><span>' + esc(t("run.total")) + "</span><span>" + esc(runSize(r)) + "</span></div>";
     runSteps(r).forEach(function (x) { h += "<p><b>" + esc(x) + "</b></p>"; });
     h += "<p>" + esc(t("run.how." + r.k)) + "</p>";
     if (pace) h += "<p><b>" + esc(pace) + "</b></p>";
     else if (zone && !window.Run.paces(S.answers, S.results)) h += '<p class="qhint">' + esc(t("run.pace.none")) + "</p>";
-    if (r.k !== "race") h += '<p class="qhint">' + esc(t("run.warm")) + "</p>";
+    if ((r.sport || "run") === "run" && r.k !== "race") h += '<p class="qhint">' + esc(t("run.warm")) + "</p>";
+    if (r.sport === "swim" || r.sport === "tri") h += '<p class="qhint">' + esc(t("run.safe.swim")) + "</p>";
+    if (r.sport === "bike" || r.sport === "tri") h += '<p class="qhint">' + esc(t("run.safe.bike")) + "</p>";
     h += '</div><div class="note warn">' + esc(t("run.stop")) + "</div>";
     h += '<div class="card ci"><h3>' + esc(t("run.log.title")) + '</h3><div class="cirow"><label class="f"><input type="text" inputmode="decimal" data-run="min" value="' + esc(d.min) + '" placeholder="' + (r.min || "") + '" aria-label="' + esc(t("run.log.min")) + '"><i>' + esc(t("today.min")) + '</i></label><label class="f"><input type="text" inputmode="decimal" data-run="km" value="' + esc(d.km) + '" placeholder="' + (r.km || "") + '" aria-label="' + esc(t("run.log.km")) + '"><i>km</i></label></div><p class="qhint">' + esc(t("run.log.hint")) + "</p></div>";
     return h + '<p class="err" id="err" role="alert">' + esc(ui.err) + '</p><button class="btn" id="rundone">' + esc(t("run.log.done")) + '</button><button class="btn ghost" id="runskip">' + esc(t("run.log.skip")) + "</button>";
@@ -272,18 +284,19 @@
   function finishRun() {
     var c = cur(), p = S.plan, w = window.Run.week(p.run, c.week), r = w.runs[c.item.j], d = S.draft || {};
     var min = num(d.min || ""), km = num(d.km || "");
-    if (!(min >= 1 && min <= 600) || km < 0 || km > 100) { ui.err = t("run.log.invalid"); render(); return; }
-    S.log.push({ date: iso(new Date()), seq: c.seq, week: c.week, weeks: p.weeks, type: "run", kind: r.k, dist: r.dist || null, rung: w.rung, min: Math.round(min * 10) / 10, km: Math.round(km * 100) / 100, ex: [], vol: 0 });
+    if (!(min >= 1 && min <= 1200) || km < 0 || km > 400) { ui.err = t("run.log.invalid"); render(); return; }
+    S.log.push({ date: iso(new Date()), seq: c.seq, week: c.week, weeks: p.weeks, type: "run", sport: r.sport || "run", kind: r.k, dist: r.dist || null, rung: w.rung, min: Math.round(min * 10) / 10, km: Math.round(km * 100) / 100, ex: [], vol: 0 });
     S.done = (S.done || 0) + 1; S.draft = null; ui.err = "";
     ui.finish = { run: true, idx: S.log.length - 1 }; save(); render(); window.scrollTo(0, 0);
   }
   function runStats(l) {
     var s = [[t("run.stat.time"), nf(l.min, 1), t("today.min")]];
-    if (l.km) s.push([t("run.stat.dist"), nf(l.km, 2), "km"], [t("rs.pace"), window.Progress.fmtTime(l.min * 60 / l.km), "/km"]);
+    if (l.km) s.push([t("run.stat.dist"), nf(l.km, 2), "km"]);
+    if (l.km && (l.sport || "run") === "run") s.push([t("rs.pace"), window.Progress.fmtTime(l.min * 60 / l.km), "/km"]);
     return s;
   }
   function logTitle(l) {
-    if (l.type === "run") return t("run.title") + " · " + runTitle({ k: l.kind, dist: l.dist });
+    if (l.type === "run") return sportName(l) + " · " + runTitle({ k: l.kind, dist: l.dist });
     return t("day." + l.type) + (l.letter ? " " + l.letter : "");
   }
 
@@ -360,7 +373,7 @@
       var isDone = (S.done || 0) > before + i, tick = isDone ? '<span class="pill acc">' + icon("check") + "</span>" : "";
       if (it.t === "run") {
         var r = rw.runs[it.j], pace = paceText(r, rw.rung);
-        h += '<div class="card psess"><div class="phead"><div><h3>' + esc(runTitle(r)) + '</h3><small class="fl">' + esc(t("run.title") + " · " + runSize(r)) + "</small></div>" + tick + "</div>";
+        h += '<div class="card psess"><div class="phead"><div><h3>' + esc(runTitle(r)) + '</h3><small class="fl">' + esc(sportName(r) + (runSize(r) === sportName(r) ? "" : " · " + runSize(r))) + "</small></div>" + tick + "</div>";
         runSteps(r).forEach(function (x) { h += '<p class="qhint">' + esc(x) + "</p>"; });
         if (pace) h += '<p class="qhint">' + esc(pace) + "</p>";
         h += "</div>";
