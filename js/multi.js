@@ -43,7 +43,7 @@
       hy.q.push(sim ? { id: ph === "specific" ? "sim_full" : "sim_half" } : { id: "hybrid", n: st.length });
       if (ph === "endurance" && !sim) hy.q.push({ id: "hx_weight" });
       if (ph === "specific") hy.q.push({ id: "hx_race" });
-      hy.stations = st;
+      hy.stations = st; hy.from = sim && ph === "specific" ? 0 : from;
       var runs = [easy, hy];
       if (count >= 3 && !light) runs.splice(1, 0, { k: "quality", sport: "run", q: [{ id: n % 2 === 1 ? "hx_interval" : "hx_tempo" }] });
       if (n === total) runs = [easy, hy, { k: "hyroxrace", sport: "hyrox" }];

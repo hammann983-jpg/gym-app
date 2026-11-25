@@ -23,7 +23,7 @@
     if (S.plan && S.plan.version !== 2) { S.plan = null; S.draft = null; changed = true; }
     if (changed) save();
   })();
-  var ui = { tab: "today", sub: { progress: "training", coach: "qa", nutrition: "mealplan" }, profile: false, err: "", finish: null, planWeek: null, nday: (new Date().getDay() + 6) % 7, nopen: {}, info: null };
+  var ui = { tab: "today", sub: { progress: "training", coach: "check", nutrition: "mealplan" }, profile: false, err: "", finish: null, planWeek: null, nday: (new Date().getDay() + 6) % 7, nopen: {}, info: null };
 
   var t = function (k, v) { return window.I18N.t(k, v); };
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -169,7 +169,7 @@
   // ---------- Plan und Training ----------
   function ensurePlan() {
     if (!S.plan && EX.length && window.Plan.prio(S.answers)) { S.plan = window.Plan.generate(S.answers, EX); S.done = 0; S.draft = null; save(); }
-    else if (S.plan && !(S.plan.version >= 4) && EX.length) upgradePlan();
+    else if (S.plan && !(S.plan.version >= 5) && EX.length) upgradePlan();
     return S.plan;
   }
   // Alter Plan: neu erzeugen, volle erledigte Wochen bleiben erledigt
@@ -208,7 +208,7 @@
   }
   function notesHtml() {
     return (S.plan.notes || []).map(function (n) {
-      var txt = n === "cap_days" ? t("note.cap_days", { n: S.plan.daysPerWeek }) : n === "endurance_pending" ? t("note.endurance") : n === "recomp" ? t("note.recomp") : n === "endu_conflict" ? t("note.endu_conflict") : n === "event_soon" ? t("note.event_soon") : n === "run" || n === "tri" || n === "hyrox" || n === "one_endurance" ? t("note." + n) : "";
+      var txt = n === "cap_days" ? t("note.cap_days", { n: S.plan.daysPerWeek }) : n === "endurance_pending" ? t("note.endurance") : n === "recomp" ? t("note.recomp") : n === "endu_conflict" ? t("note.endu_conflict") : n === "event_soon" ? t("note.event_soon") : n === "run" || n === "tri" || n === "hyrox" || n === "one_endurance" || n === "light" ? t("note." + n) : "";
       return txt ? '<div class="note">' + esc(txt) + "</div>" : "";
     }).join("");
   }
@@ -218,7 +218,7 @@
     if (S.draft && S.draft.seq === c.seq && S.draft.ex && s.exercises.every(function (x) { return S.draft.ex[x.id]; })) return S.draft;
     var d = { seq: c.seq, ex: {} };
     s.exercises.forEach(function (x) {
-      var n = window.Plan.setsFor(x, c.week), arr = [];
+      var n = setsAt(x, c.week), arr = [];
       for (var i = 0; i < n; i++) arr.push({ kg: "", reps: "", done: false });
       d.ex[x.id] = arr;
     });
@@ -231,6 +231,15 @@
     if (r.k === "race") return t("run.kind.race", { d: t("dist." + r.dist) });
     if (r.k === "trirace") return t("run.kind.trirace", { d: t("o.tri_distanz." + r.dist) });
     return t("run.kind." + r.k);
+  }
+  function coachState() { return window.Coach.fresh(S.coach); }
+  function adj(r) { var lang = window.I18N.lang(); return window.Coach.applyRun(r, coachState(), function (i) { return window.Multi.station(i, S.answers.hyrox_division); }); }
+  function setsAt(x, week) { var n = window.Plan.setsFor(x, week), d = coachState().sets; return d ? Math.max(2, Math.min(5, n + d)) : n; }
+  function coachReview() {
+    var out = window.Coach.review(S.coach, { log: S.log, light: !!(S.plan && S.plan.light), today: iso(new Date()) });
+    if (out.changed.length) { S.coach = out.state; S.draft = null; save(); }
+    else S.coach = out.state;
+    return out.changed;
   }
   function sportName(r) { return t("sport." + (r.sport || "run")); }
   function runSize(r) {
@@ -263,12 +272,12 @@
     return '<div class="card ringrow">' + ring(got, goal) + "<div><h3>" + esc(t("today.goal")) + "</h3><p>" + esc(t("today.of", { done: got, total: goal })) + "</p></div></div>";
   }
   function runToday(p, c) {
-    var w = window.Run.week(p.run, c.week), r = w.runs[c.item.j];
+    var w = window.Run.week(p.run, c.week), r = adj(w.runs[c.item.j]);
     if (!(S.draft && S.draft.seq === c.seq && S.draft.run)) { S.draft = { seq: c.seq, run: true, min: "", km: "" }; save(); }
     var d = S.draft, pace = paceText(r, w.rung), zone = window.Run.zone(r, w.rung);
     var h = '<div class="sec">' + esc(t("today.next")) + " · " + esc(sportName(r)) + '</div><h2 class="big">' + esc(runTitle(r)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span>' + (hasSize(r) ? '<span class="pill">' + esc(runSize(r)) + "</span>" : "") + "</div>";
     if (c.week > p.weeks) h += '<div class="note warn">' + esc(t("today.blockdone")) + "</div>";
-    h += goalCard(weekGoalDone(), c.items.length) + notesHtml();
+    h += goalCard(weekGoalDone(), c.items.length) + cardioCard() + notesHtml();
     h += '<div class="card"><h3>' + esc(weekLine(w)) + "</h3>";
     if (hasSize(r)) h += '<div class="pex"><span>' + esc(t("run.total")) + "</span><span>" + esc(runSize(r)) + "</span></div>";
     runSteps(r).forEach(function (x) { h += "<p><b>" + esc(x) + "</b></p>"; });
@@ -283,10 +292,10 @@
     return h + '<p class="err" id="err" role="alert">' + esc(ui.err) + '</p><button class="btn" id="rundone">' + esc(t("run.log.done")) + '</button><button class="btn ghost" id="runskip">' + esc(t("run.log.skip")) + "</button>";
   }
   function finishRun() {
-    var c = cur(), p = S.plan, w = window.Run.week(p.run, c.week), r = w.runs[c.item.j], d = S.draft || {};
+    var c = cur(), p = S.plan, w = window.Run.week(p.run, c.week), r = adj(w.runs[c.item.j]), d = S.draft || {};
     var min = num(d.min || ""), km = num(d.km || "");
     if (!(min >= 1 && min <= 1200) || km < 0 || km > 400) { ui.err = t("run.log.invalid"); render(); return; }
-    S.log.push({ date: iso(new Date()), seq: c.seq, week: c.week, weeks: p.weeks, type: "run", sport: r.sport || "run", kind: r.k, dist: r.dist || null, rung: w.rung, min: Math.round(min * 10) / 10, km: Math.round(km * 100) / 100, ex: [], vol: 0 });
+    S.log.push({ date: iso(new Date()), seq: c.seq, week: c.week, weeks: p.weeks, type: "run", sport: r.sport || "run", kind: r.k, dist: r.dist || null, rung: w.rung, st: (r.stations || []).length, min: Math.round(min * 10) / 10, km: Math.round(km * 100) / 100, ex: [], vol: 0 });
     S.done = (S.done || 0) + 1; S.draft = null; ui.err = "";
     ui.finish = { run: true, idx: S.log.length - 1 }; save(); render(); window.scrollTo(0, 0);
   }
@@ -301,18 +310,29 @@
     return t("day." + l.type) + (l.letter ? " " + l.letter : "");
   }
 
+  function feelBox(i) {
+    var l = S.log[i]; if (!l) return "";
+    return '<div class="feel"><b>' + esc(t("feel.title")) + '</b><div class="chips">' + ["easy", "ok", "hard", "pain"].map(function (k) { return '<button class="chip" data-feel="' + k + '" data-i="' + i + '" aria-pressed="' + (l.feel === k) + '">' + esc(t("feel." + k)) + "</button>"; }).join("") + "</div>" +
+      (l.feel === "pain" ? '<div class="note red">' + esc(t("feel.paintext")) + "</div>" : l.feel ? '<p class="qhint">' + esc(t("feel.thanks")) + "</p>" : "") + "</div>";
+  }
+  function cardioCard() {
+    var n = coachState().cardio; if (!n) return "";
+    var today = iso(new Date()), ws = weekStartIso(today), done = (S.cardio || []).filter(function (d) { return weekStartIso(d) === ws; }).length;
+    return '<div class="card cardio"><h3>' + esc(t("cardio.title")) + "</h3><p>" + esc(t("cardio.text", { n: n })) + "</p><p><b>" + esc(t("today.of", { done: Math.min(done, n), total: n })) + "</b></p>" + (done < n ? '<button class="btn ghost" id="cardiodone">' + esc(t("cardio.done")) + "</button>" : "") + "</div>";
+  }
   function todayView() {
     if (ui.finish && ui.finish.run) {
       var rl = S.log[ui.finish.idx];
-      return '<div class="card done"><h3>' + esc(t("today.done.title")) + '</h3><div class="stats two">' + runStats(rl).map(function (x) { return '<div class="stat"><small>' + esc(x[0]) + "</small><b>" + esc(x[1] + " " + x[2]) + "</b></div>"; }).join("") + '</div><button class="btn" data-share="' + ui.finish.idx + '">' + esc(t("share.btn")) + '</button><button class="btn ghost" id="finok">' + esc(t("today.done.ok")) + "</button></div>";
+      return '<div class="card done"><h3>' + esc(t("today.done.title")) + '</h3><div class="stats two">' + runStats(rl).map(function (x) { return '<div class="stat"><small>' + esc(x[0]) + "</small><b>" + esc(x[1] + " " + x[2]) + "</b></div>"; }).join("") + "</div>" + feelBox(ui.finish.idx) + '<button class="btn" data-share="' + ui.finish.idx + '">' + esc(t("share.btn")) + '</button><button class="btn ghost" id="finok">' + esc(t("today.done.ok")) + "</button></div>";
     }
     if (ui.finish) {
       var f = ui.finish, h = '<div class="card done"><h3>' + esc(t("today.done.title")) + '</h3><div class="stats two"><div class="stat"><small>' + esc(t("today.done.vol")) + "</small><b>" + nf(f.vol, 0) + ' kg</b></div><div class="stat"><small>' + esc(t("today.done.sets")) + "</small><b>" + f.sets + "</b></div></div>";
       f.prs.forEach(function (p) { h += '<div class="note warn">' + esc(t("today.done.pr")) + ": " + esc(p) + "</div>"; });
-      return h + '<button class="btn" data-share="' + f.idx + '">' + esc(t("share.btn")) + '</button><button class="btn ghost" id="finok">' + esc(t("today.done.ok")) + "</button></div>";
+      return h + feelBox(f.idx) + '<button class="btn" data-share="' + f.idx + '">' + esc(t("share.btn")) + '</button><button class="btn ghost" id="finok">' + esc(t("today.done.ok")) + "</button></div>";
     }
     var p = ensurePlan();
     if (!p) return "";
+    runAuto();
     var c = cur();
     if (c.item.t === "run") return runToday(p, c);
     var s = p.sessions[c.idx], d = ensureDraft(c), deload = window.Plan.isDeload(c.week);
@@ -321,7 +341,7 @@
     if (c.week > p.weeks) h += '<div class="note warn">' + esc(t("today.blockdone")) + "</div>";
     if (deload) h += '<div class="note warn">' + esc(t("today.deload")) + "</div>";
     h += goalCard(got, goal);
-    h += notesHtml();
+    h += cardioCard() + notesHtml();
     h += '<p class="qhint">' + esc(t("today.hint")) + "</p>";
     s.exercises.forEach(function (x, i) {
       var hist = history(x.id), sug = window.Plan.suggest(x, hist), n = d.ex[x.id].length;
@@ -373,7 +393,7 @@
     window.Plan.weekItems(p, w).forEach(function (it, i) {
       var isDone = (S.done || 0) > before + i, tick = isDone ? '<span class="pill acc">' + icon("check") + "</span>" : "";
       if (it.t === "run") {
-        var r = rw.runs[it.j], pace = paceText(r, rw.rung);
+        var r = w >= c.week ? adj(rw.runs[it.j]) : rw.runs[it.j], pace = paceText(r, rw.rung);
         h += '<div class="card psess"><div class="phead"><div><h3>' + esc(runTitle(r)) + '</h3><small class="fl">' + esc(sportName(r) + (runSize(r) === sportName(r) ? "" : " · " + runSize(r))) + "</small></div>" + tick + "</div>";
         runSteps(r).forEach(function (x) { h += '<p class="qhint">' + esc(x) + "</p>"; });
         if (pace) h += '<p class="qhint">' + esc(pace) + "</p>";
@@ -383,7 +403,7 @@
       var s = p.sessions[it.i];
       h += '<div class="card psess"><div class="phead"><div><h3>' + esc(headline(s)) + "</h3><small class=\"fl\">" + esc(sessionTitle(s) + (s.type === "fb" ? " · " + focusLine(s) : "")) + "</small></div>" + tick + "</div>";
       s.exercises.forEach(function (x) {
-        h += '<div class="pex"><span>' + esc(exName(x.id)) + "</span><span>" + window.Plan.setsFor(x, w) + " × " + esc(x.text) + "</span></div>";
+        h += '<div class="pex"><span>' + esc(exName(x.id)) + "</span><span>" + (w >= c.week ? setsAt(x, w) : window.Plan.setsFor(x, w)) + " × " + esc(x.text) + "</span></div>";
       });
       h += "</div>";
     });
@@ -404,7 +424,7 @@
 
   // ---------- App ----------
   var TABS = ["today", "plan", "progress", "nutrition", "coach"];
-  var SUBS = { progress: ["training", "weight", "results", "races"], coach: ["qa", "goals"], nutrition: ["mealplan", "shopping"] };
+  var SUBS = { progress: ["training", "weight", "results", "races"], coach: ["check", "qa", "goals"], nutrition: ["mealplan", "shopping"] };
 
   // ---------- Ernährung ----------
   function foodName(id) { var n = FOOD.foods[id].n; return n[window.I18N.lang()] || n.en; }
@@ -433,7 +453,9 @@
     if (!adv || !ws.length) return;
     var log = S.kcalLog || [], last = log.length ? log[log.length - 1].date : null;
     var d = window.Progress.autoAdjust(adv, S.kcalAdj || 0, last, iso(new Date()), ws[0].date);
-    if (d !== 0) { S.kcalAdj = (S.kcalAdj || 0) + d; S.kcalLog = log.concat([{ date: iso(new Date()), delta: d, state: adv.state }]); save(); }
+    if (d === 0) return;
+    var step = window.Coach.weightStep(S.coach, adv, d, !!(S.plan && S.plan.run) || !!(S.plan && S.plan.light), iso(new Date()));
+    S.coach = step.state; S.kcalAdj = (S.kcalAdj || 0) + step.kcal; S.kcalLog = log.concat([{ date: iso(new Date()), delta: step.kcal, state: adv.state }]); save();
   }
 
   function chartSvg(pts, goal) {
@@ -560,7 +582,28 @@
     return h + '<p class="qhint">' + esc(t("nutri.weeknote")) + " " + esc(t("nutri.disc")) + "</p>";
   }
 
+  function coachCheck() {
+    var s = coachState(), h = '<p class="qhint">' + esc(t("check.intro")) + "</p>";
+    var rows = [[t("check.sets"), s.sets > 0 ? "+" + s.sets : String(s.sets)], [t("check.endu"), Math.round(s.endu * 100) + " %"]];
+    if (S.plan && S.plan.run && S.plan.run.goal === "hyrox") rows.push([t("check.hx"), s.hx > 0 ? "+" + s.hx : String(s.hx)]);
+    rows.push([t("check.cardio"), s.cardio + " ×"], [t("check.kcal"), (S.kcalAdj > 0 ? "+" : "") + (S.kcalAdj || 0)]);
+    h += '<div class="card"><h3>' + esc(t("check.now")) + "</h3>" + rows.map(function (r) { return '<div class="pex"><span>' + esc(r[0]) + "</span><span>" + esc(r[1]) + "</span></div>"; }).join("") + "</div>";
+    var ad = S.plan ? window.Coach.adherence(S.log, window.Plan.weekItems(S.plan, cur().week).length, iso(new Date())) : null;
+    if (ad) h += '<div class="note ' + (ad.low ? "warn" : "") + '">' + esc(t(ad.low ? "check.adh.low" : "check.adh.ok", { done: ad.done, total: ad.planned })) + "</div>";
+    var adv = weightAdvice();
+    if (adv && adv.mode === "cut" && adv.state === "tooslow") h += '<div class="card"><h3>' + esc(t("check.plateau")) + '</h3><ul class="tips">' + [1, 2, 3, 4].map(function (i) { return "<li>" + esc(t("check.plateau." + i)) + "</li>"; }).join("") + "</ul></div>";
+    var hist = s.history.slice().reverse();
+    h += '<div class="sec">' + esc(t("check.changes")) + "</div>";
+    if (!hist.length) return h + '<div class="card"><p>' + esc(t("check.none")) + "</p></div>";
+    var first = true;
+    hist.slice(0, 15).forEach(function (c) {
+      var can = !c.undone && first; if (!c.undone) first = false;
+      h += '<div class="card change' + (c.undone ? " undone" : "") + '"><small>' + esc(new Date(c.date + "T12:00:00").toLocaleDateString(window.I18N.lang(), { day: "numeric", month: "long" })) + (c.undone ? " · " + esc(t("check.undone")) : "") + "</small><p>" + esc(t("check.c." + c.key, c.info || {})) + "</p>" + (can ? '<button class="swap" id="coachundo">' + esc(t("check.undo")) + "</button>" : "") + "</div>";
+    });
+    return h;
+  }
   function coachView() {
+    if (ui.sub.coach === "check") { ensurePlan(); runAuto(); coachReview(); return coachCheck(); }
     if (ui.sub.coach === "goals") {
       var G = window.Plan.goals(S.answers);
       return '<div class="card"><h3>' + esc(t("coach.goals.title")) + "</h3><p>" + esc(G.map(function (g) { return t("o.ziele." + g); }).join(", ")) + "</p><p>" + esc(t("coach.goals.text")) + '</p><button class="btn" id="chgoals">' + esc(t("coach.goals.change")) + "</button></div>";
@@ -760,6 +803,11 @@
       };
     });
     on("finish", finishSession);
+    $app.querySelectorAll("[data-feel]").forEach(function (b) {
+      b.onclick = function () { var l = S.log[Number(b.getAttribute("data-i"))]; if (!l) return; l.feel = b.getAttribute("data-feel"); save(); coachReview(); render(); };
+    });
+    on("cardiodone", function () { S.cardio = (S.cardio || []).concat([iso(new Date())]); save(); render(); });
+    on("coachundo", function () { var u = window.Coach.undo(S.coach); S.coach = u.state; S.kcalAdj = (S.kcalAdj || 0) + u.kcal; S.draft = null; save(); render(); });
     on("rundone", finishRun);
     on("runskip", function () { S.done = (S.done || 0) + 1; S.draft = null; ui.err = ""; save(); render(); window.scrollTo(0, 0); });
     $app.querySelectorAll("[data-run]").forEach(function (el) { el.oninput = function () { if (S.draft && S.draft.run) { S.draft[el.getAttribute("data-run")] = el.value; save(); } }; });

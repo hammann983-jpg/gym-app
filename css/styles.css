@@ -246,3 +246,13 @@ main > .btn.ghost { box-shadow: none; }
 .card.meal.pre { border-color: var(--accent-2); }
 .card.meal small.prewhen { color: var(--accent-2); font-weight: 600; }
 .trainbtn + .note { margin-top: 10px; }
+
+/* Coach */
+.feel { display: grid; gap: 4px; }
+.feel .chips { margin: 4px 0; }
+.card.cardio { margin-bottom: 14px; border-color: var(--accent-2); }
+.card.change { padding: 14px 16px; gap: 6px; margin-top: 10px; }
+.card.change small { color: var(--accent); font-weight: 600; font-size: 12px; }
+.card.change p { color: var(--text); }
+.card.change.undone { opacity: .5; }
+.card.change .swap { justify-self: start; }

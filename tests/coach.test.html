@@ -1,0 +1,57 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Coach Test</title>
+<body style="font-family:system-ui;padding:20px"><h1>Coach-Tests</h1><pre id="out">läuft…</pre>
+<script src="../js/questionnaire.js"></script>
+<script src="../js/plan.js"></script>
+<script src="../js/progress.js"></script>
+<script src="../js/run.js"></script>
+<script src="../js/multi.js"></script>
+<script src="../js/coach.js"></script>
+<script>
+var res = [], fails = 0;
+function ok(name, cond, info) { if (!cond) fails++; res.push((cond ? "OK   " : "FAIL ") + name + (cond ? "" : "  " + (info || ""))); }
+function L(type, feel, date, extra) { return Object.assign({ type: type, feel: feel, date: date || "2026-11-20" }, extra || {}); }
+function rv(state, log, o) { return Coach.review(state, Object.assign({ log: log, today: "2026-11-25" }, o || {})); }
+fetch("../data/exercises.json", { cache: "no-cache" }).then(r => r.json()).then(function (d) {
+  var EX = d.uebungen;
+  var a = rv({}, [L("fb", "hard"), L("fb", "hard")]);
+  ok("2x zu hart (Kraft): ein Satz weniger", a.state.sets === -1 && a.changed[0] === "gym_down" && a.state.endu === 1);
+  ok("Keine zweite Änderung in derselben Woche", rv(a.state, [L("fb", "hard"), L("fb", "hard"), L("fb", "hard"), L("fb", "hard")]).changed.length === 0);
+  ok("3x zu leicht (Ausdauer): +5 %", rv({}, [L("run", "easy"), L("run", "easy"), L("run", "easy")]).state.endu === 1.05);
+  ok("2x leicht reicht nicht", rv({}, [L("run", "easy"), L("run", "easy")]).changed.length === 0);
+  ok("Bei gelber Gesundheitsantwort nie steigern", rv({}, [L("run", "easy"), L("run", "easy"), L("run", "easy")], { light: true }).changed.length === 0);
+  var p = rv({}, [L("run", "pain")]);
+  ok("Schmerz: sofort weniger", p.state.endu === 0.9 && p.changed[0] === "endu_pain");
+  ok("Nach Schmerz 14 Tage keine Steigerung", rv({}, [L("fb", "pain", "2026-11-18"), L("run", "easy"), L("run", "easy"), L("run", "easy")]).changed.indexOf("endu_up") < 0);
+  var st = {}; for (var i = 0; i < 20; i++) st = Coach.review(st, { log: Array(i * 2 + 2).fill(L("run", "hard")), today: "2027-0" + (1 + Math.floor(i / 4)) + "-" + (1 + (i % 4) * 7 < 10 ? "0" : "") + (1 + (i % 4) * 7) }).state;
+  ok("Grenzen: nie unter 80 %", st.endu >= 0.8, st.endu);
+  var hxl = [L("run", "ok", "2026-11-10", { sport: "hyrox", st: 4, min: 40 }), L("run", "ok", "2026-11-24", { sport: "hyrox", st: 4, min: 37 })];
+  var h = rv({}, hxl); ok("Hyrox schneller: mehr Stationen", h.state.hx === 1 && h.changed[0] === "hx_up" && h.state.history[0].info.pct === 8);
+  ok("Hyrox: gleiches Ergebnis zählt nur einmal", rv(h.state, hxl, { today: "2026-12-10" }).changed.length === 0);
+  ok("Hyrox andere Stationszahl wird nicht verglichen", rv({}, [hxl[0], L("run", "ok", "2026-11-24", { sport: "hyrox", st: 2, min: 20 })]).changed.length === 0);
+  var item = Multi.hyrox({ hyrox_division: "open_frauen" }, 12, 2).weeks[0].runs[1];
+  var more = Coach.applyRun(item, { hx: 1 }, i => Multi.station(i, "open_frauen"));
+  ok("Hyrox Stufe +1: 5 Stationen", more.stations.length === 5 && more.q[0].n === 5 && item.stations.length === 4, more.stations.length);
+  ok("Ausdauer 90 %: kürzer, Rennen bleibt", Coach.applyRun({ k: "easy", min: 50 }, { endu: 0.9 }).min === 45 && Coach.applyRun({ k: "long", km: 20 }, { endu: 0.9 }).km === 18 && Coach.applyRun({ k: "race", dist: "5k" }, { endu: 0.9 }).k === "race");
+  var w1 = Coach.weightStep({}, { mode: "cut", state: "tooslow" }, -100, false, "2026-11-25");
+  ok("Gewicht stagniert: zuerst Cardio, Kalorien unverändert", w1.state.cardio === 1 && w1.kcal === 0);
+  var w2 = Coach.weightStep(w1.state, { mode: "cut" }, -100, false, "2026-12-10"), w3 = Coach.weightStep(w2.state, { mode: "cut" }, -100, false, "2026-12-25");
+  ok("Danach zweites Cardio, erst dann Kalorien", w2.state.cardio === 2 && w3.kcal === -100 && w3.state.cardio === 2);
+  ok("Zu schnell: Cardio wieder raus", Coach.weightStep(w2.state, { mode: "cut" }, 100, false, "2026-12-25").state.cardio === 1);
+  ok("Mit Ausdauer-Plan nur Kalorien", Coach.weightStep({}, { mode: "cut" }, -100, true, "2026-11-25").kcal === -100);
+  var u = Coach.undo(w3.state); ok("Rückgängig nimmt Kalorien zurück", u.kcal === 100);
+  ok("Rückgängig nimmt Cardio zurück", Coach.undo(w1.state).state.cardio === 0);
+  var prof = { ziele: ["triathlon"], tri_distanz: "olympisch", kraft_erfahrung: "m6_24", trainingstage: 5, dauer_min: 60, ort: "studio", verletzungen: ["keine"], s4: "ja" };
+  ok("Screening erkennt Gelb", Q.screening(prof).yellow === true);
+  [["triathlon"], ["marathon"], ["hyrox"], ["laufen"]].forEach(function (z) {
+    var pl = Plan.generate(Object.assign({}, prof, { ziele: z, lauf_ziel: "hm", lauf_level: "ueber_30" }), EX, { today: new Date("2026-11-25T12:00:00") }), bad = [];
+    for (var w = 1; w <= pl.weeks + 1; w++) Run.week(pl.run, w).runs.forEach(function (r) { if (["quality", "bikehard", "sim"].indexOf(r.k) >= 0) bad.push(w + r.k); (r.q || []).forEach(function (q) { if (["hybrid", "swim_endu"].indexOf(q.id) < 0) bad.push(w + q.id); }); });
+    ok("Gelb " + z + ": keine Intervalle, kein Wettkampftempo", !bad.length && pl.light, bad.slice(0, 5).join());
+  });
+  var gp = Plan.generate(Object.assign({}, prof, { ziele: ["kraft"] }), EX);
+  ok("Gelb Kraft: leichtes Schema, höchstens 3 Sätze, mindestens 8 Wiederholungen", gp.light && gp.sessions.every(s => s.exercises.every(x => x.sets <= 3 && (x.timed || x.bodyweight || x.lo >= 8))));
+  ok("Adhärenz", Coach.adherence([L("fb", null, "2026-11-01"), L("fb", null, "2026-11-20")], 3, "2026-11-25").low === true && Coach.adherence([L("fb", null, "2026-11-20")], 3, "2026-11-25") === null);
+  document.getElementById("out").textContent = (fails ? fails + " FEHLER" : "ALLE " + res.length + " TESTS GRÜN") + "\n\n" + res.join("\n");
+}).catch(e => { document.getElementById("out").textContent = "FEHLER " + e.stack; });
+</script>
