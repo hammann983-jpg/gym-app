@@ -202,3 +202,19 @@ a.btn.vid { display: block; text-align: center; text-decoration: none; }
 .shop[aria-pressed="true"] .sn, .shop[aria-pressed="true"] .sa { text-decoration: line-through; opacity: .5; }
 .shop[aria-pressed="true"] .tick { background: var(--accent-2); border-color: var(--accent-2); }
 .shop[aria-pressed="true"] .tick::after { content: ""; width: 9px; height: 5px; border-left: 2px solid #00222A; border-bottom: 2px solid #00222A; transform: rotate(-45deg) translate(1px, -1px); }
+
+/* Fortschritt */
+.card.ci { gap: 12px; }
+.cirow { display: flex; gap: 8px; align-items: stretch; }
+.cirow .f { flex: 1; }
+.card.ci input[type="text"], .card.ci input[type="date"], .card.ci select { width: 100%; background: var(--surface-2); border: 1px solid transparent; border-radius: 12px; padding: 12px; font: 600 16px var(--font-body); min-height: 48px; color: var(--text); }
+.card.ci select { appearance: none; }
+.card.ci input:focus, .card.ci select:focus { outline: 2px solid var(--accent); }
+.cirow input[type="date"] { flex: 1.3; }
+.cirow .btn { padding: 0 18px; min-height: 48px; font-size: 16px; }
+.card.ci .btn { width: 100%; }
+.cirow .btn { width: auto; }
+.chartc { padding: 10px; margin: 12px 0; }
+.chart { width: 100%; height: auto; display: block; }
+.card.race { gap: 10px; margin-top: 10px; }
+.card.race small.fl { margin-top: 0; }

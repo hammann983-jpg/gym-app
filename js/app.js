@@ -309,7 +309,111 @@
   function foodName(id) { var n = FOOD.foods[id].n; return n[window.I18N.lang()] || n.en; }
   function mealTitle(m) { return m.t[window.I18N.lang()] || m.t.en; }
   function itemText(it) { return (it.count > 0 ? it.count + " × " : it.amount + " g ") + foodName(it.id); }
-  function nutriWeek() { return window.Nutrition.week(S.answers, FOOD, new Date(), S.nswap && S.nswap[window.Nutrition.weekInfo(new Date()).key]); }
+  function nutriWeek() { runAuto(); return window.Nutrition.week(S.answers, FOOD, new Date(), S.nswap && S.nswap[window.Nutrition.weekInfo(new Date()).key], S.kcalAdj || 0); }
+
+  // ---------- Fortschritt: Gewicht, Ergebnisse, Rennen ----------
+  function sortedWeights() { return (S.weights || []).slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; }); }
+  function goalMode() {
+    var base = window.Nutrition.targets(S.answers, 0);
+    if (!base) return null;
+    return base.adj < 0 ? "cut" : base.adj > 0 ? "muscle" : "hold";
+  }
+  function weightAdvice() {
+    var mode = goalMode(), ws = sortedWeights();
+    if (!mode) return null;
+    var beginner = S.answers.kraft_erfahrung === "noch_nie" || S.answers.kraft_erfahrung === "unter_6";
+    var adv = window.Progress.advice(mode, beginner, ws, iso(new Date()));
+    adv.mode = mode; return adv;
+  }
+  // passt das Kalorienziel automatisch an (frühestens alle 14 Tage, höchstens ±300 kcal)
+  function runAuto() {
+    var adv = weightAdvice(), ws = sortedWeights();
+    if (!adv || !ws.length) return;
+    var log = S.kcalLog || [], last = log.length ? log[log.length - 1].date : null;
+    var d = window.Progress.autoAdjust(adv, S.kcalAdj || 0, last, iso(new Date()), ws[0].date);
+    if (d !== 0) { S.kcalAdj = (S.kcalAdj || 0) + d; S.kcalLog = log.concat([{ date: iso(new Date()), delta: d, state: adv.state }]); save(); }
+  }
+
+  function chartSvg(pts, goal) {
+    var W = 320, H = 150, pad = 26;
+    var ys = pts.map(function (p) { return Number(p.kg); }).concat(goal ? [goal] : []);
+    var lo = Math.min.apply(null, ys) - 0.5, hi = Math.max.apply(null, ys) + 0.5;
+    var xs = pts.map(function (p) { return new Date(p.date + "T12:00:00").getTime(); }), x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
+    function X(v) { return x1 === x0 ? W / 2 : pad + (v - x0) / (x1 - x0) * (W - 2 * pad); }
+    function Y(v) { return H - pad + 6 - (v - lo) / (hi - lo) * (H - 2 * pad); }
+    var line = pts.map(function (p, i) { return (i ? "L" : "M") + X(xs[i]).toFixed(1) + " " + Y(Number(p.kg)).toFixed(1); }).join(" ");
+    var s = '<svg class="chart" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(t("weight.trend")) + '">';
+    if (goal) s += '<line x1="' + pad + '" x2="' + (W - pad) + '" y1="' + Y(goal).toFixed(1) + '" y2="' + Y(goal).toFixed(1) + '" stroke="var(--accent-2)" stroke-dasharray="4 4" stroke-width="1.5"/>';
+    s += '<path d="' + line + '" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+    pts.forEach(function (p, i) { s += '<circle cx="' + X(xs[i]).toFixed(1) + '" cy="' + Y(Number(p.kg)).toFixed(1) + '" r="3.5" fill="var(--accent)"/>'; });
+    s += '<text x="4" y="' + (Y(hi - 0.5) + 4) + '" fill="var(--muted)" font-size="10">' + nf(hi - 0.5, 1) + '</text><text x="4" y="' + (Y(lo + 0.5) + 4) + '" fill="var(--muted)" font-size="10">' + nf(lo + 0.5, 1) + "</text></svg>";
+    return s;
+  }
+
+  function weightView() {
+    var ws = sortedWeights(), h = '<div class="card ci"><div class="cirow"><label class="f"><input type="text" inputmode="decimal" id="wkg" placeholder="' + (ws.length ? nf(ws[ws.length - 1].kg, 1) : "") + '" aria-label="' + esc(t("weight.kg")) + '"><i>kg</i></label><input type="date" id="wdate" value="' + iso(new Date()) + '" aria-label="' + esc(t("weight.date")) + '"><button class="btn" id="wsave">' + esc(t("weight.save")) + '</button></div><p class="err" id="werr" role="alert">' + esc(ui.err) + "</p></div>";
+    if (ws.length) {
+      var last = ws[ws.length - 1], first = ws[0], ch = Number(last.kg) - Number(first.kg), goal = Number(S.answers.zielgewicht_kg) || 0;
+      h += '<div class="stats">' + '<div class="stat"><small>' + esc(t("weight.last")) + "</small><b>" + nf(last.kg, 1) + " kg</b></div>" +
+        '<div class="stat"><small>' + esc(t("weight.change")) + "</small><b>" + (ch > 0 ? "+" : "") + nf(ch, 1) + " kg</b></div>" +
+        '<div class="stat"><small>' + esc(t("weight.goal")) + "</small><b>" + (goal ? nf(goal, 1) + " kg" : "–") + "</b></div></div>";
+      if (ws.length >= 2) h += '<div class="card chartc">' + chartSvg(ws.slice(-24), goal) + "</div>";
+      var adv = weightAdvice();
+      if (adv && adv.state === "wait") h += '<div class="note">' + esc(t("weight.wait")) + "</div>";
+      else if (adv) {
+        h += '<div class="note ' + (adv.state === "ontrack" ? "" : "warn") + '"><b>' + esc(t("weight.trend")) + ":</b> " + esc(t("weight.perweek", { kg: (adv.rate > 0 ? "+" : "") + nf(adv.rate, 2), pct: nf(adv.pct, 2) })) + "<br>" + esc(adv.state === "ontrack" ? t("weight.adv.ontrack") : t("weight.adv." + adv.mode + "." + adv.state)) + "</div>";
+      }
+      if (S.kcalAdj) h += '<div class="note">' + esc(t("weight.adj", { n: (S.kcalAdj > 0 ? "+" : "") + S.kcalAdj })) + "</div>";
+      h += '<div class="sec">' + esc(t("weight.history")) + "</div>";
+      ws.slice().reverse().slice(0, 20).forEach(function (w) {
+        h += '<div class="card hist"><div><b>' + nf(w.kg, 1) + " kg</b><small>" + esc(new Date(w.date + "T12:00:00").toLocaleDateString(window.I18N.lang(), { weekday: "short", day: "numeric", month: "short", year: "numeric" })) + '</small></div><button class="swap" data-wdel="' + w.date + '">' + esc(t("weight.delete")) + "</button></div>";
+      });
+    } else h += '<div class="note">' + esc(t("weight.wait")) + "</div>";
+    return h;
+  }
+
+  function resultsView() {
+    var lang = window.I18N.lang(), R = S.results || [], h = "";
+    var lifts = EX.filter(function (e) { return ["kniebeuge", "hinge", "push_h", "push_schraeg", "push_v", "pull_v", "pull_h", "ausfall"].indexOf(e.kategorie) >= 0 && e.equipment.some(function (q) { return q !== "koerper"; }); });
+    h += '<div class="card ci"><h3>' + esc(t("rs.strength")) + '</h3><select id="lift" aria-label="' + esc(t("rs.exercise")) + '">' + lifts.map(function (e) { return '<option value="' + e.id + '">' + esc(exName(e.id)) + "</option>"; }).join("") +
+      '</select><div class="cirow"><label class="f"><input type="text" inputmode="decimal" id="lkg" aria-label="' + esc(t("rs.kg")) + '"><i>kg</i></label><label class="f"><input type="text" inputmode="numeric" id="lreps" aria-label="' + esc(t("rs.reps")) + '"><i>' + esc(t("today.reps")) + '</i></label></div><button class="btn" id="lsave">' + esc(t("rs.save")) + '</button><p class="err" id="lerr" role="alert">' + esc(ui.err2 || "") + "</p></div>";
+    var best = {};
+    R.filter(function (r) { return r.type === "lift"; }).forEach(function (r) { var e = window.Progress.e1rm(r.kg, r.reps); if (!best[r.ex] || e > best[r.ex].e) best[r.ex] = { e: e, kg: r.kg, reps: r.reps, date: r.date }; });
+    Object.keys(best).forEach(function (id) { h += '<div class="card hist"><div><b>' + esc(exName(id)) + "</b><small>" + esc(t("rs.best")) + ": " + nf(best[id].kg, 2) + " kg × " + best[id].reps + "</small></div><span>" + esc(t("rs.e1rm")) + ": <b>" + nf(best[id].e, 1) + " kg</b></span></div>"; });
+    h += '<div class="card ci" style="margin-top:14px"><h3>' + esc(t("rs.run")) + '</h3><select id="rdist" aria-label="' + esc(t("rs.distance")) + '">' + ["5k", "10k", "hm", "m"].map(function (k) { return '<option value="' + k + '">' + esc(t("dist." + k)) + "</option>"; }).join("") +
+      '</select><div class="cirow"><input type="text" id="rtime" inputmode="text" placeholder="25:30" aria-label="' + esc(t("rs.time")) + '"></div><button class="btn" id="rsave">' + esc(t("rs.save")) + '</button><p class="err" id="rerr" role="alert">' + esc(ui.err3 || "") + "</p></div>";
+    var runs = R.filter(function (r) { return r.type === "run"; });
+    if (runs.length) {
+      var lr = runs[runs.length - 1], km = window.Progress.DIST[lr.dist];
+      h += '<div class="card"><h3>' + esc(t("dist." + lr.dist)) + ": " + window.Progress.fmtTime(lr.sec) + '</h3><p>' + esc(t("rs.pace")) + ": " + window.Progress.fmtTime(window.Progress.pace(lr.sec, km)) + " " + esc(t("rs.perkm")) + "</p>";
+      h += '<div class="sec" style="margin-top:6px">' + esc(t("rs.predict")) + "</div>";
+      ["5k", "10k", "hm", "m"].filter(function (k) { return k !== lr.dist; }).forEach(function (k) {
+        var s = window.Progress.riegel(lr.sec, km, window.Progress.DIST[k]);
+        h += '<div class="pex"><span>' + esc(t("dist." + k)) + "</span><span>" + window.Progress.fmtTime(s) + " · " + window.Progress.fmtTime(window.Progress.pace(s, window.Progress.DIST[k])) + " " + esc(t("rs.perkm")) + "</span></div>";
+      });
+      h += '<p class="qhint">' + esc(t("rs.predictnote")) + "</p></div>";
+    }
+    if (!R.length) h += '<p class="qhint">' + esc(t("rs.none")) + "</p>";
+    return h;
+  }
+
+  function racesView() {
+    var today = iso(new Date()), races = (S.races || []).slice(), G = window.Plan.goals(S.answers), h = "";
+    if (S.answers.event_datum && !races.some(function (r) { return r.fromGoal; })) races.push({ id: "goal", name: t("race.fromgoal"), date: S.answers.event_datum, type: "other", fromGoal: true });
+    races.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+    h += '<div class="card ci"><h3>' + esc(t("race.add")) + '</h3><input type="text" id="rname" placeholder="' + esc(t("race.name")) + '" aria-label="' + esc(t("race.name")) + '"><div class="cirow"><input type="date" id="rdate" aria-label="' + esc(t("race.date")) + '"><select id="rtype" aria-label="' + esc(t("race.type")) + '">' +
+      ["5k", "10k", "hm", "m"].map(function (k) { return '<option value="' + k + '">' + esc(t("dist." + k)) + "</option>"; }).join("") + '<option value="tri">' + esc(t("race.tri")) + '</option><option value="hyrox">Hyrox</option><option value="other">' + esc(t("race.other")) + '</option></select></div><button class="btn" id="racesave">' + esc(t("race.save")) + '</button><p class="err" id="raceerr" role="alert">' + esc(ui.err4 || "") + "</p></div>";
+    if (!races.length) return h + '<p class="qhint">' + esc(t("race.none")) + "</p>";
+    races.forEach(function (r) {
+      var n = window.Progress.daysUntil(r.date, today), past = n < 0;
+      h += '<div class="card race"><div class="phead"><div><h3>' + esc(r.name) + "</h3><small class=\"fl\">" + esc(new Date(r.date + "T12:00:00").toLocaleDateString(window.I18N.lang(), { day: "numeric", month: "long", year: "numeric" })) + "</small></div>" +
+        '<span class="pill ' + (past ? "" : "acc") + '">' + esc(past ? t("race.past") : n === 0 ? t("race.today") : t("race.countdown", { n: n })) + "</span></div>";
+      if (past) h += r.result ? "<p>" + esc(t("race.result")) + ": <b>" + esc(r.result) + "</b></p>" : '<div class="cirow"><input type="text" data-rres="' + r.id + '" placeholder="' + esc(t("race.result")) + ' (h:mm:ss)" aria-label="' + esc(t("race.result")) + '"><button class="swap" data-rressave="' + r.id + '">' + esc(t("race.save")) + "</button></div>";
+      if (!r.fromGoal) h += '<button class="swap" data-rdel="' + r.id + '" style="align-self:flex-start">' + esc(t("race.delete")) + "</button>";
+      h += "</div>";
+    });
+    return h;
+  }
 
   function nutritionView() {
     if (!FOOD || !S.answers.ernaehrungsform) return "";
@@ -381,6 +485,9 @@
     if (tab === "today") body = todayView();
     else if (tab === "plan") body = planView();
     else if (tab === "progress" && ui.sub.progress === "training") body = historyView();
+    else if (tab === "progress" && ui.sub.progress === "weight") body = weightView();
+    else if (tab === "progress" && ui.sub.progress === "results") body = resultsView();
+    else if (tab === "progress" && ui.sub.progress === "races") body = racesView();
     else if (tab === "coach") body = coachView();
     else if (tab === "nutrition") body = nutritionView();
     h += body || emptyCard(tab);
@@ -488,6 +595,39 @@
         var wk = window.Nutrition.weekInfo(new Date()).key, id = b.getAttribute("data-shop");
         S.shop = S.shop || {}; S.shop[wk] = S.shop[wk] || {}; S.shop[wk][id] = !S.shop[wk][id];
         save(); b.setAttribute("aria-pressed", !!S.shop[wk][id]);
+      };
+    });
+    on("wsave", function () {
+      var kg = parseFloat((document.getElementById("wkg").value || "").replace(",", ".")), d = document.getElementById("wdate").value || iso(new Date());
+      if (!(kg >= 30 && kg <= 300)) { ui.err = t("weight.invalid"); render(); return; }
+      ui.err = ""; S.weights = (S.weights || []).filter(function (w) { return w.date !== d; }).concat([{ date: d, kg: Math.round(kg * 10) / 10 }]);
+      save(); runAuto(); render();
+    });
+    $app.querySelectorAll("[data-wdel]").forEach(function (b) { b.onclick = function () { S.weights = (S.weights || []).filter(function (w) { return w.date !== b.getAttribute("data-wdel"); }); save(); render(); }; });
+    on("lsave", function () {
+      var kg = parseFloat((document.getElementById("lkg").value || "").replace(",", ".")), reps = parseInt(document.getElementById("lreps").value, 10);
+      if (!(kg > 0 && reps >= 1 && reps <= 30)) { ui.err2 = t("rs.invalidlift"); render(); return; }
+      ui.err2 = ""; S.results = (S.results || []).concat([{ type: "lift", ex: document.getElementById("lift").value, kg: kg, reps: reps, date: iso(new Date()) }]); save(); render();
+    });
+    on("rsave", function () {
+      var sec = window.Progress.parseTime(document.getElementById("rtime").value);
+      if (!(sec > 0)) { ui.err3 = t("rs.invalidtime"); render(); return; }
+      ui.err3 = ""; S.results = (S.results || []).concat([{ type: "run", dist: document.getElementById("rdist").value, sec: sec, date: iso(new Date()) }]); save(); render();
+    });
+    on("racesave", function () {
+      var name = (document.getElementById("rname").value || "").trim(), date = document.getElementById("rdate").value;
+      if (!name || !date) { ui.err4 = t("race.invalid"); render(); return; }
+      ui.err4 = ""; S.races = (S.races || []).concat([{ id: String(Date.now()), name: name.slice(0, 60), date: date, type: document.getElementById("rtype").value }]); save(); render();
+    });
+    $app.querySelectorAll("[data-rdel]").forEach(function (b) { b.onclick = function () { S.races = (S.races || []).filter(function (r) { return r.id !== b.getAttribute("data-rdel"); }); save(); render(); }; });
+    $app.querySelectorAll("[data-rressave]").forEach(function (b) {
+      b.onclick = function () {
+        var id = b.getAttribute("data-rressave"), inp = $app.querySelector('[data-rres="' + id + '"]'), val = inp ? inp.value.trim().slice(0, 20) : "";
+        if (!val) return;
+        S.races = S.races || [];
+        var r = S.races.find(function (x) { return x.id === id; });
+        if (!r && id === "goal") { r = { id: "goal", name: t("race.fromgoal"), date: S.answers.event_datum, type: "other", fromGoal: true }; S.races.push(r); }
+        if (r) { r.result = val; save(); render(); }
       };
     });
     on("chgoals", function () { S.onboarded = false; S.qdone = false; S.qid = "ziele"; S.plan = null; S.draft = null; save(); render(); window.scrollTo(0, 0); });

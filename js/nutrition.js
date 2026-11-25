@@ -26,7 +26,7 @@
   }
 
   // Tagesziele oder null (kein Ernährungsziel in Schutzfällen, siehe ernaehrung.md Abschnitt 0)
-  function targets(a) {
+  function targets(a, adjKcal) {
     if (window.Q && window.Q.screening(a).nutriOff) return null;
     var w = num(a.gewicht_kg), h = num(a.groesse_cm);
     if (!(w > 0 && h > 0 && num(a.alter) > 0)) return null;
@@ -34,7 +34,7 @@
     var factor = Math.min(1.9, (ACT[a.schritte] || 1.3) + Math.min(0.15, days * 0.03));
     var tdee = b * factor, adj = adjust(a), notes = [];
     if (adj < -0.25) adj = -0.25;
-    var kcal = tdee * (1 + adj);
+    var kcal = Math.max(tdee * 0.75, tdee * (1 + adj) + (adjKcal || 0)); // nie mehr als 25 % unter dem Gesamtumsatz
     var minK = a.geschlecht === "weiblich" ? 1400 : a.geschlecht === "maennlich" ? 1700 : 1550;
     var floor = Math.max(minK, b);
     if (kcal < floor) { kcal = floor; notes.push("min"); }
@@ -118,8 +118,8 @@
   }
 
   // Wochenplan: 7 Tage mit je 3 bis 5 Mahlzeiten. swaps: { "<tag>|<slot>": anzahl } verschiebt die Auswahl.
-  function week(a, data, date, swaps) {
-    var info = weekInfo(date || new Date()), tg = targets(a), m = Number(a.mahlzeiten) || 3;
+  function week(a, data, date, swaps, adjKcal) {
+    var info = weekInfo(date || new Date()), tg = targets(a, adjKcal), m = Number(a.mahlzeiten) || 3;
     var split = SLOT_SPLIT[m] || SLOT_SPLIT[3], pools = {}, days = [];
     ["fruehstueck", "mittag", "abend", "snack"].forEach(function (s) { pools[s] = pool(a, data, s, info.key); });
     for (var d = 0; d < 7; d++) {

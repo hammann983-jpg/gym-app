@@ -1,0 +1,51 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Fortschritt Test</title>
+<body style="font-family:system-ui;padding:20px"><h1>Fortschritts-Tests</h1><pre id="out">läuft…</pre>
+<script src="../js/progress.js"></script>
+<script>
+var res = [], fails = 0;
+function ok(name, cond, info) { if (!cond) fails++; res.push((cond ? "OK   " : "FAIL ") + name + (cond ? "" : "  " + (info || ""))); }
+function d(n) { var x = new Date("2026-11-30T12:00:00"); x.setDate(x.getDate() - n); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); }
+var today = "2026-11-30";
+function series(startKg, perWeek, days) { var out = []; for (var i = days; i >= 0; i -= 3) out.push({ date: d(i), kg: Math.round((startKg + perWeek * (days - i) / 7) * 100) / 100 }); return out; }
+var P = Progress;
+ok("Steigung -0,5 kg/Woche erkannt", Math.abs(P.rate(series(70, -0.5, 21), today) + 0.5) < 0.02, P.rate(series(70, -0.5, 21), today));
+ok("Zu wenig Daten (2 Einträge): keine Aussage", P.rate([{ date: d(10), kg: 70 }, { date: d(0), kg: 69 }], today) === null);
+ok("Zu kurzer Zeitraum (unter 10 Tage): keine Aussage", P.rate([{ date: d(6), kg: 70 }, { date: d(3), kg: 70 }, { date: d(0), kg: 69.5 }], today) === null);
+ok("Alte Einträge (über 28 Tage) zählen nicht", P.rate([{ date: d(60), kg: 90 }, { date: d(50), kg: 85 }, { date: d(40), kg: 80 }], today) === null);
+// Abnehmen
+ok("Abnehmen: -0,5 %/Woche = im Plan", P.advice("cut", true, series(70, -0.35, 21), today).state === "ontrack", JSON.stringify(P.advice("cut", true, series(70, -0.35, 21), today)));
+var a2 = P.advice("cut", true, series(70, 0.0, 21), today);
+ok("Abnehmen: Gewicht steht -> zu langsam, -100 kcal", a2.state === "tooslow" && a2.delta === -100, JSON.stringify(a2));
+var a3 = P.advice("cut", true, series(70, -0.8, 21), today);
+ok("Abnehmen: -1,1 %/Woche -> zu schnell, +100 kcal", a3.state === "toofast" && a3.delta === 100, JSON.stringify(a3));
+// Aufbau
+var m1 = P.advice("muscle", true, series(70, 0.2, 21), today);
+ok("Aufbau Anfänger: +0,3 %/Woche im Plan", m1.state === "ontrack", JSON.stringify(m1));
+var m2 = P.advice("muscle", false, series(70, 0.5, 21), today);
+ok("Aufbau Fortgeschritten: +0,7 %/Woche zu schnell, -100", m2.state === "toofast" && m2.delta === -100, JSON.stringify(m2));
+var m3 = P.advice("muscle", false, series(70, 0.0, 21), today);
+ok("Aufbau: kein Zuwachs -> zu langsam, +100", m3.state === "tooslow" && m3.delta === 100, JSON.stringify(m3));
+ok("Halten: stabiles Gewicht im Plan", P.advice("hold", false, series(70, 0.05, 21), today).state === "ontrack");
+// Automatik
+var adv = { state: "tooslow", delta: -100 };
+ok("Automatik: erst nach 14 Tagen Daten", P.autoAdjust(adv, 0, null, today, d(10)) === 0 && P.autoAdjust(adv, 0, null, today, d(20)) === -100);
+ok("Automatik: höchstens alle 14 Tage", P.autoAdjust(adv, -100, d(5), today, d(40)) === 0 && P.autoAdjust(adv, -100, d(15), today, d(40)) === -100);
+ok("Automatik: Summe höchstens ±300 kcal", P.autoAdjust(adv, -300, d(20), today, d(60)) === 0 && P.autoAdjust({ state: "tooslow", delta: 100 }, 250, d(20), today, d(60)) === 50);
+ok("Automatik: im Plan = keine Änderung", P.autoAdjust({ state: "ontrack", delta: 0 }, 0, null, today, d(40)) === 0);
+// Kraft
+ok("1RM Epley: 100 kg x 5 = 116,7", Math.abs(P.e1rm(100, 5) - 116.67) < 0.01);
+ok("1RM bei 1 Wdh = Gewicht", P.e1rm(80, 1) === 80);
+ok("1RM ungültig = 0", P.e1rm(0, 5) === 0 && P.e1rm(50, 0) === 0);
+// Laufen
+ok("Zeit parsen: 25:30, 1:45:10, 30, 22,5", P.parseTime("25:30") === 1530 && P.parseTime("1:45:10") === 6310 && P.parseTime("30") === 1800 && P.parseTime("22,5") === 1350 && P.parseTime("abc") === 0);
+ok("Zeit formatieren", P.fmtTime(1530) === "25:30" && P.fmtTime(6310) === "1:45:10");
+var t5 = 25 * 60, m42 = P.riegel(t5, 5, 42.195);
+ok("Riegel: 25:00 über 5 km -> Marathon ca. 3:55 bis 4:00", m42 > 3 * 3600 + 50 * 60 && m42 < 4 * 3600 + 3 * 60, P.fmtTime(m42));
+ok("Riegel: 5 km -> 10 km ca. 52:10", Math.abs(P.riegel(t5, 5, 10) - 52 * 60 - 10) < 20, P.fmtTime(P.riegel(t5, 5, 10)));
+ok("Tempo: 25:00 über 5 km = 5:00 pro km", P.fmtTime(P.pace(t5, 5)) === "5:00");
+ok("Countdown in Tagen", P.daysUntil("2026-12-14", today) === 14 && P.daysUntil("2026-11-29", today) === -1);
+document.getElementById("out").textContent = res.join("\n") + "\n\n" + (fails ? fails + " FEHLER" : "ALLE OK (" + res.length + ")");
+document.title = fails ? "FAIL" : "PASS";
+</script>
