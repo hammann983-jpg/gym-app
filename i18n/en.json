@@ -562,5 +562,16 @@
   "check.c.cardio_up": "Your weight is barely moving: added 1 × 30 min cardio, calories stay the same.",
   "check.c.cardio_down": "You are losing very fast: 1 cardio session fewer.",
   "check.c.kcal_down": "Your weight is not moving as planned: {n} kcal less per day (never below the minimum).",
-  "check.c.kcal_up": "Your weight trend calls for more energy: {n} kcal more per day."
+  "check.c.kcal_up": "Your weight trend calls for more energy: {n} kcal more per day.",
+  "sub.know": "Learn",
+  "know.search": "Search a question or keyword",
+  "know.disc": "General information, not medical advice. Not a live AI.",
+  "know.cat.kraft": "Strength",
+  "know.cat.muskel": "Muscle & bodybuilding",
+  "know.cat.essen": "Nutrition",
+  "know.cat.laufen": "Running",
+  "know.cat.marathon": "Marathon",
+  "know.cat.triathlon": "Triathlon",
+  "know.cat.hyrox": "Hyrox",
+  "know.cat.erholung": "Recovery & safety"
 }

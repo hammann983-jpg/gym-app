@@ -562,5 +562,16 @@
   "check.c.cardio_up": "Ton poids bouge peu : 1 × 30 min de cardio en plus, mêmes calories.",
   "check.c.cardio_down": "Tu perds très vite : 1 séance de cardio en moins.",
   "check.c.kcal_down": "Ton poids n'évolue pas comme prévu : {n} kcal en moins par jour (jamais sous le minimum).",
-  "check.c.kcal_up": "Ton évolution demande plus d'énergie : {n} kcal en plus par jour."
+  "check.c.kcal_up": "Ton évolution demande plus d'énergie : {n} kcal en plus par jour.",
+  "sub.know": "Savoir",
+  "know.search": "Chercher une question ou un mot",
+  "know.disc": "Informations générales, pas un avis médical. Pas une IA en direct.",
+  "know.cat.kraft": "Force",
+  "know.cat.muskel": "Muscle et bodybuilding",
+  "know.cat.essen": "Nutrition",
+  "know.cat.laufen": "Course",
+  "know.cat.marathon": "Marathon",
+  "know.cat.triathlon": "Triathlon",
+  "know.cat.hyrox": "Hyrox",
+  "know.cat.erholung": "Récupération et sécurité"
 }

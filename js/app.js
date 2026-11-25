@@ -3,6 +3,7 @@
   var C = window.GYM_CONFIG, KEY = "gym.v1";
   var $app = document.getElementById("app");
   var TIPS = {};
+  var KNOW = {};
   var QS = [], EX = [], EXBY = {}, NAMES = {}, FOOD = null;
 
   function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
@@ -424,7 +425,7 @@
 
   // ---------- App ----------
   var TABS = ["today", "plan", "progress", "nutrition", "coach"];
-  var SUBS = { progress: ["training", "weight", "results", "races"], coach: ["check", "qa", "goals"], nutrition: ["mealplan", "shopping"] };
+  var SUBS = { progress: ["training", "weight", "results", "races"], coach: ["check", "know", "qa", "goals"], nutrition: ["mealplan", "shopping"] };
 
   // ---------- Ernährung ----------
   function foodName(id) { var n = FOOD.foods[id].n; return n[window.I18N.lang()] || n.en; }
@@ -602,7 +603,31 @@
     });
     return h;
   }
+  var CATS = ["kraft", "muskel", "essen", "laufen", "marathon", "triathlon", "hyrox", "erholung"];
+  // Themen zu den eigenen Zielen zuerst. In Schutzfällen keine Ernährungs- und Gewichts-Zahlen.
+  function knowledge() {
+    var G = window.Plan.goals(S.answers), mine = {}, off = window.Q.screening(S.answers).nutriOff;
+    var MAP = { kraft: ["kraft"], muskelaufbau: ["muskel", "kraft"], bodybuilding: ["muskel", "kraft"], abnehmen: ["essen"], fitness: ["kraft"], laufen: ["laufen"], marathon: ["marathon", "laufen"], triathlon: ["triathlon"], hyrox: ["hyrox"] };
+    G.forEach(function (g) { (MAP[g] || []).forEach(function (c) { mine[c] = 1; }); });
+    var list = (KNOW[window.I18N.lang()] || KNOW.en || []).filter(function (x) { return !(off && (x.cat === "essen" || x.id === "b6")); });
+    var cats = CATS.filter(function (c) { return list.some(function (x) { return x.cat === c; }); });
+    cats.sort(function (a, b) { return (mine[b] || 0) - (mine[a] || 0) || CATS.indexOf(a) - CATS.indexOf(b); });
+    return { list: list, cats: cats };
+  }
+  function knowList() {
+    var k = knowledge(), f = (ui.knowq || "").trim().toLowerCase(), cat = ui.knowcat || k.cats[0];
+    var items = k.list.filter(function (x) { return f ? (x.q + " " + x.a).toLowerCase().indexOf(f) >= 0 : x.cat === cat; });
+    if (!items.length) return '<p class="qhint">' + esc(t("coach.qa.none")) + "</p>";
+    return items.map(function (x) { return '<details class="know"><summary>' + esc(x.q) + "</summary><p>" + esc(x.a) + "</p></details>"; }).join("");
+  }
+  function knowView() {
+    var k = knowledge(), cat = ui.knowcat || k.cats[0];
+    return '<input class="search" id="knowsearch" type="search" placeholder="' + esc(t("know.search")) + '" value="' + esc(ui.knowq || "") + '" aria-label="' + esc(t("know.search")) + '"><div class="chips">' +
+      k.cats.map(function (c) { return '<button class="chip" data-know="' + c + '" aria-pressed="' + (c === cat) + '">' + esc(t("know.cat." + c)) + "</button>"; }).join("") +
+      '</div><div id="knowlist">' + knowList() + '</div><p class="qhint">' + esc(t("know.disc")) + "</p>";
+  }
   function coachView() {
+    if (ui.sub.coach === "know") return knowView();
     if (ui.sub.coach === "check") { ensurePlan(); runAuto(); coachReview(); return coachCheck(); }
     if (ui.sub.coach === "goals") {
       var G = window.Plan.goals(S.answers);
@@ -888,6 +913,9 @@
       };
     });
     on("chgoals", function () { S.onboarded = false; S.qdone = false; S.qid = "ziele"; S.plan = null; S.draft = null; save(); render(); window.scrollTo(0, 0); });
+    $app.querySelectorAll("[data-know]").forEach(function (b) { b.onclick = function () { ui.knowcat = b.getAttribute("data-know"); ui.knowq = ""; render(); }; });
+    var ks = document.getElementById("knowsearch");
+    if (ks) ks.oninput = function () { ui.knowq = ks.value; document.getElementById("knowlist").innerHTML = knowList(); };
     var qs = document.getElementById("qasearch");
     if (qs) qs.oninput = function () { ui.qaq = qs.value; var pos = qs.selectionStart; render(); var n = document.getElementById("qasearch"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } };
     var ibg = document.getElementById("infobg");
@@ -914,7 +942,8 @@
     getJSON("data/exercises.json").then(function (d) { EX = d.uebungen; EX.forEach(function (e) { EXBY[e.id] = e; }); }),
     getJSON("data/ex-names.json").then(function (d) { NAMES = d; }),
     getJSON("data/essen.json").then(function (d) { FOOD = d; }),
-    getJSON("data/tips.json").then(function (d) { TIPS = d; })
+    getJSON("data/tips.json").then(function (d) { TIPS = d; }),
+    getJSON("data/wissen.json").then(function (d) { KNOW = d; })
   ]).then(render, render);
 
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {

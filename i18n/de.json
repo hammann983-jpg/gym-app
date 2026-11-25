@@ -562,5 +562,16 @@
   "check.c.cardio_up": "Dein Gewicht bewegt sich zu wenig: 1 × 30 Min. Extra-Cardio dazu, Kalorien bleiben gleich.",
   "check.c.cardio_down": "Du nimmst sehr schnell ab: 1 Cardio-Einheit weniger.",
   "check.c.kcal_down": "Dein Gewicht bewegt sich nicht wie geplant: {n} kcal weniger am Tag (nie unter dem Minimum).",
-  "check.c.kcal_up": "Deine Gewichts-Entwicklung braucht mehr Energie: {n} kcal mehr am Tag."
+  "check.c.kcal_up": "Deine Gewichts-Entwicklung braucht mehr Energie: {n} kcal mehr am Tag.",
+  "sub.know": "Wissen",
+  "know.search": "Frage oder Stichwort suchen",
+  "know.disc": "Allgemeine Informationen, kein Ersatz für ärztliche Beratung. Keine live antwortende KI.",
+  "know.cat.kraft": "Kraft",
+  "know.cat.muskel": "Muskelaufbau & Bodybuilding",
+  "know.cat.essen": "Ernährung",
+  "know.cat.laufen": "Laufen",
+  "know.cat.marathon": "Marathon",
+  "know.cat.triathlon": "Triathlon",
+  "know.cat.hyrox": "Hyrox",
+  "know.cat.erholung": "Erholung & Sicherheit"
 }

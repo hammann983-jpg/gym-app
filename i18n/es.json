@@ -562,5 +562,16 @@
   "check.c.cardio_up": "Tu peso apenas cambia: 1 × 30 min de cardio extra, mismas calorías.",
   "check.c.cardio_down": "Bajas muy rápido: 1 sesión de cardio menos.",
   "check.c.kcal_down": "Tu peso no avanza según el plan: {n} kcal menos al día (nunca bajo el mínimo).",
-  "check.c.kcal_up": "Tu evolución pide más energía: {n} kcal más al día."
+  "check.c.kcal_up": "Tu evolución pide más energía: {n} kcal más al día.",
+  "sub.know": "Saber",
+  "know.search": "Buscar pregunta o palabra",
+  "know.disc": "Información general, no sustituye al médico. No es una IA en vivo.",
+  "know.cat.kraft": "Fuerza",
+  "know.cat.muskel": "Músculo y culturismo",
+  "know.cat.essen": "Nutrición",
+  "know.cat.laufen": "Correr",
+  "know.cat.marathon": "Maratón",
+  "know.cat.triathlon": "Triatlón",
+  "know.cat.hyrox": "Hyrox",
+  "know.cat.erholung": "Recuperación y seguridad"
 }
