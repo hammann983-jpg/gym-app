@@ -265,3 +265,20 @@ main > .btn.ghost { box-shadow: none; }
 .know[open] summary::after { content: "–"; }
 .know p { margin: 0; padding: 0 16px 16px; color: var(--muted); }
 .search + .chips { margin-top: 12px; }
+
+/* Politur */
+.cicol { display: grid; gap: 8px; }
+.card.ci .cicol input[type="date"] { width: 100%; }
+.num::-webkit-outer-spin-button, .num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.num { -moz-appearance: textfield; appearance: textfield; }
+main > .card + .qhint, main > .qhint + .card, main > #knowlist + .qhint { margin-top: 12px; }
+main > .card + .sec, main > .note + .sec { margin-top: 18px; }
+main > .sec { margin-bottom: 8px; }
+.card + .card { margin-top: 12px; }
+#rest { position: fixed; left: 12px; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom)); max-width: 536px; margin: 0 auto; z-index: 6; display: flex; align-items: center; gap: 10px; background: var(--surface-2); border: 1px solid var(--accent-2); border-radius: 16px; padding: 10px 12px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+#rest span { font-size: 13px; color: var(--muted); }
+#rest b { font-family: var(--font-head); font-size: 30px; margin-right: auto; font-variant-numeric: tabular-nums; }
+#rest button { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 12px; min-height: 44px; font-weight: 600; font-size: 14px; }
+#rest.over { border-color: var(--accent); }
+#rest.over b { color: var(--accent); }
+.note + .qhint { margin-top: 12px; }

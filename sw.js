@@ -1,5 +1,5 @@
 // Offline-Cache. Bei Änderungen CACHE hochzählen und ?v=N in index.html und config.js anpassen.
-var CACHE = "forma-v21";
+var CACHE = "forma-v22";
 var FILES = ["./", "index.html", "config.js", "js/i18n.js", "js/questionnaire.js", "js/plan.js", "js/nutrition.js", "js/progress.js", "js/run.js", "js/multi.js", "js/coach.js", "js/share.js", "data/essen.json", "data/tips.json", "data/wissen.json", "data/exercises.json", "data/ex-names.json", "js/app.js", "css/styles.css",
   "data/questionnaire.json", "i18n/en.json", "i18n/de.json", "i18n/es.json", "i18n/fr.json", "manifest.webmanifest", "icons/mark-256.png", "icons/icon-192.png"];
 

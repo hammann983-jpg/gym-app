@@ -156,7 +156,7 @@
     }
     var a = S.answers, G = window.Plan.goals(a), pr = window.Plan.prio(a), weeks = window.Plan.totalWeeks(a);
     var goal = t("o.ziele." + pr);
-    var h = '<section class="screen">' + logo() + "<h1>" + esc(t("res.title")) + "</h1><p>" + esc(t("res.sub")) + '</p><div class="stats">' +
+    var h = '<section class="screen">' + logo() + "<h1>" + esc(t("res.title")) + "</h1><p>" + esc(t("res.sub")) + '</p><div class="stats two">' +
       '<div class="stat"><small>' + esc(t("res.goal")) + "</small><b>" + esc(goal) + "</b></div>" +
       '<div class="stat"><small>' + esc(t("res.weeks")) + "</small><b>" + weeks + " " + esc(t("u.weeks")) + "</b></div>" +
       '<div class="stat"><small>' + esc(t("res.bmi")) + "</small><b>" + (sc.bmi ? sc.bmi.toLocaleString(window.I18N.lang(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "–") + "</b></div>" +
@@ -180,11 +180,15 @@
   }
   function sessionTitle(s) { return t("day." + s.type) + (s.letter ? " " + s.letter : ""); }
   // Große Überschrift: die trainierten Muskelgruppen (Ganzkörper behält seinen Namen)
+  function focusList(s) {
+    var f = s.focus || [];
+    return f.some(function (x) { return x === "quads" || x === "posterior"; }) ? f.filter(function (x) { return x !== "legs"; }) : f;
+  }
   function headline(s) {
     if (s.type === "fb" || !s.focus || !s.focus.length) return sessionTitle(s);
-    return s.focus.map(function (f) { return t("focus." + f); }).join(" · ");
+    return focusList(s).map(function (f) { return t("focus." + f); }).join(" · ");
   }
-  function focusLine(s) { return (s.focus || []).map(function (f) { return t("focus." + f); }).join(" · "); }
+  function focusLine(s) { return focusList(s).map(function (f) { return t("focus." + f); }).join(" · "); }
   function cur() {
     var c = window.Plan.cursor(S.plan, S.done || 0);
     c.idx = c.item.i;
@@ -208,7 +212,8 @@
     return '<div class="ring"><svg width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="var(--surface-2)" stroke-width="7"/><circle cx="32" cy="32" r="27" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="' + C2.toFixed(1) + '" stroke-dashoffset="' + (C2 * (1 - f)).toFixed(1) + '" transform="rotate(-90 32 32)"/></svg><span>' + done + "/" + total + "</span></div>";
   }
   function notesHtml() {
-    return (S.plan.notes || []).map(function (n) {
+    var bb = window.Plan.goals(S.answers).indexOf("bodybuilding") >= 0 && S.answers.bb_phase && !S.plan.light ? '<div class="note">' + esc(t("bb." + S.answers.bb_phase)) + "</div>" : "";
+    return bb + (S.plan.notes || []).map(function (n) {
       var txt = n === "cap_days" ? t("note.cap_days", { n: S.plan.daysPerWeek }) : n === "endurance_pending" ? t("note.endurance") : n === "recomp" ? t("note.recomp") : n === "endu_conflict" ? t("note.endu_conflict") : n === "event_soon" ? t("note.event_soon") : n === "run" || n === "tri" || n === "hyrox" || n === "one_endurance" || n === "light" ? t("note." + n) : "";
       return txt ? '<div class="note">' + esc(txt) + "</div>" : "";
     }).join("");
@@ -365,7 +370,27 @@
 
   function num(v) { var n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : 0; }
 
+  // Pausen-Uhr: liegt außerhalb der App-Fläche, damit sie beim Neuzeichnen bleibt
+  var restTimer = null;
+  function stopRest() { clearInterval(restTimer); var el = document.getElementById("rest"); if (el) el.remove(); }
+  function startRest(sec) {
+    stopRest(); if (!(sec > 0)) return;
+    var end = Date.now() + sec * 1000, el = document.createElement("div");
+    el.id = "rest"; el.setAttribute("role", "timer");
+    el.innerHTML = '<span id="resttxt"></span><b id="restnum"></b><button id="restadd">+30 s</button><button id="restx">' + esc(t("rest.skip")) + "</button>";
+    document.body.appendChild(el);
+    function tick() {
+      var left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+      document.getElementById("resttxt").textContent = t(left ? "rest.title" : "rest.done");
+      document.getElementById("restnum").textContent = window.Progress.fmtTime(left);
+      if (!left) { clearInterval(restTimer); el.className = "over"; if (navigator.vibrate) navigator.vibrate(200); }
+    }
+    document.getElementById("restadd").onclick = function () { end = Math.max(end, Date.now()) + 30000; el.className = ""; clearInterval(restTimer); restTimer = setInterval(tick, 500); tick(); };
+    document.getElementById("restx").onclick = stopRest;
+    restTimer = setInterval(tick, 500); tick();
+  }
   function finishSession() {
+    stopRest();
     var c = cur(), s = S.plan.sessions[c.idx], d = S.draft, vol = 0, sets = 0, prs = [], entry = { date: iso(new Date()), seq: c.seq, week: c.week, type: s.type, letter: s.letter, ex: [], vol: 0 };
     s.exercises.forEach(function (x) {
       var done = (d.ex[x.id] || []).filter(function (r) { return r.done; }).map(function (r) { return { kg: num(r.kg), reps: num(r.reps) }; });
@@ -526,7 +551,7 @@
     var today = iso(new Date()), races = (S.races || []).slice(), G = window.Plan.goals(S.answers), h = "";
     if (S.answers.event_datum && !races.some(function (r) { return r.fromGoal; })) races.push({ id: "goal", name: t("race.fromgoal"), date: S.answers.event_datum, type: "other", fromGoal: true });
     races.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
-    h += '<div class="card ci"><h3>' + esc(t("race.add")) + '</h3><input type="text" id="rname" placeholder="' + esc(t("race.name")) + '" aria-label="' + esc(t("race.name")) + '"><div class="cirow"><input type="date" id="rdate" aria-label="' + esc(t("race.date")) + '"><select id="rtype" aria-label="' + esc(t("race.type")) + '">' +
+    h += '<div class="card ci"><h3>' + esc(t("race.add")) + '</h3><input type="text" id="rname" placeholder="' + esc(t("race.name")) + '" aria-label="' + esc(t("race.name")) + '"><div class="cicol"><input type="date" id="rdate" aria-label="' + esc(t("race.date")) + '"><select id="rtype" aria-label="' + esc(t("race.type")) + '">' +
       ["5k", "10k", "hm", "m"].map(function (k) { return '<option value="' + k + '">' + esc(t("dist." + k)) + "</option>"; }).join("") + '<option value="tri">' + esc(t("race.tri")) + '</option><option value="hyrox">Hyrox</option><option value="other">' + esc(t("race.other")) + '</option></select></div><button class="btn" id="racesave">' + esc(t("race.save")) + '</button><p class="err" id="raceerr" role="alert">' + esc(ui.err4 || "") + "</p></div>";
     if (!races.length) return h + '<p class="qhint">' + esc(t("race.none")) + "</p>";
     races.forEach(function (r) {
@@ -585,9 +610,10 @@
 
   function coachCheck() {
     var s = coachState(), h = '<p class="qhint">' + esc(t("check.intro")) + "</p>";
-    var rows = [[t("check.sets"), s.sets > 0 ? "+" + s.sets : String(s.sets)], [t("check.endu"), Math.round(s.endu * 100) + " %"]];
+    var plain = t("check.asplanned");
+    var rows = [[t("check.sets"), s.sets ? (s.sets > 0 ? "+" : "") + s.sets : plain], [t("check.endu"), s.endu === 1 ? plain : Math.round(s.endu * 100) + " %"]];
     if (S.plan && S.plan.run && S.plan.run.goal === "hyrox") rows.push([t("check.hx"), s.hx > 0 ? "+" + s.hx : String(s.hx)]);
-    rows.push([t("check.cardio"), s.cardio + " ×"], [t("check.kcal"), (S.kcalAdj > 0 ? "+" : "") + (S.kcalAdj || 0)]);
+    rows.push([t("check.cardio"), s.cardio ? s.cardio + " ×" : t("check.nocardio")], [t("check.kcal"), S.kcalAdj ? (S.kcalAdj > 0 ? "+" : "") + S.kcalAdj : plain]);
     h += '<div class="card"><h3>' + esc(t("check.now")) + "</h3>" + rows.map(function (r) { return '<div class="pex"><span>' + esc(r[0]) + "</span><span>" + esc(r[1]) + "</span></div>"; }).join("") + "</div>";
     var ad = S.plan ? window.Coach.adherence(S.log, window.Plan.weekItems(S.plan, cur().week).length, iso(new Date())) : null;
     if (ad) h += '<div class="note ' + (ad.low ? "warn" : "") + '">' + esc(t(ad.low ? "check.adh.low" : "check.adh.ok", { done: ad.done, total: ad.planned })) + "</div>";
@@ -608,10 +634,11 @@
   function knowledge() {
     var G = window.Plan.goals(S.answers), mine = {}, off = window.Q.screening(S.answers).nutriOff;
     var MAP = { kraft: ["kraft"], muskelaufbau: ["muskel", "kraft"], bodybuilding: ["muskel", "kraft"], abnehmen: ["essen"], fitness: ["kraft"], laufen: ["laufen"], marathon: ["marathon", "laufen"], triathlon: ["triathlon"], hyrox: ["hyrox"] };
-    G.forEach(function (g) { (MAP[g] || []).forEach(function (c) { mine[c] = 1; }); });
+    var rank = 0;
+    [window.Plan.prio(S.answers)].concat(G).forEach(function (g) { (MAP[g] || []).forEach(function (c) { if (!mine[c]) mine[c] = ++rank; }); });
     var list = (KNOW[window.I18N.lang()] || KNOW.en || []).filter(function (x) { return !(off && (x.cat === "essen" || x.id === "b6")); });
     var cats = CATS.filter(function (c) { return list.some(function (x) { return x.cat === c; }); });
-    cats.sort(function (a, b) { return (mine[b] || 0) - (mine[a] || 0) || CATS.indexOf(a) - CATS.indexOf(b); });
+    cats.sort(function (a, b) { return (mine[a] || 99) - (mine[b] || 99) || CATS.indexOf(a) - CATS.indexOf(b); });
     return { list: list, cats: cats };
   }
   function knowList() {
@@ -767,11 +794,18 @@
       ["local", "photo", "fonts", "host", "links", "delete"].map(function (k) { return "<p>" + esc(t("priv." + k)) + "</p>"; }).join("") +
       '<button class="btn ghost" id="privclose">' + esc(t("profile.close")) + "</button></div></div>";
   }
+  function validBackup(d) {
+    var x = d && d.app === "forma" && d.data;
+    if (!x || typeof x !== "object" || typeof x.answers !== "object" || !Array.isArray(x.log)) return false;
+    if (!C.LANGS.some(function (l) { return l.code === x.lang; })) return false;
+    // keine HTML-Zeichen aus fremden Dateien übernehmen
+    return !/[<>]/.test(JSON.stringify(x));
+  }
   function profileSheet() {
     return '<div class="sheet-bg" id="bg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(t("profile.title")) + "</h2>" +
       '<div><div class="lbl">' + esc(t("profile.language")) + '</div><div class="chips">' +
       C.LANGS.map(function (l) { return '<button class="chip" data-lang="' + l.code + '" lang="' + l.code + '" aria-pressed="' + (S.lang === l.code) + '">' + esc(l.label) + "</button>"; }).join("") +
-      '</div></div><button class="btn ghost" id="redo">' + esc(t("profile.redo")) + '</button><button class="btn ghost" id="privopen">' + esc(t("priv.title")) + '</button><p class="ver">' + esc(t("profile.disclaimer")) + '</p><div class="ver">' + esc(t("profile.version")) + " " + C.VERSION + '</div><button class="btn ghost" id="close">' + esc(t("profile.close")) + "</button></div></div>";
+      '</div></div><button class="btn ghost" id="redo">' + esc(t("profile.redo")) + '</button><div><div class="lbl">' + esc(t("backup.title")) + '</div><p class="qhint">' + esc(t("backup.text")) + '</p></div><button class="btn ghost" id="bksave">' + esc(t("backup.save")) + '</button><label class="btn ghost filebtn">' + esc(t("backup.load")) + '<input type="file" accept=".json,application/json" id="bkload" hidden></label><p class="qhint" id="bkmsg" role="status"></p><div><div class="lbl">' + esc(t("install.title")) + '</div><p class="qhint">' + esc(t("install.ios")) + "<br>" + esc(t("install.android")) + '</p></div><button class="btn ghost" id="privopen">' + esc(t("priv.title")) + '</button><p class="ver">' + esc(t("profile.disclaimer")) + '</p><div class="ver">' + esc(t("profile.version")) + " " + C.VERSION + '</div><button class="btn ghost" id="close">' + esc(t("profile.close")) + "</button></div></div>";
   }
 
   function render() {
@@ -801,7 +835,7 @@
     $app.querySelectorAll("[data-opt]").forEach(function (b) { b.onclick = function () { pickOption(q, b.getAttribute("data-opt")); }; });
     var inp = document.getElementById("num");
     if (inp) { inp.onkeydown = function (e) { if (e.key === "Enter") tryNext(); }; if (q && q.type === "number") inp.focus(); }
-    $app.querySelectorAll("[data-tab]").forEach(function (b) { b.onclick = function () { ui.tab = b.getAttribute("data-tab"); render(); window.scrollTo(0, 0); }; });
+    $app.querySelectorAll("[data-tab]").forEach(function (b) { b.onclick = function () { ui.tab = b.getAttribute("data-tab"); stopRest(); render(); window.scrollTo(0, 0); }; });
     $app.querySelectorAll("[data-sub]").forEach(function (b) { b.onclick = function () { ui.sub[ui.tab] = b.getAttribute("data-sub"); render(); }; });
     $app.querySelectorAll("[data-week]").forEach(function (b) { b.onclick = function () { ui.planWeek = Number(b.getAttribute("data-week")); render(); }; });
     // Training eintragen: Eingaben direkt speichern, ohne neu zu zeichnen (Fokus bleibt)
@@ -825,6 +859,8 @@
           });
         }
         b.setAttribute("aria-pressed", r.done); save();
+        var sx = S.plan.sessions[cur().idx], ex = sx && sx.exercises.find(function (x) { return x.id === parts[0]; });
+        if (r.done && ex) startRest(ex.rest); else stopRest();
       };
     });
     on("finish", finishSession);
@@ -920,6 +956,21 @@
     if (qs) qs.oninput = function () { ui.qaq = qs.value; var pos = qs.selectionStart; render(); var n = document.getElementById("qasearch"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } };
     var ibg = document.getElementById("infobg");
     if (ibg) ibg.onclick = function (e) { if (e.target === ibg) { ui.info = null; render(); } };
+    var bkmsg = function (k) { var m = document.getElementById("bkmsg"); if (m) m.textContent = t(k); };
+    on("bksave", function () {
+      window.Share.save(new File([JSON.stringify({ app: "forma", version: C.VERSION, data: S })], "forma-backup-" + iso(new Date()) + ".json", { type: "application/json" }));
+      bkmsg("backup.saved");
+    });
+    var bk = document.getElementById("bkload");
+    if (bk) bk.onchange = function () {
+      var f = bk.files && bk.files[0]; if (!f || f.size > 5000000) { bkmsg("backup.bad"); return; }
+      f.text().then(function (txt) {
+        var d = null; try { d = JSON.parse(txt); } catch (e) {}
+        if (!validBackup(d)) { bkmsg("backup.bad"); return; }
+        if (!window.confirm(t("backup.confirm"))) return;
+        localStorage.setItem(KEY, JSON.stringify(d.data)); window.location.reload();
+      });
+    };
     on("privopen", function () { ui.profile = false; ui.privacy = true; render(); });
     on("privclose", function () { ui.privacy = false; render(); });
     var pbg = document.getElementById("privbg");
