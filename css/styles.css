@@ -321,3 +321,6 @@ main > .sec { margin-bottom: 8px; }
 .ansq .f { margin-top: 6px; }
 .fav { justify-self: start; background: transparent; border: 0; color: var(--muted); font-size: 13px; padding: 6px 0; min-height: 36px; }
 .fav[aria-pressed="true"] { color: var(--accent); }
+
+.hello { margin: 0 0 6px; font-size: 18px; font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
+.screen p.hello { color: var(--accent); }

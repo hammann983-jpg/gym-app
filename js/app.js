@@ -88,6 +88,8 @@
     if (q.hint) h += '<p class="qhint">' + esc(t("h." + q.id)) + "</p>";
     if (q.type === "number") {
       h += '<div class="numrow"><input class="num" id="num" type="number" inputmode="decimal" min="' + q.min + '" max="' + q.max + '" value="' + esc(v == null ? "" : v) + '" aria-label="' + esc(t("q." + q.id)) + '"><span class="unit">' + esc(unitText(q.unit)) + "</span></div>";
+    } else if (q.type === "text") {
+      h += '<div class="numrow"><input class="num" id="num" type="text" maxlength="30" autocomplete="given-name" style="font-size:28px" value="' + esc(v || "") + '" aria-label="' + esc(t("q." + q.id)) + '"></div>';
     } else if (q.type === "date") {
       h += '<div class="numrow"><input class="num" id="num" type="date" style="font-size:24px" value="' + esc(v || "") + '"></div>';
     } else {
@@ -98,7 +100,7 @@
       }).join("") + "</div>";
     }
     h += '<p class="err" id="err" role="alert">' + esc(ui.err) + "</p></div>";
-    var last = idx === list.length - 1, needsNext = q.type === "number" || q.type === "date" || q.type === "multi";
+    var last = idx === list.length - 1, needsNext = q.type === "number" || q.type === "date" || q.type === "multi" || q.type === "text";
     h += '<div class="qnav">' + (idx > 0 ? '<button class="btn ghost" id="back">' + esc(t("q.back")) + "</button>" : "");
     if (needsNext || last) h += '<button class="btn" id="next">' + esc(t(last ? "q.finish" : "q.next")) + "</button>";
     h += "</div>";
@@ -106,6 +108,9 @@
     return h + "</div>";
   }
 
+  // Zeichen, die in die Seite eingreifen könnten, werden entfernt
+  function cleanName(v) { return String(v == null ? "" : v).replace(/[<>"{}]/g, "").replace(/\s+/g, " ").trim().slice(0, 30); }
+  function hello() { return S.answers.name ? '<p class="hello">' + esc(t("hello", { name: S.answers.name })) + "</p>" : ""; }
   function goto(offset) {
     var list = qList(), idx = list.findIndex(function (q) { return q.id === S.qid; });
     var n = idx + offset;
@@ -119,11 +124,12 @@
 
   function tryNext() {
     var q = currentQ(), v = S.answers[q.id];
-    if (q.type === "number" || q.type === "date") {
+    if (q.type === "number" || q.type === "date" || q.type === "text") {
       var el = document.getElementById("num");
       v = el ? el.value : v;
       if (q.type === "number" && v !== "") v = window.Q.num(v);
-      if (v === "" || (typeof v === "number" && isNaN(v))) v = null;
+      if (q.type === "text") v = cleanName(v);
+      if (v === "" || v == null || (typeof v === "number" && isNaN(v))) v = null;
       if (v == null) delete S.answers[q.id]; else S.answers[q.id] = v;
     }
     if (!window.Q.valid(q, S.answers[q.id])) {
@@ -159,7 +165,7 @@
     }
     var a = S.answers, G = window.Plan.goals(a), pr = window.Plan.prio(a), weeks = window.Plan.totalWeeks(a);
     var goal = t("o.ziele." + pr);
-    var h = '<section class="screen">' + logo() + "<h1>" + esc(t("res.title")) + "</h1><p>" + esc(t("res.sub")) + '</p><div class="stats two">' +
+    var h = '<section class="screen">' + logo() + hello() + "<h1>" + esc(t("res.title")) + "</h1><p>" + esc(t("res.sub")) + '</p><div class="stats two">' +
       '<div class="stat"><small>' + esc(t("res.goal")) + "</small><b>" + esc(goal) + "</b></div>" +
       '<div class="stat"><small>' + esc(t("res.weeks")) + "</small><b>" + weeks + " " + esc(t("u.weeks")) + "</b></div>" +
       '<div class="stat"><small>' + esc(t("res.bmi")) + "</small><b>" + (sc.bmi ? sc.bmi.toLocaleString(window.I18N.lang(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "–") + "</b></div>" +
@@ -355,7 +361,7 @@
     var w = window.Run.week(p.run, c.week), r = adj(w.runs[c.item.j]);
     if (!(S.draft && S.draft.seq === c.seq && S.draft.run)) { S.draft = { seq: c.seq, run: true, min: "", km: "" }; save(); }
     var d = S.draft, pace = paceText(r, w.rung), zone = window.Run.zone(r, w.rung);
-    var h = '<div class="sec">' + esc(t("today.next")) + " · " + esc(sportName(r)) + '</div><h2 class="big">' + esc(runTitle(r)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span>' + (hasSize(r) ? '<span class="pill">' + esc(runSize(r)) + "</span>" : "") + "</div>";
+    var h = hello() + '<div class="sec">' + esc(t("today.next")) + " · " + esc(sportName(r)) + '</div><h2 class="big">' + esc(runTitle(r)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span>' + (hasSize(r) ? '<span class="pill">' + esc(runSize(r)) + "</span>" : "") + "</div>";
     h += notice(p, c) + goalCard(weekGoalDone(), c.items.length) + notesHtml();
     h += '<div class="card"><h3>' + esc(weekLine(w)) + "</h3>";
     if (hasSize(r)) h += '<div class="pex"><span>' + esc(t("run.total")) + "</span><span>" + esc(runSize(r)) + "</span></div>";
@@ -437,7 +443,7 @@
     if (c.item.t === "run") return runToday(p, c);
     var s = sess(c.idx, c.week), d = ensureDraft(c), deload = window.Plan.isDeload(c.week);
     var goal = c.items.length, got = weekGoalDone();
-    var h = '<div class="sec">' + esc(t("today.next")) + (s.type === "fb" ? "" : " · " + esc(sessionTitle(s))) + '</div><h2 class="big">' + esc(headline(s)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span><span class="pill">' + esc(t("today.exercises", { n: s.exercises.length })) + "</span>" + (cardioFor(c.week, c.idx) ? '<span class="pill">+ ' + esc(t("cardio.pill", { min: cardioFor(c.week, c.idx).min })) + "</span>" : "") + "</div>";
+    var h = hello() + '<div class="sec">' + esc(t("today.next")) + (s.type === "fb" ? "" : " · " + esc(sessionTitle(s))) + '</div><h2 class="big">' + esc(headline(s)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span><span class="pill">' + esc(t("today.exercises", { n: s.exercises.length })) + "</span>" + (cardioFor(c.week, c.idx) ? '<span class="pill">+ ' + esc(t("cardio.pill", { min: cardioFor(c.week, c.idx).min })) + "</span>" : "") + "</div>";
     if (deload) h += '<div class="note warn">' + esc(t("today.deload")) + "</div>";
     if (((c.week - 1) % 8 === 0) && (c.week > 1 || p.cycle)) h += '<div class="note">' + esc(t("block.new")) + "</div>";
     h += notice(p, c) + goalCard(got, goal);
@@ -614,7 +620,7 @@
   }
 
   // ---------- Angaben ändern, ohne neu anzufangen ----------
-  var EDITABLE = ["gewicht_kg", "zielgewicht_kg", "trainingstage", "dauer_min", "ort", "heim", "schlaf", "verletzungen", "event_datum"];
+  var EDITABLE = ["name", "gewicht_kg", "zielgewicht_kg", "trainingstage", "dauer_min", "ort", "heim", "schlaf", "verletzungen", "event_datum"];
   function answersSheet() {
     var d = ui.ans, h = '<div class="sheet-bg" id="ansbg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(t("ans.title")) + '</h2><p class="qhint">' + esc(t("ans.hint")) + "</p>";
     EDITABLE.forEach(function (id) {
@@ -622,7 +628,8 @@
       if (id === "heim" && d.ort !== "zuhause") return;
       if (id === "event_datum" && !window.Plan.goals(S.answers).some(function (g) { return ["laufen", "marathon", "triathlon", "hyrox"].indexOf(g) >= 0; })) return;
       h += '<div class="ansq"><div class="lbl">' + esc(t("q." + id)) + "</div>";
-      if (q.type === "number") h += '<label class="f"><input type="text" inputmode="decimal" data-ansn="' + id + '" value="' + esc(d[id] == null ? "" : d[id]) + '" aria-label="' + esc(t("q." + id)) + '"><i>' + esc(unitText(q.unit)) + "</i></label>";
+      if (q.type === "text") h += '<label class="f"><input type="text" maxlength="30" autocomplete="given-name" data-anst="' + id + '" value="' + esc(d[id] || "") + '" aria-label="' + esc(t("q." + id)) + '"></label>';
+      else if (q.type === "number") h += '<label class="f"><input type="text" inputmode="decimal" data-ansn="' + id + '" value="' + esc(d[id] == null ? "" : d[id]) + '" aria-label="' + esc(t("q." + id)) + '"><i>' + esc(unitText(q.unit)) + "</i></label>";
       else if (q.type === "date") h += '<input type="date" data-ansd="' + id + '" value="' + esc(d[id] || "") + '" aria-label="' + esc(t("q." + id)) + '">';
       else h += '<div class="chips">' + (q.options || []).map(function (o) {
         var on = q.type === "multi" ? (d[id] || []).indexOf(o) >= 0 : String(d[id]) === String(o);
@@ -635,6 +642,7 @@
   }
   function saveAnswers() {
     var d = ui.ans, bad = "";
+    if (d.name !== undefined) { d.name = cleanName(d.name); if (!d.name) delete d.name; }
     EDITABLE.forEach(function (id) {
       var q = QS.filter(function (x) { return x.id === id; })[0]; if (!q) return;
       if (id === "heim" && d.ort !== "zuhause") return;
@@ -1059,7 +1067,7 @@
     return safe(x);
   }
   function profileSheet() {
-    return '<div class="sheet-bg" id="bg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(t("profile.title")) + "</h2>" +
+    return '<div class="sheet-bg" id="bg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(t("profile.title")) + "</h2>" + hello() +
       '<div><div class="lbl">' + esc(t("profile.language")) + '</div><div class="chips">' +
       C.LANGS.map(function (l) { return '<button class="chip" data-lang="' + l.code + '" lang="' + l.code + '" aria-pressed="' + (S.lang === l.code) + '">' + esc(l.label) + "</button>"; }).join("") +
       '</div></div><button class="btn" id="ansopen">' + esc(t("ans.title")) + '</button><button class="btn ghost" id="fbopen">' + esc(t("fb.title")) + '</button><button class="btn ghost" id="redo">' + esc(t("profile.redo")) + '</button><div><div class="lbl">' + esc(t("backup.title")) + '</div><p class="qhint">' + esc(t("backup.text")) + '</p></div><button class="btn ghost" id="bksave">' + esc(t("backup.save")) + '</button><label class="btn ghost filebtn">' + esc(t("backup.load")) + '<input type="file" accept=".json,application/json" id="bkload" hidden></label><p class="qhint" id="bkmsg" role="status"></p><div><div class="lbl">' + esc(t("install.title")) + '</div><p class="qhint">' + esc(t("install.ios")) + "<br>" + esc(t("install.android")) + '</p></div><button class="btn ghost" id="privopen">' + esc(t("priv.title")) + '</button><p class="ver">' + esc(t("profile.disclaimer")) + '</p><div class="ver">' + esc(t("profile.version")) + " " + C.VERSION + '</div><button class="btn ghost" id="close">' + esc(t("profile.close")) + "</button></div></div>";
@@ -1128,6 +1136,7 @@
     on("ansclose", function () { ui.ans = null; render(); });
     on("anssave", saveAnswers);
     $app.querySelectorAll("[data-ansn]").forEach(function (el) { el.oninput = function () { var id = el.getAttribute("data-ansn"); if (el.value.trim() === "") delete ui.ans[id]; else ui.ans[id] = el.value.trim().replace(",", "."); }; });
+    $app.querySelectorAll("[data-anst]").forEach(function (el) { el.oninput = function () { ui.ans[el.getAttribute("data-anst")] = el.value; }; });
     $app.querySelectorAll("[data-ansd]").forEach(function (el) { el.onchange = function () { var id = el.getAttribute("data-ansd"); if (el.value) ui.ans[id] = el.value; else delete ui.ans[id]; }; });
     $app.querySelectorAll("[data-anso]").forEach(function (b) {
       b.onclick = function () {

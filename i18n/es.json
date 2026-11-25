@@ -700,5 +700,8 @@
   "fb.copied": "Copiado. Pégalo en WhatsApp o un correo.",
   "fb.manual": "Selecciona el texto y cópialo.",
   "nutri.byweight": "Calculado con {kg} kg de tus últimos registros.",
-  "nutri.fav": "Favorito"
+  "nutri.fav": "Favorito",
+  "q.name": "¿Cómo te llamas?",
+  "h.name": "Opcional. Basta tu nombre de pila. Se queda solo en tu dispositivo.",
+  "hello": "Hola, {name}"
 }

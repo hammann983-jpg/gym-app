@@ -700,5 +700,8 @@
   "fb.copied": "Kopiert. Füg den Text in WhatsApp oder eine Mail ein.",
   "fb.manual": "Markier den Text oben und kopiere ihn.",
   "nutri.byweight": "Berechnet mit {kg} kg aus deinen letzten Einträgen.",
-  "nutri.fav": "Favorit"
+  "nutri.fav": "Favorit",
+  "q.name": "Wie heißt du?",
+  "h.name": "Freiwillig. Dein Vorname reicht. Er bleibt nur auf deinem Gerät.",
+  "hello": "Hallo, {name}"
 }

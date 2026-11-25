@@ -3,6 +3,13 @@
  "note": "Struktur ohne Texte. Texte stehen in i18n/<sprache>.json (q.<id>, h.<id>, o.<id>.<option>, sec.<abschnitt>). type: number | choice | multi | date | yesno. if: nur zeigen, wenn Antwort in Liste. screen: red = Plan stoppt bei ja/keine_antwort, yellow = Arzt-Hinweis, nutri = keine Kalorienzahlen.",
  "questions": [
   {
+   "id": "name",
+   "sec": "about",
+   "type": "text",
+   "hint": true,
+   "required": false
+  },
+  {
    "id": "alter",
    "sec": "about",
    "type": "number",
