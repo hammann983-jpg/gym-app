@@ -218,3 +218,9 @@ a.btn.vid { display: block; text-align: center; text-decoration: none; }
 .chart { width: 100%; height: auto; display: block; }
 .card.race { gap: 10px; margin-top: 10px; }
 .card.race small.fl { margin-top: 0; }
+
+/* Teilen */
+.sharecv { display: grid; place-items: center; }
+.sharecanvas { max-height: 52vh; width: auto; max-width: 100%; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+.filebtn { display: block; text-align: center; cursor: pointer; }
+.card.hist .hr { display: flex; align-items: center; gap: 10px; }

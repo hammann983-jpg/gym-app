@@ -362,5 +362,21 @@
   "race.other": "Autre",
   "race.invalid": "Saisis un nom et une date.",
   "race.fromgoal": "Ton événement objectif",
-  "race.delete": "Retirer"
+  "race.delete": "Retirer",
+  "share.title": "Partager la séance",
+  "share.btn": "Partager",
+  "share.photo": "Choisir une photo",
+  "share.hint": "Choisis un style. Ta photo reste sur ton téléphone et n'est pas envoyée.",
+  "share.style.stats": "Chiffres",
+  "share.style.poster": "Affiche",
+  "share.style.photo": "Photo",
+  "share.style.week": "Semaine",
+  "share.exercises": "Exercices",
+  "share.done": "terminé.",
+  "share.weekdone": "Objectif de la semaine atteint",
+  "share.weekprogress": "Ma semaine d'entraînement",
+  "share.sessions": "Séances",
+  "share.streak": "Série",
+  "share.weeks": "{n} semaines",
+  "share.saved": "Image enregistrée."
 }

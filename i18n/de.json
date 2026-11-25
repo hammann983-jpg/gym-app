@@ -362,5 +362,21 @@
   "race.other": "Anderes",
   "race.invalid": "Gib einen Namen und ein Datum ein.",
   "race.fromgoal": "Dein Ziel-Wettkampf",
-  "race.delete": "Entfernen"
+  "race.delete": "Entfernen",
+  "share.title": "Training teilen",
+  "share.btn": "Teilen",
+  "share.photo": "Foto wählen",
+  "share.hint": "Wähle einen Stil. Dein Foto bleibt auf deinem Handy und wird nicht hochgeladen.",
+  "share.style.stats": "Zahlen",
+  "share.style.poster": "Poster",
+  "share.style.photo": "Foto",
+  "share.style.week": "Woche",
+  "share.exercises": "Übungen",
+  "share.done": "geschafft.",
+  "share.weekdone": "Wochenziel geschafft",
+  "share.weekprogress": "Meine Trainingswoche",
+  "share.sessions": "Einheiten",
+  "share.streak": "Serie",
+  "share.weeks": "{n} Wochen",
+  "share.saved": "Bild gespeichert."
 }

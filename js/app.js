@@ -222,7 +222,7 @@
     if (ui.finish) {
       var f = ui.finish, h = '<div class="card done"><h3>' + esc(t("today.done.title")) + '</h3><div class="stats two"><div class="stat"><small>' + esc(t("today.done.vol")) + "</small><b>" + nf(f.vol, 0) + ' kg</b></div><div class="stat"><small>' + esc(t("today.done.sets")) + "</small><b>" + f.sets + "</b></div></div>";
       f.prs.forEach(function (p) { h += '<div class="note warn">' + esc(t("today.done.pr")) + ": " + esc(p) + "</div>"; });
-      return h + '<button class="btn" id="finok">' + esc(t("today.done.ok")) + "</button></div>";
+      return h + '<button class="btn" data-share="' + f.idx + '">' + esc(t("share.btn")) + '</button><button class="btn ghost" id="finok">' + esc(t("today.done.ok")) + "</button></div>";
     }
     var p = ensurePlan();
     if (!p) return "";
@@ -268,7 +268,8 @@
     });
     if (!sets) { ui.err = t("today.nosets"); render(); return; }
     entry.vol = vol; S.log.push(entry); S.done = (S.done || 0) + 1; S.draft = null; ui.err = "";
-    ui.finish = { vol: vol, sets: sets, prs: prs }; save(); render();
+    entry.focus = s.focus || []; entry.prs = prs; entry.weeks = S.plan.weeks;
+    ui.finish = { vol: vol, sets: sets, prs: prs, idx: S.log.length - 1 }; save(); render();
   }
 
   function planView() {
@@ -296,7 +297,7 @@
     S.log.slice().reverse().slice(0, 30).forEach(function (l) {
       var sets = l.ex.reduce(function (a, e) { return a + e.sets.length; }, 0);
       var d = new Date(l.date + "T12:00:00");
-      h += '<div class="card hist"><div><b>' + esc(t("day." + l.type) + (l.letter ? " " + l.letter : "")) + "</b><small>" + esc(d.toLocaleDateString(window.I18N.lang(), { weekday: "short", day: "numeric", month: "short" })) + "</small></div><span>" + esc(t("prog.entry", { vol: nf(l.vol, 0), sets: sets })) + "</span></div>";
+      h += '<div class="card hist"><div><b>' + esc(t("day." + l.type) + (l.letter ? " " + l.letter : "")) + "</b><small>" + esc(d.toLocaleDateString(window.I18N.lang(), { weekday: "short", day: "numeric", month: "short" })) + "</small></div><div class=\"hr\"><span>" + esc(t("prog.entry", { vol: nf(l.vol, 0), sets: sets })) + '</span><button class="swap" data-share="' + S.log.indexOf(l) + '">' + esc(t("share.btn")) + "</button></div></div>";
     });
     return h;
   }
@@ -497,7 +498,39 @@
     }).join("") + "</div></nav>";
     if (ui.profile) h += profileSheet();
     if (ui.info) h += infoSheet(ui.info);
+    if (ui.share) h += shareSheet();
     return h;
+  }
+
+  // ---------- Teilen ----------
+  var MARK = null, SHARE_CV = null;
+  function weekStartIso(s) { var d = new Date(s + "T12:00:00"), k = (d.getDay() + 6) % 7; d.setDate(d.getDate() - k); return iso(d); }
+  function shareData(i) {
+    var l = S.log[i]; if (!l) return null;
+    var lang = window.I18N.lang(), ws = weekStartIso(l.date), goal = S.plan ? S.plan.sessions.length : 3;
+    var byWeek = {}; S.log.forEach(function (x) { var k = weekStartIso(x.date); byWeek[k] = (byWeek[k] || 0) + 1; });
+    var days = [0, 0, 0, 0, 0, 0, 0]; S.log.forEach(function (x) { if (weekStartIso(x.date) === ws) days[(new Date(x.date + "T12:00:00").getDay() + 6) % 7] = 1; });
+    var streak = 0, k = ws; while (byWeek[k] >= goal) { streak++; var dd = new Date(k + "T12:00:00"); dd.setDate(dd.getDate() - 7); k = iso(dd); }
+    var title = (l.type === "fb" || !(l.focus || []).length) ? t("day." + l.type) + (l.letter ? " " + l.letter : "") : l.focus.map(function (f) { return t("focus." + f); }).join(" · ");
+    var exs = l.ex.map(function (e) { var b = e.sets.reduce(function (a, s) { return (s.kg * s.reps > a.kg * a.reps) ? s : a; }, e.sets[0]); return { name: exName(e.id), best: (b.kg ? nf(b.kg, 2) + " kg × " : "") + b.reps + (b.kg ? "" : " ×") }; });
+    var dn = []; for (var q = 0; q < 7; q++) dn.push(new Date(2024, 0, 1 + q).toLocaleDateString(lang, { weekday: "short" }).slice(0, 2));
+    return { title: title, date: new Date(l.date + "T12:00:00").toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" }), vol: l.vol, sets: l.ex.reduce(function (a, e) { return a + e.sets.length; }, 0), ex: l.ex.length, prs: l.prs || [], week: Math.min(l.week, l.weeks || (S.plan && S.plan.weeks) || l.week), weeks: l.weeks || (S.plan && S.plan.weeks) || 12, lang: lang, brand: C.APP_NAME, exercises: exs, dayNames: dn,
+      weekStats: { done: byWeek[ws] || 0, goal: goal, days: days, streak: streak },
+      labels: { volume: t("today.done.vol"), sets: t("today.done.sets"), exercises: t("share.exercises"), week: t("plan.week"), record: t("today.done.pr"), done: t("share.done"), weekdone: t("share.weekdone"), weekprogress: t("share.weekprogress"), sessions: t("share.sessions"), streak: t("share.streak"), weeks: t("share.weeks") } };
+  }
+  function shareSheet() {
+    var sh = ui.share, styles = ["stats", "poster", "photo", "week"];
+    return '<div class="sheet-bg" id="sharebg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(t("share.title")) + '</h2><div class="sharecv" id="sharecv"></div><p class="qhint">' + esc(t("share.hint")) + '</p><div class="chips">' +
+      styles.map(function (s) { return '<button class="chip" data-sstyle="' + s + '" aria-pressed="' + (sh.style === s) + '">' + esc(t("share.style." + s)) + "</button>"; }).join("") +
+      '</div><label class="btn ghost filebtn">' + esc(t("share.photo")) + '<input type="file" accept="image/*" id="sharephoto" hidden></label><button class="btn" id="shareok">' + esc(t("share.btn")) + '</button><button class="btn ghost" id="shareclose">' + esc(t("profile.close")) + "</button></div></div>";
+  }
+  async function drawShare() {
+    var host = document.getElementById("sharecv"); if (!host || !ui.share) return;
+    try { await Promise.all([document.fonts.load('700 100px "Barlow Condensed"'), document.fonts.load('600 40px Inter')]); } catch (e) {}
+    if (!MARK) MARK = await new Promise(function (res) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = function () { res(null); }; im.src = "icons/mark.png?v=" + C.VERSION; });
+    var d = shareData(ui.share.idx); if (!d) return;
+    SHARE_CV = window.Share.draw(ui.share.style, d, MARK, ui.share.photo);
+    SHARE_CV.className = "sharecanvas"; host.innerHTML = ""; host.appendChild(SHARE_CV);
   }
 
   function list(arr) { return '<ul class="tips">' + arr.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>"; }
@@ -581,6 +614,20 @@
     on("finok", function () { ui.finish = null; render(); window.scrollTo(0, 0); });
     $app.querySelectorAll("[data-info]").forEach(function (b) { b.onclick = function () { ui.info = b.getAttribute("data-info"); render(); }; });
     on("infoclose", function () { ui.info = null; render(); });
+    $app.querySelectorAll("[data-share]").forEach(function (b) { b.onclick = function () { ui.share = { idx: Number(b.getAttribute("data-share")), style: "stats", photo: null }; render(); }; });
+    $app.querySelectorAll("[data-sstyle]").forEach(function (b) { b.onclick = function () { ui.share.style = b.getAttribute("data-sstyle"); render(); }; });
+    on("shareclose", function () { ui.share = null; render(); });
+    var sbg = document.getElementById("sharebg");
+    if (sbg) sbg.onclick = function (e) { if (e.target === sbg) { ui.share = null; render(); } };
+    var sp = document.getElementById("sharephoto");
+    if (sp) sp.onchange = function () {
+      var f = sp.files && sp.files[0]; if (!f) return;
+      var url = URL.createObjectURL(f), im = new Image();
+      im.onload = function () { ui.share.photo = im; ui.share.style = "photo"; render(); };
+      im.src = url;
+    };
+    on("shareok", function () { if (SHARE_CV) window.Share.share(SHARE_CV, "forma-" + (S.log[ui.share.idx] ? S.log[ui.share.idx].date : "workout") + ".png", C.APP_NAME); });
+    if (ui.share) drawShare();
     $app.querySelectorAll("[data-nday]").forEach(function (b) { b.onclick = function () { ui.nday = Number(b.getAttribute("data-nday")); render(); }; });
     $app.querySelectorAll("[data-mopen]").forEach(function (b) { b.onclick = function () { var k = b.getAttribute("data-mopen"); ui.nopen[k] = !ui.nopen[k]; render(); }; });
     $app.querySelectorAll("[data-swap]").forEach(function (b) {

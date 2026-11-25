@@ -362,5 +362,21 @@
   "race.other": "Otro",
   "race.invalid": "Introduce un nombre y una fecha.",
   "race.fromgoal": "Tu evento objetivo",
-  "race.delete": "Quitar"
+  "race.delete": "Quitar",
+  "share.title": "Compartir entrenamiento",
+  "share.btn": "Compartir",
+  "share.photo": "Elegir una foto",
+  "share.hint": "Elige un estilo. Tu foto se queda en tu móvil y no se sube.",
+  "share.style.stats": "Datos",
+  "share.style.poster": "Póster",
+  "share.style.photo": "Foto",
+  "share.style.week": "Semana",
+  "share.exercises": "Ejercicios",
+  "share.done": "hecho.",
+  "share.weekdone": "Objetivo semanal cumplido",
+  "share.weekprogress": "Mi semana de entrenamiento",
+  "share.sessions": "Sesiones",
+  "share.streak": "Racha",
+  "share.weeks": "{n} semanas",
+  "share.saved": "Imagen guardada."
 }
