@@ -1,0 +1,12 @@
+# Interne Arbeitsdateien, nicht öffentlich
+.claude/
+CLAUDE.md
+KICKOFF-PROMPT.md
+README.md
+SPEC.md
+IDEEN-STRUKTUR.md
+design/
+referenz/
+data/fragebogen.json
+*.zip
+muster/

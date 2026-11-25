@@ -1,0 +1,57 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Fragebogen Test</title>
+<body style="font-family:system-ui;padding:20px"><h1>Fragebogen-Tests</h1><pre id="out">läuft…</pre>
+<script src="../js/questionnaire.js"></script>
+<script>
+var res = [], fails = 0;
+function eq(name, got, want) { var ok = JSON.stringify(got) === JSON.stringify(want); if (!ok) fails++; res.push((ok ? "OK   " : "FAIL ") + name + (ok ? "" : "  got=" + JSON.stringify(got) + " want=" + JSON.stringify(want))); }
+Promise.all([fetch("../data/questionnaire.json").then(r => r.json()), ...["en","de","es","fr"].map(c => fetch("../i18n/" + c + ".json").then(r => r.json()))]).then(function (all) {
+  var Qs = all[0].questions, langs = { en: all[1], de: all[2], es: all[3], fr: all[4] };
+  // Sichtbarkeit
+  var ids = a => Q.visible(Qs, a).map(q => q.id);
+  eq("Kraft: keine Hyrox-Fragen", ids({ hauptziel: "kraft" }).indexOf("hyrox_division"), -1);
+  eq("Hyrox: Division sichtbar", ids({ hauptziel: "hyrox" }).indexOf("hyrox_division") >= 0, true);
+  eq("Triathlon: Distanz + Lauf-Level", [ids({ hauptziel: "triathlon" }).indexOf("tri_distanz") >= 0, ids({ hauptziel: "triathlon" }).indexOf("lauf_level") >= 0], [true, true]);
+  eq("Bodybuilding: Phase sichtbar", ids({ hauptziel: "bodybuilding" }).indexOf("bb_phase") >= 0, true);
+  eq("Marathon: kein bb_phase", ids({ hauptziel: "marathon" }).indexOf("bb_phase"), -1);
+  // Prüfung
+  var q = id => Qs.find(x => x.id === id);
+  eq("Alter 13 ungültig", Q.valid(q("alter"), 13), false);
+  eq("Alter 30 gültig", Q.valid(q("alter"), 30), true);
+  eq("Alter leer ungültig (Pflicht)", Q.valid(q("alter"), ""), false);
+  eq("Zielgewicht leer ok (freiwillig)", Q.valid(q("zielgewicht_kg"), null), true);
+  eq("Komma-Zahl", Q.num("65,5"), 65.5);
+  eq("Multi leer ungültig", Q.valid(q("equipment"), []), false);
+  // Sicherheit
+  var base = { alter: 30, gewicht_kg: 65, groesse_cm: 170, s1: "nein", s2: "nein", s3: "nein", s4: "nein", s5: "nein", s6: "nein", s7: "nein", essstoerung: "nein" };
+  eq("Alles nein: grün", [Q.screening(base).red, Q.screening(base).yellow, Q.screening(base).nutriOff], [false, false, false]);
+  eq("s2 ja: rot", Q.screening(Object.assign({}, base, { s2: "ja" })).red, true);
+  eq("s1 keine Antwort: rot", Q.screening(Object.assign({}, base, { s1: "keine_antwort" })).red, true);
+  eq("s4 ja: gelb, nicht rot", [Q.screening(Object.assign({}, base, { s4: "ja" })).yellow, Q.screening(Object.assign({}, base, { s4: "ja" })).red], [true, false]);
+  eq("Schwanger: keine Kalorien", Q.screening(Object.assign({}, base, { s6: "ja" })).nutriOff, true);
+  eq("Essstörung ja: keine Kalorien", Q.screening(Object.assign({}, base, { essstoerung: "ja" })).nutriOff, true);
+  eq("17 Jahre: keine Kalorien", Q.screening(Object.assign({}, base, { alter: 17 })).nutriOff, true);
+  eq("BMI 17: keine Kalorien", Q.screening(Object.assign({}, base, { gewicht_kg: 49 })).nutriOff, true);
+  eq("BMI 22,5", Math.round(Q.bmi({ gewicht_kg: 65, groesse_cm: 170 }) * 10) / 10, 22.5);
+  // Texte in allen Sprachen
+  var miss = [];
+  Qs.forEach(function (x) {
+    ["en", "de", "es", "fr"].forEach(function (L) {
+      var d = langs[L];
+      if (!d["q." + x.id]) miss.push(L + " q." + x.id);
+      if (x.hint && !d["h." + x.id]) miss.push(L + " h." + x.id);
+      if (!d["sec." + x.sec]) miss.push(L + " sec." + x.sec);
+      var opts = x.type === "yesno" ? ["ja", "nein", "keine_antwort"] : (x.options || []);
+      opts.forEach(function (o) { if (typeof o === "number") return; if (!d["o." + x.id + "." + o] && !d["o." + o]) miss.push(L + " o." + x.id + "." + o); });
+      if (x.unit && x.unit.indexOf("u.") === 0 && !d[x.unit]) miss.push(L + " " + x.unit);
+    });
+  });
+  eq("Alle Fragetexte und Optionen in 4 Sprachen", miss, []);
+  var ref = Object.keys(langs.en), diff = [];
+  ["de", "es", "fr"].forEach(L => { ref.forEach(k => { if (!(k in langs[L])) diff.push(L + " fehlt " + k); }); Object.keys(langs[L]).forEach(k => { if (!(k in langs.en)) diff.push(L + " zu viel " + k); }); });
+  eq("Schlüssel-Gleichheit", diff, []);
+  document.getElementById("out").textContent = res.join("\n") + "\n\n" + (fails ? fails + " FEHLER" : "ALLE OK (" + res.length + ")");
+  document.title = fails ? "FAIL" : "PASS";
+});
+</script>

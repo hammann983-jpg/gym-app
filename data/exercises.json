@@ -1,0 +1,1799 @@
+{
+ "version": 1,
+ "uebungen": [
+  {
+   "id": "kniebeuge_koerper",
+   "name": "Kniebeuge (Körpergewicht)",
+   "kategorie": "kniebeuge",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "Oberschenkel vorn",
+    "Po"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Füße schulterbreit, Zehen leicht nach außen",
+    "Knie zeigen in Richtung der Zehen",
+    "Brust offen, Rücken gerade"
+   ],
+   "fehler": [
+    "Knie fallen nach innen",
+    "Fersen heben ab"
+   ],
+   "atmung": "Einatmen beim Runtergehen, Ausatmen beim Hochkommen",
+   "sicherheit": "Nur so tief, wie der Rücken gerade bleibt.",
+   "leichter": "Kniebeuge auf Stuhl (hinsetzen und aufstehen)",
+   "schwerer": "Goblet-Kniebeuge",
+   "meiden_bei": [],
+   "wdh_standard": "10-15",
+   "einseitig": false
+  },
+  {
+   "id": "goblet_kniebeuge",
+   "name": "Goblet-Kniebeuge",
+   "kategorie": "kniebeuge",
+   "equipment": [
+    "kurzhantel",
+    "kettlebell"
+   ],
+   "muskeln": [
+    "Oberschenkel vorn",
+    "Po",
+    "Rumpf"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Gewicht vor der Brust halten, Ellbogen nach unten",
+    "Tief runter, Rücken lang",
+    "Mit den Fersen hochdrücken"
+   ],
+   "fehler": [
+    "Gewicht rutscht vom Körper weg",
+    "Zu schnell nach unten"
+   ],
+   "atmung": "Einatmen unten vorbereiten, Ausatmen beim Aufstehen",
+   "sicherheit": "Gewicht wählen, bei dem die Technik hält.",
+   "leichter": "Kniebeuge (Körpergewicht)",
+   "schwerer": "Langhantel-Kniebeuge",
+   "meiden_bei": [
+    "knie_tief"
+   ],
+   "wdh_standard": "8-12",
+   "einseitig": false
+  },
+  {
+   "id": "beinpresse",
+   "name": "Beinpresse",
+   "kategorie": "kniebeuge",
+   "equipment": [
+    "maschine"
+   ],
+   "muskeln": [
+    "Oberschenkel vorn",
+    "Po"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Füße schulterbreit mittig auf der Platte",
+    "Knie zeigen über die Zehen, nicht nach innen",
+    "Unterer Rücken bleibt an der Lehne"
+   ],
+   "fehler": [
+    "Po hebt unten ab",
+    "Knie werden ganz durchgedrückt"
+   ],
+   "atmung": "Ausatmen beim Drücken",
+   "sicherheit": "Beim Drücken die Knie nie ganz durchstrecken, nie die Lehne verlassen.",
+   "leichter": "Weniger Gewicht, flachere Tiefe",
+   "schwerer": "Einbeinig",
+   "meiden_bei": [],
+   "wdh_standard": "10-15",
+   "einseitig": false
+  },
+  {
+   "id": "kniebeuge_langhantel",
+   "name": "Kniebeuge (Langhantel)",
+   "kategorie": "kniebeuge",
+   "equipment": [
+    "langhantel",
+    "rack"
+   ],
+   "muskeln": [
+    "Oberschenkel vorn",
+    "Po",
+    "Rücken",
+    "Rumpf"
+   ],
+   "level": "fortgeschritten",
+   "cues": [
+    "Stange fest auf dem oberen Rücken, Ellbogen unter der Stange",
+    "Rumpf fest, Atem in den Bauch",
+    "Tief genug, dass die Hüfte unter das Knie kommt, wenn es geht"
+   ],
+   "fehler": [
+    "Rücken rundet unten",
+    "Gewicht auf den Zehen"
+   ],
+   "atmung": "Tief einatmen, Rumpf anspannen, nach dem Aufstehen ausatmen",
+   "sicherheit": "Immer im Rack mit Sicherheitsstangen, nie allein am Limit.",
+   "leichter": "Goblet-Kniebeuge",
+   "schwerer": "Pausen-Kniebeuge",
+   "meiden_bei": [
+    "knie_tief",
+    "ruecken"
+   ],
+   "wdh_standard": "5-8",
+   "einseitig": false
+  },
+  {
+   "id": "kettlebell_deadlift",
+   "name": "Kettlebell-Kreuzheben",
+   "kategorie": "hinge",
+   "equipment": [
+    "kettlebell",
+    "kurzhantel"
+   ],
+   "muskeln": [
+    "Beinrückseite",
+    "Po",
+    "unterer Rücken"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Hüfte nach hinten schieben, Knie nur leicht gebeugt",
+    "Rücken bleibt gerade, Blick schräg nach vorn",
+    "Mit der Hüfte aufrichten, Po anspannen"
+   ],
+   "fehler": [
+    "Rücken rundet",
+    "Hocke statt Hüftbeuge"
+   ],
+   "atmung": "Einatmen unten, Ausatmen beim Aufrichten",
+   "sicherheit": "Gewicht nah am Körper führen.",
+   "leichter": "Gewicht auf Kasten erhöhen (kürzerer Weg)",
+   "schwerer": "Rumänisches Kreuzheben",
+   "meiden_bei": [],
+   "wdh_standard": "8-12",
+   "einseitig": false
+  },
+  {
+   "id": "rumaenisches_kreuzheben",
+   "name": "Rumänisches Kreuzheben",
+   "kategorie": "hinge",
+   "equipment": [
+    "langhantel",
+    "kurzhantel"
+   ],
+   "muskeln": [
+    "Beinrückseite",
+    "Po",
+    "unterer Rücken"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Gewicht nah an den Beinen",
+    "Hüfte nach hinten, Knie leicht gebeugt",
+    "Bis zur Mitte der Schienbeine, dann Po nach vorn"
+   ],
+   "fehler": [
+    "Rücken rundet",
+    "Gewicht schwingt vom Körper weg"
+   ],
+   "atmung": "Einatmen beim Runtergehen, Ausatmen beim Aufrichten",
+   "sicherheit": "Nur so tief, wie der Rücken gerade bleibt.",
+   "leichter": "Kettlebell-Kreuzheben",
+   "schwerer": "Einbeinig",
+   "meiden_bei": [
+    "ruecken_akut"
+   ],
+   "wdh_standard": "8-12",
+   "einseitig": false
+  },
+  {
+   "id": "kreuzheben",
+   "name": "Kreuzheben (Langhantel)",
+   "kategorie": "hinge",
+   "equipment": [
+    "langhantel"
+   ],
+   "muskeln": [
+    "Beinrückseite",
+    "Po",
+    "Rücken",
+    "Griff"
+   ],
+   "level": "erfahren",
+   "cues": [
+    "Stange über Mitte Fuß, Schulterblätter über der Stange",
+    "Rumpf anspannen, Rücken lang",
+    "Boden wegdrücken, Stange am Körper hoch"
+   ],
+   "fehler": [
+    "Rücken rundet",
+    "Hüfte schießt zuerst hoch"
+   ],
+   "atmung": "Tief einatmen, Rumpf anspannen, oben ausatmen",
+   "sicherheit": "Nie mit rundem Rücken ziehen. Bei Rückenproblemen auslassen.",
+   "leichter": "Rumänisches Kreuzheben",
+   "schwerer": "Defizit-Kreuzheben",
+   "meiden_bei": [
+    "ruecken"
+   ],
+   "wdh_standard": "3-6",
+   "einseitig": false
+  },
+  {
+   "id": "hip_thrust",
+   "name": "Hip Thrust",
+   "kategorie": "hinge",
+   "equipment": [
+    "langhantel",
+    "kurzhantel",
+    "bank",
+    "koerper"
+   ],
+   "muskeln": [
+    "Po",
+    "Beinrückseite"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Schulterblätter auf der Bank, Füße hüftbreit",
+    "Hüfte hochdrücken bis der Körper eine Linie bildet",
+    "Oben Po fest anspannen, Kinn zur Brust"
+   ],
+   "fehler": [
+    "Hohlkreuz oben",
+    "Füße zu weit weg"
+   ],
+   "atmung": "Ausatmen beim Hochdrücken",
+   "sicherheit": "Polster unter die Stange legen.",
+   "leichter": "Glute Bridge",
+   "schwerer": "Einbeinig",
+   "meiden_bei": [],
+   "wdh_standard": "8-12",
+   "einseitig": false
+  },
+  {
+   "id": "glute_bridge",
+   "name": "Glute Bridge",
+   "kategorie": "hinge",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "Po"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Rückenlage, Füße nah am Po",
+    "Hüfte heben bis Schulter-Knie-Linie",
+    "Oben 1 Sekunde halten"
+   ],
+   "fehler": [
+    "Hohlkreuz",
+    "Knie fallen nach außen"
+   ],
+   "atmung": "Ausatmen beim Heben",
+   "sicherheit": "Kein Schmerz im unteren Rücken.",
+   "leichter": "Weniger Höhe",
+   "schwerer": "Hip Thrust",
+   "meiden_bei": [],
+   "wdh_standard": "12-15",
+   "einseitig": false
+  },
+  {
+   "id": "kettlebell_swing",
+   "name": "Kettlebell-Swing",
+   "kategorie": "hinge",
+   "equipment": [
+    "kettlebell"
+   ],
+   "muskeln": [
+    "Po",
+    "Beinrückseite",
+    "Rumpf"
+   ],
+   "level": "fortgeschritten",
+   "cues": [
+    "Hüfte nach hinten wie beim Kreuzheben",
+    "Hüfte schnellt nach vorn, die Arme führen nur",
+    "Oben stehen wie ein Brett, Po fest"
+   ],
+   "fehler": [
+    "Mit den Armen hochziehen",
+    "Rücken rundet"
+   ],
+   "atmung": "Ausatmen beim Hochschwingen",
+   "sicherheit": "Erst Kreuzheben können, dann Swing. Abstand zu anderen halten.",
+   "leichter": "Kettlebell-Kreuzheben",
+   "schwerer": "Einarmig",
+   "meiden_bei": [
+    "ruecken"
+   ],
+   "wdh_standard": "15-20",
+   "einseitig": false
+  },
+  {
+   "id": "ausfallschritt_rueckwaerts",
+   "name": "Ausfallschritt rückwärts",
+   "kategorie": "ausfall",
+   "equipment": [
+    "koerper",
+    "kurzhantel"
+   ],
+   "muskeln": [
+    "Oberschenkel vorn",
+    "Po"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Großer Schritt nach hinten",
+    "Vorderes Knie über dem Fuß",
+    "Aufrecht bleiben, Rumpf fest"
+   ],
+   "fehler": [
+    "Schritt zu kurz",
+    "Knie schlägt nach innen"
+   ],
+   "atmung": "Einatmen runter, Ausatmen hoch",
+   "sicherheit": "Bei Gleichgewichtsproblemen an einer Wand festhalten.",
+   "leichter": "Ohne Gewicht, kleinerer Schritt",
+   "schwerer": "Gehend mit Kurzhanteln",
+   "meiden_bei": [],
+   "wdh_standard": "8-12 pro Seite",
+   "einseitig": true
+  },
+  {
+   "id": "bulgarische_split_kniebeuge",
+   "name": "Bulgarische Split-Kniebeuge",
+   "kategorie": "ausfall",
+   "equipment": [
+    "kurzhantel",
+    "bank",
+    "koerper"
+   ],
+   "muskeln": [
+    "Oberschenkel vorn",
+    "Po"
+   ],
+   "level": "fortgeschritten",
+   "cues": [
+    "Hinterer Fuß auf der Bank",
+    "Vorderer Fuß weit genug vor",
+    "Senkrecht runter, vorderes Knie über dem Fuß"
+   ],
+   "fehler": [
+    "Fuß zu nah an der Bank",
+    "Oberkörper kippt"
+   ],
+   "atmung": "Einatmen runter, Ausatmen hoch",
+   "sicherheit": "Gleichgewicht erst ohne Gewicht üben.",
+   "leichter": "Ausfallschritt rückwärts",
+   "schwerer": "Mit Langhantel",
+   "meiden_bei": [
+    "knie_tief"
+   ],
+   "wdh_standard": "8-10 pro Seite",
+   "einseitig": true
+  },
+  {
+   "id": "step_up",
+   "name": "Step-up",
+   "kategorie": "ausfall",
+   "equipment": [
+    "kurzhantel",
+    "bank"
+   ],
+   "muskeln": [
+    "Oberschenkel vorn",
+    "Po"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Ganzer Fuß auf der Box",
+    "Mit dem vorderen Bein hochdrücken",
+    "Langsam wieder runter"
+   ],
+   "fehler": [
+    "Mit dem hinteren Bein abdrücken",
+    "Oberkörper kippt"
+   ],
+   "atmung": "Ausatmen beim Hochsteigen",
+   "sicherheit": "Niedrige Box bei Knieproblemen.",
+   "leichter": "Niedrigere Box",
+   "schwerer": "Höhere Box mit Gewicht",
+   "meiden_bei": [],
+   "wdh_standard": "8-12 pro Seite",
+   "einseitig": true
+  },
+  {
+   "id": "ausfallschritt_gehend",
+   "name": "Gehende Ausfallschritte",
+   "kategorie": "ausfall",
+   "equipment": [
+    "kurzhantel",
+    "koerper"
+   ],
+   "muskeln": [
+    "Oberschenkel vorn",
+    "Po"
+   ],
+   "level": "fortgeschritten",
+   "cues": [
+    "Großer Schritt, hinteres Knie nahe am Boden",
+    "Aufrecht bleiben",
+    "Gleichmäßiges Tempo"
+   ],
+   "fehler": [
+    "Schritte zu klein",
+    "Knie kippt nach innen"
+   ],
+   "atmung": "Einatmen runter, Ausatmen hoch",
+   "sicherheit": "Genug Platz, rutschfeste Schuhe.",
+   "leichter": "Ausfallschritt rückwärts",
+   "schwerer": "Mit schwereren Hanteln",
+   "meiden_bei": [
+    "knie_tief"
+   ],
+   "wdh_standard": "10-12 pro Seite",
+   "einseitig": true
+  },
+  {
+   "id": "liegestuetz",
+   "name": "Liegestütz",
+   "kategorie": "push_h",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "Brust",
+    "Schulter vorn",
+    "Trizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Körper bildet eine gerade Linie",
+    "Ellbogen etwa 45° vom Körper",
+    "Brust fast bis zum Boden"
+   ],
+   "fehler": [
+    "Hüfte hängt durch",
+    "Ellbogen weit nach außen"
+   ],
+   "atmung": "Einatmen runter, Ausatmen hoch",
+   "sicherheit": "Erhöhte Hände, wenn es zu schwer ist.",
+   "leichter": "Hände erhöht (Bank)",
+   "schwerer": "Füße erhöht",
+   "meiden_bei": [
+    "handgelenk"
+   ],
+   "wdh_standard": "8-15",
+   "einseitig": false
+  },
+  {
+   "id": "bankdruecken",
+   "name": "Bankdrücken (Langhantel)",
+   "kategorie": "push_h",
+   "equipment": [
+    "langhantel",
+    "bank",
+    "rack"
+   ],
+   "muskeln": [
+    "Brust",
+    "Schulter vorn",
+    "Trizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Schulterblätter zusammen und nach unten",
+    "Stange auf Brusthöhe senken, Unterarme senkrecht",
+    "Füße fest am Boden"
+   ],
+   "fehler": [
+    "Po hebt ab",
+    "Ellbogen 90° weg vom Körper"
+   ],
+   "atmung": "Einatmen beim Senken, Ausatmen beim Drücken",
+   "sicherheit": "Immer mit Sicherheitsstangen oder Spotter.",
+   "leichter": "Kurzhantel-Bankdrücken",
+   "schwerer": "Pausen-Bankdrücken",
+   "meiden_bei": [
+    "schulter"
+   ],
+   "wdh_standard": "5-8",
+   "einseitig": false
+  },
+  {
+   "id": "kurzhantel_bankdruecken",
+   "name": "Kurzhantel-Bankdrücken",
+   "kategorie": "push_h",
+   "equipment": [
+    "kurzhantel",
+    "bank"
+   ],
+   "muskeln": [
+    "Brust",
+    "Schulter vorn",
+    "Trizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Schulterblätter fest auf der Bank",
+    "Hanteln über der Brust, Unterarme senkrecht",
+    "Kontrolliert runter, bis die Ellbogen etwa auf Brusthöhe sind"
+   ],
+   "fehler": [
+    "Hanteln pendeln",
+    "Schultern rollen nach vorn"
+   ],
+   "atmung": "Einatmen runter, Ausatmen hoch",
+   "sicherheit": "Hanteln sicher auf die Oberschenkel setzen und hinlegen.",
+   "leichter": "Liegestütz",
+   "schwerer": "Schrägbank",
+   "meiden_bei": [],
+   "wdh_standard": "8-12",
+   "einseitig": false
+  },
+  {
+   "id": "brustpresse_maschine",
+   "name": "Brustpresse (Maschine)",
+   "kategorie": "push_h",
+   "equipment": [
+    "maschine"
+   ],
+   "muskeln": [
+    "Brust",
+    "Trizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Sitz so stellen, dass Griffe auf Brusthöhe sind",
+    "Schulterblätter an die Lehne",
+    "Nicht ganz durchstrecken"
+   ],
+   "fehler": [
+    "Schultern ziehen hoch",
+    "Zu schnell zurück"
+   ],
+   "atmung": "Ausatmen beim Drücken",
+   "sicherheit": "Gut bei Schulterproblemen.",
+   "leichter": "Weniger Gewicht",
+   "schwerer": "Kurzhantel-Bankdrücken",
+   "meiden_bei": [],
+   "wdh_standard": "10-15",
+   "einseitig": false
+  },
+  {
+   "id": "schraegbank_kurzhantel",
+   "name": "Schrägbankdrücken (Kurzhanteln)",
+   "kategorie": "push_schraeg",
+   "equipment": [
+    "kurzhantel",
+    "bank"
+   ],
+   "muskeln": [
+    "obere Brust",
+    "Schulter vorn",
+    "Trizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Bank auf 30°",
+    "Schulterblätter fest",
+    "Hanteln leicht V-förmig führen"
+   ],
+   "fehler": [
+    "Bank zu steil",
+    "Rücken im Hohlkreuz"
+   ],
+   "atmung": "Ausatmen beim Drücken",
+   "sicherheit": "Moderate Schrägstellung ist schulterfreundlicher.",
+   "leichter": "Flachbank",
+   "schwerer": "Mehr Gewicht",
+   "meiden_bei": [],
+   "wdh_standard": "8-12",
+   "einseitig": false
+  },
+  {
+   "id": "schulterdruecken_kurzhantel",
+   "name": "Schulterdrücken (Kurzhanteln)",
+   "kategorie": "push_v",
+   "equipment": [
+    "kurzhantel"
+   ],
+   "muskeln": [
+    "Schulter",
+    "Trizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Sitzend mit Rückenlehne",
+    "Hanteln auf Schulterhöhe, Ellbogen leicht vor dem Körper",
+    "Über dem Kopf zusammenführen, Rumpf fest"
+   ],
+   "fehler": [
+    "Hohlkreuz",
+    "Kopf schiebt nach vorn"
+   ],
+   "atmung": "Ausatmen beim Drücken",
+   "sicherheit": "Bei Schulterschmerz Landmine Press nutzen.",
+   "leichter": "Landmine Press",
+   "schwerer": "Stehend",
+   "meiden_bei": [
+    "schulter"
+   ],
+   "wdh_standard": "8-12",
+   "einseitig": false
+  },
+  {
+   "id": "landmine_press",
+   "name": "Landmine Press",
+   "kategorie": "push_v",
+   "equipment": [
+    "langhantel"
+   ],
+   "muskeln": [
+    "Schulter",
+    "obere Brust",
+    "Trizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Stange in einer Ecke fixieren",
+    "Schräg nach oben drücken",
+    "Rumpf fest, kein Hohlkreuz"
+   ],
+   "fehler": [
+    "Mit dem Rücken mitdrücken",
+    "Zu weit zur Seite"
+   ],
+   "atmung": "Ausatmen beim Drücken",
+   "sicherheit": "Schulterfreundlich.",
+   "leichter": "Weniger Gewicht",
+   "schwerer": "Stehend mit mehr Last",
+   "meiden_bei": [],
+   "wdh_standard": "8-12 pro Seite",
+   "einseitig": true
+  },
+  {
+   "id": "latzug",
+   "name": "Latzug",
+   "kategorie": "pull_v",
+   "equipment": [
+    "kabel",
+    "maschine"
+   ],
+   "muskeln": [
+    "breiter Rückenmuskel",
+    "Bizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Brust raus, Schulterblätter nach unten",
+    "Zur oberen Brust ziehen, nicht in den Nacken",
+    "Langsam wieder hoch"
+   ],
+   "fehler": [
+    "Mit Schwung ziehen",
+    "Nacken statt Brust"
+   ],
+   "atmung": "Ausatmen beim Ziehen",
+   "sicherheit": "Nie hinter den Kopf ziehen.",
+   "leichter": "Leichter ziehen",
+   "schwerer": "Klimmzug",
+   "meiden_bei": [],
+   "wdh_standard": "8-12",
+   "einseitig": false
+  },
+  {
+   "id": "assistierter_klimmzug",
+   "name": "Klimmzug mit Band oder Maschine",
+   "kategorie": "pull_v",
+   "equipment": [
+    "band",
+    "maschine"
+   ],
+   "muskeln": [
+    "breiter Rückenmuskel",
+    "Bizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Schulterblätter zuerst nach unten",
+    "Brust zur Stange",
+    "Langsam runter"
+   ],
+   "fehler": [
+    "Kinn nach vorn strecken",
+    "Halber Weg"
+   ],
+   "atmung": "Ausatmen beim Hochziehen",
+   "sicherheit": "Griff fest, Rumpf spannen.",
+   "leichter": "Dickeres Band",
+   "schwerer": "Klimmzug",
+   "meiden_bei": [],
+   "wdh_standard": "5-10",
+   "einseitig": false
+  },
+  {
+   "id": "klimmzug",
+   "name": "Klimmzug",
+   "kategorie": "pull_v",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "breiter Rückenmuskel",
+    "Bizeps",
+    "Griff"
+   ],
+   "level": "fortgeschritten",
+   "cues": [
+    "Schulterblätter zuerst nach unten",
+    "Brust zur Stange",
+    "Langsam runter, voller Weg"
+   ],
+   "fehler": [
+    "Schwung aus den Beinen",
+    "Halber Weg"
+   ],
+   "atmung": "Ausatmen beim Hochziehen",
+   "sicherheit": "Bei Schulterschmerz Latzug.",
+   "leichter": "Mit Band",
+   "schwerer": "Mit Zusatzgewicht",
+   "meiden_bei": [
+    "schulter"
+   ],
+   "wdh_standard": "5-10",
+   "einseitig": false
+  },
+  {
+   "id": "rudern_kabel",
+   "name": "Rudern am Kabel (sitzend)",
+   "kategorie": "pull_h",
+   "equipment": [
+    "kabel"
+   ],
+   "muskeln": [
+    "mittlerer Rücken",
+    "Bizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Aufrecht sitzen, Brust raus",
+    "Ellbogen am Körper entlang nach hinten",
+    "Schulterblätter am Ende zusammen"
+   ],
+   "fehler": [
+    "Mit dem Oberkörper pendeln",
+    "Schultern hochziehen"
+   ],
+   "atmung": "Ausatmen beim Ziehen",
+   "sicherheit": "Rücken bleibt gerade.",
+   "leichter": "Weniger Gewicht",
+   "schwerer": "Langhantel-Rudern",
+   "meiden_bei": [],
+   "wdh_standard": "8-12",
+   "einseitig": false
+  },
+  {
+   "id": "kurzhantel_rudern_einarmig",
+   "name": "Einarmiges Kurzhantelrudern",
+   "kategorie": "pull_h",
+   "equipment": [
+    "kurzhantel",
+    "bank"
+   ],
+   "muskeln": [
+    "mittlerer Rücken",
+    "Bizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Eine Hand und ein Knie auf der Bank",
+    "Rücken parallel zum Boden",
+    "Ellbogen zur Hüfte ziehen"
+   ],
+   "fehler": [
+    "Rumpf dreht auf",
+    "Schwung"
+   ],
+   "atmung": "Ausatmen beim Ziehen",
+   "sicherheit": "Rücken bleibt neutral.",
+   "leichter": "Leichter",
+   "schwerer": "Schwerer",
+   "meiden_bei": [],
+   "wdh_standard": "8-12 pro Seite",
+   "einseitig": true
+  },
+  {
+   "id": "rudern_maschine",
+   "name": "Rudern an der Maschine (Brust gestützt)",
+   "kategorie": "pull_h",
+   "equipment": [
+    "maschine"
+   ],
+   "muskeln": [
+    "mittlerer Rücken",
+    "hintere Schulter"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Brust gegen das Polster",
+    "Ellbogen nach hinten",
+    "Kurz halten und langsam zurück"
+   ],
+   "fehler": [
+    "Mit dem Rücken mitziehen",
+    "Zu schnell"
+   ],
+   "atmung": "Ausatmen beim Ziehen",
+   "sicherheit": "Rückenschonend.",
+   "leichter": "Weniger Gewicht",
+   "schwerer": "Kabelrudern",
+   "meiden_bei": [],
+   "wdh_standard": "10-12",
+   "einseitig": false
+  },
+  {
+   "id": "langhantel_rudern",
+   "name": "Langhantel-Rudern (vorgebeugt)",
+   "kategorie": "pull_h",
+   "equipment": [
+    "langhantel"
+   ],
+   "muskeln": [
+    "mittlerer Rücken",
+    "Bizeps",
+    "unterer Rücken"
+   ],
+   "level": "fortgeschritten",
+   "cues": [
+    "Hüfte nach hinten, Rücken gerade, Oberkörper ca. 45°",
+    "Stange zum Bauchnabel ziehen",
+    "Oben Schulterblätter zusammen"
+   ],
+   "fehler": [
+    "Rücken rundet",
+    "Hochziehen mit Schwung"
+   ],
+   "atmung": "Ausatmen beim Ziehen",
+   "sicherheit": "Bei Rückenproblemen auslassen.",
+   "leichter": "Kabelrudern",
+   "schwerer": "Mehr Gewicht",
+   "meiden_bei": [
+    "ruecken"
+   ],
+   "wdh_standard": "6-10",
+   "einseitig": false
+  },
+  {
+   "id": "seitheben",
+   "name": "Seitheben",
+   "kategorie": "schulter_seitlich",
+   "equipment": [
+    "kurzhantel",
+    "kabel"
+   ],
+   "muskeln": [
+    "seitliche Schulter"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Leicht vorgebeugt, Ellbogen leicht gebeugt",
+    "Bis Schulterhöhe heben",
+    "Langsam senken"
+   ],
+   "fehler": [
+    "Schwung",
+    "Hanteln zu schwer"
+   ],
+   "atmung": "Ausatmen beim Heben",
+   "sicherheit": "Leicht anfangen.",
+   "leichter": "Leichter",
+   "schwerer": "Am Kabel",
+   "meiden_bei": [],
+   "wdh_standard": "12-15",
+   "einseitig": false
+  },
+  {
+   "id": "face_pull",
+   "name": "Face Pull",
+   "kategorie": "schulter_hinten",
+   "equipment": [
+    "kabel",
+    "band"
+   ],
+   "muskeln": [
+    "hintere Schulter",
+    "oberer Rücken"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Seil auf Augenhöhe",
+    "Zum Gesicht ziehen, Hände weit auseinander",
+    "Ellbogen hoch, Schulterblätter zusammen"
+   ],
+   "fehler": [
+    "Zu viel Gewicht",
+    "Kopf schiebt nach vorn"
+   ],
+   "atmung": "Ausatmen beim Ziehen",
+   "sicherheit": "Gut für die Schultergesundheit.",
+   "leichter": "Band",
+   "schwerer": "Mehr Gewicht",
+   "meiden_bei": [],
+   "wdh_standard": "12-15",
+   "einseitig": false
+  },
+  {
+   "id": "reverse_fly",
+   "name": "Reverse Fly",
+   "kategorie": "schulter_hinten",
+   "equipment": [
+    "kurzhantel",
+    "maschine"
+   ],
+   "muskeln": [
+    "hintere Schulter"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Vorgebeugt, Rücken gerade",
+    "Arme seitlich öffnen, Ellbogen leicht gebeugt",
+    "Schulterblätter zusammen"
+   ],
+   "fehler": [
+    "Schwung",
+    "Rücken rundet"
+   ],
+   "atmung": "Ausatmen beim Öffnen",
+   "sicherheit": "Leichte Gewichte reichen.",
+   "leichter": "Maschine",
+   "schwerer": "Mehr Gewicht",
+   "meiden_bei": [],
+   "wdh_standard": "12-15",
+   "einseitig": false
+  },
+  {
+   "id": "trizepsdruecken_kabel",
+   "name": "Trizepsdrücken am Kabel",
+   "kategorie": "trizeps",
+   "equipment": [
+    "kabel"
+   ],
+   "muskeln": [
+    "Trizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Ellbogen am Körper fixiert",
+    "Ganz strecken, kurz halten",
+    "Langsam zurück"
+   ],
+   "fehler": [
+    "Ellbogen wandern nach vorn",
+    "Mit dem Oberkörper drücken"
+   ],
+   "atmung": "Ausatmen beim Drücken",
+   "sicherheit": "Gut für die Ellbogen bei leichtem Gewicht.",
+   "leichter": "Leichter",
+   "schwerer": "Einarmig",
+   "meiden_bei": [],
+   "wdh_standard": "10-15",
+   "einseitig": false
+  },
+  {
+   "id": "overhead_trizeps_kurzhantel",
+   "name": "Trizepsstrecken über Kopf",
+   "kategorie": "trizeps",
+   "equipment": [
+    "kurzhantel",
+    "kabel"
+   ],
+   "muskeln": [
+    "Trizeps"
+   ],
+   "level": "fortgeschritten",
+   "cues": [
+    "Hantel über dem Kopf halten",
+    "Ellbogen zeigen nach vorn",
+    "Hinter den Kopf senken, wieder strecken"
+   ],
+   "fehler": [
+    "Ellbogen gehen auseinander",
+    "Hohlkreuz"
+   ],
+   "atmung": "Ausatmen beim Strecken",
+   "sicherheit": "Bei Ellbogenschmerz Kabeldrücken.",
+   "leichter": "Leichter",
+   "schwerer": "Schwerer",
+   "meiden_bei": [
+    "ellbogen"
+   ],
+   "wdh_standard": "10-12",
+   "einseitig": false
+  },
+  {
+   "id": "bizeps_curl_kurzhantel",
+   "name": "Bizeps-Curl (Kurzhanteln)",
+   "kategorie": "bizeps",
+   "equipment": [
+    "kurzhantel"
+   ],
+   "muskeln": [
+    "Bizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Ellbogen am Körper",
+    "Ohne Schwung nach oben",
+    "Langsam senken"
+   ],
+   "fehler": [
+    "Schwung aus dem Rücken",
+    "Ellbogen wandern nach vorn"
+   ],
+   "atmung": "Ausatmen beim Beugen",
+   "sicherheit": "Gewicht so wählen, dass die Technik hält.",
+   "leichter": "Leichter",
+   "schwerer": "Hammer-Curl",
+   "meiden_bei": [],
+   "wdh_standard": "10-12",
+   "einseitig": false
+  },
+  {
+   "id": "hammer_curl",
+   "name": "Hammer-Curl",
+   "kategorie": "bizeps",
+   "equipment": [
+    "kurzhantel"
+   ],
+   "muskeln": [
+    "Bizeps",
+    "Unterarm"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Daumen zeigen nach oben",
+    "Ellbogen am Körper",
+    "Ohne Schwung"
+   ],
+   "fehler": [
+    "Schwung",
+    "Handgelenke knicken"
+   ],
+   "atmung": "Ausatmen beim Beugen",
+   "sicherheit": "Handgelenkfreundlich.",
+   "leichter": "Leichter",
+   "schwerer": "Schwerer",
+   "meiden_bei": [],
+   "wdh_standard": "10-12",
+   "einseitig": false
+  },
+  {
+   "id": "beinbeuger_maschine",
+   "name": "Beinbeuger (Maschine)",
+   "kategorie": "beinbeuger",
+   "equipment": [
+    "maschine"
+   ],
+   "muskeln": [
+    "Beinrückseite"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Polster über den Fersen",
+    "Hüfte bleibt am Sitz",
+    "Langsam zurück"
+   ],
+   "fehler": [
+    "Hüfte hebt ab",
+    "Zu schnell"
+   ],
+   "atmung": "Ausatmen beim Beugen",
+   "sicherheit": "Nicht ruckartig.",
+   "leichter": "Weniger Gewicht",
+   "schwerer": "Einbeinig",
+   "meiden_bei": [],
+   "wdh_standard": "10-15",
+   "einseitig": false
+  },
+  {
+   "id": "beinstrecker_maschine",
+   "name": "Beinstrecker (Maschine)",
+   "kategorie": "beinstrecker",
+   "equipment": [
+    "maschine"
+   ],
+   "muskeln": [
+    "Oberschenkel vorn"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Rücken an der Lehne",
+    "Oben kurz halten",
+    "Langsam senken"
+   ],
+   "fehler": [
+    "Schwung",
+    "Knie hyperextendiert"
+   ],
+   "atmung": "Ausatmen beim Strecken",
+   "sicherheit": "Bei Kniebeschwerden mit weniger Gewicht.",
+   "leichter": "Weniger Gewicht",
+   "schwerer": "Einbeinig",
+   "meiden_bei": [
+    "knie"
+   ],
+   "wdh_standard": "10-15",
+   "einseitig": false
+  },
+  {
+   "id": "wadenheben_stehend",
+   "name": "Wadenheben (stehend)",
+   "kategorie": "waden",
+   "equipment": [
+    "koerper",
+    "kurzhantel",
+    "maschine"
+   ],
+   "muskeln": [
+    "Waden"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Ganz hoch auf die Zehen",
+    "Oben 1 Sekunde halten",
+    "Unten voll dehnen"
+   ],
+   "fehler": [
+    "Zu schnell",
+    "Halbe Bewegung"
+   ],
+   "atmung": "Ausatmen beim Heben",
+   "sicherheit": "Auf Stufe für vollen Weg.",
+   "leichter": "Beidbeinig",
+   "schwerer": "Einbeinig mit Gewicht",
+   "meiden_bei": [],
+   "wdh_standard": "12-20",
+   "einseitig": false
+  },
+  {
+   "id": "plank",
+   "name": "Unterarmstütz (Plank)",
+   "kategorie": "rumpf",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "Rumpf"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Körper bildet eine Linie",
+    "Po leicht anspannen",
+    "Unterarme unter den Schultern"
+   ],
+   "fehler": [
+    "Hüfte hängt durch",
+    "Atem anhalten"
+   ],
+   "atmung": "Ruhig weiteratmen",
+   "sicherheit": "Aufhören, wenn der Rücken schmerzt.",
+   "leichter": "Auf den Knien",
+   "schwerer": "Mit Gewicht",
+   "meiden_bei": [],
+   "wdh_standard": "20-45 Sek.",
+   "einseitig": false
+  },
+  {
+   "id": "dead_bug",
+   "name": "Dead Bug",
+   "kategorie": "rumpf",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "Rumpf"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Rückenlage, unterer Rücken am Boden",
+    "Gegenüberliegenden Arm und Bein langsam strecken",
+    "Rücken bleibt flach"
+   ],
+   "fehler": [
+    "Hohlkreuz",
+    "Zu schnell"
+   ],
+   "atmung": "Ausatmen beim Strecken",
+   "sicherheit": "Sehr rückenfreundlich.",
+   "leichter": "Nur Beine",
+   "schwerer": "Mit Gewicht",
+   "meiden_bei": [],
+   "wdh_standard": "8-10 pro Seite",
+   "einseitig": true
+  },
+  {
+   "id": "bird_dog",
+   "name": "Bird Dog",
+   "kategorie": "rumpf",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "Rumpf",
+    "Po",
+    "unterer Rücken"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Vierfüßler, Rücken neutral",
+    "Gegenüberliegenden Arm und Bein strecken",
+    "Becken bleibt ruhig"
+   ],
+   "fehler": [
+    "Becken kippt",
+    "Zu hoch heben"
+   ],
+   "atmung": "Ruhig atmen",
+   "sicherheit": "Rückenfreundlich.",
+   "leichter": "Nur ein Bein",
+   "schwerer": "Mit Pause oben",
+   "meiden_bei": [],
+   "wdh_standard": "8-10 pro Seite",
+   "einseitig": true
+  },
+  {
+   "id": "pallof_press",
+   "name": "Pallof Press",
+   "kategorie": "rumpf",
+   "equipment": [
+    "kabel",
+    "band"
+   ],
+   "muskeln": [
+    "Rumpf (Anti-Rotation)"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Seitlich zum Kabel stehen",
+    "Griff vor der Brust, nach vorn strecken",
+    "Nicht mitdrehen"
+   ],
+   "fehler": [
+    "Oberkörper dreht",
+    "Hohlkreuz"
+   ],
+   "atmung": "Ausatmen beim Strecken",
+   "sicherheit": "Rumpf fest.",
+   "leichter": "Leichter",
+   "schwerer": "Mehr Gewicht",
+   "meiden_bei": [],
+   "wdh_standard": "10 pro Seite",
+   "einseitig": true
+  },
+  {
+   "id": "seitstuetz",
+   "name": "Seitstütz",
+   "kategorie": "rumpf",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "seitlicher Rumpf"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Ellbogen unter der Schulter",
+    "Hüfte hoch, Körper eine Linie",
+    "Nicht nach vorn oder hinten kippen"
+   ],
+   "fehler": [
+    "Hüfte sinkt",
+    "Schulter hochgezogen"
+   ],
+   "atmung": "Ruhig atmen",
+   "sicherheit": "Aufhören bei Schulterschmerz.",
+   "leichter": "Auf den Knien",
+   "schwerer": "Mit Beinheben",
+   "meiden_bei": [
+    "schulter"
+   ],
+   "wdh_standard": "20-30 Sek. pro Seite",
+   "einseitig": true
+  },
+  {
+   "id": "haengen_beinheben",
+   "name": "Hängendes Knieheben",
+   "kategorie": "rumpf",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "unterer Bauch",
+    "Griff"
+   ],
+   "level": "fortgeschritten",
+   "cues": [
+    "Schulterblätter aktiv",
+    "Knie langsam zur Brust",
+    "Ohne Schwung runter"
+   ],
+   "fehler": [
+    "Pendeln",
+    "Mit Schwung"
+   ],
+   "atmung": "Ausatmen beim Heben",
+   "sicherheit": "Griff nicht überfordern.",
+   "leichter": "Auf Beinhebe-Station",
+   "schwerer": "Gestreckte Beine",
+   "meiden_bei": [],
+   "wdh_standard": "8-12",
+   "einseitig": false
+  },
+  {
+   "id": "farmers_walk",
+   "name": "Farmer's Walk",
+   "kategorie": "griff",
+   "equipment": [
+    "kurzhantel",
+    "kettlebell"
+   ],
+   "muskeln": [
+    "Griff",
+    "Rumpf",
+    "Schultern",
+    "Waden"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Aufrecht gehen, Schultern tief",
+    "Rumpf fest, kurze Schritte",
+    "Gewicht gleichmäßig tragen"
+   ],
+   "fehler": [
+    "Schultern hochgezogen",
+    "Zu große Schritte"
+   ],
+   "atmung": "Ruhig atmen",
+   "sicherheit": "Gewicht nicht fallen lassen, Platz lassen.",
+   "leichter": "Leichter",
+   "schwerer": "Schwerer",
+   "meiden_bei": [],
+   "wdh_standard": "20-40 m",
+   "einseitig": false
+  },
+  {
+   "id": "skierg",
+   "name": "SkiErg",
+   "kategorie": "hyrox",
+   "equipment": [
+    "cardio-geraet"
+   ],
+   "muskeln": [
+    "Rücken",
+    "Arme",
+    "Rumpf"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Hüfte beugen, aus dem Rumpf ziehen",
+    "Arme vollständig durchziehen",
+    "Rhythmus 28–34 Züge pro Minute"
+   ],
+   "fehler": [
+    "Nur mit den Armen ziehen",
+    "Zu hoher Widerstand"
+   ],
+   "atmung": "Ausatmen beim Zug",
+   "sicherheit": "Locker anfangen.",
+   "leichter": "Kürzere Strecke",
+   "schwerer": "Schneller Split",
+   "meiden_bei": [],
+   "wdh_standard": "500-1000 m",
+   "einseitig": false
+  },
+  {
+   "id": "rudergeraet",
+   "name": "Rudergerät",
+   "kategorie": "hyrox",
+   "equipment": [
+    "cardio-geraet"
+   ],
+   "muskeln": [
+    "Beine",
+    "Rücken",
+    "Arme"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Beine, Rumpf, Arme – dann umgekehrt zurück",
+    "Rücken gerade",
+    "24–28 Schläge pro Minute"
+   ],
+   "fehler": [
+    "Zuerst mit dem Rücken ziehen",
+    "Schlagrate zu hoch"
+   ],
+   "atmung": "Ausatmen beim Zug",
+   "sicherheit": "Nicht überstrecken.",
+   "leichter": "Kürzere Strecke",
+   "schwerer": "Schneller Split",
+   "meiden_bei": [],
+   "wdh_standard": "500-1000 m",
+   "einseitig": false
+  },
+  {
+   "id": "sled_push",
+   "name": "Sled Push",
+   "kategorie": "hyrox",
+   "equipment": [
+    "sled"
+   ],
+   "muskeln": [
+    "Beine",
+    "Po",
+    "Rumpf"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Flacher Rücken, Arme gestreckt",
+    "Kurze schnelle Schritte",
+    "Druck in den Boden"
+   ],
+   "fehler": [
+    "Zu aufrecht",
+    "Zu große Schritte"
+   ],
+   "atmung": "Gleichmäßig ausatmen",
+   "sicherheit": "Gewicht langsam steigern.",
+   "leichter": "Leichter Schlitten",
+   "schwerer": "Wettkampfgewicht",
+   "meiden_bei": [],
+   "wdh_standard": "4 × 12,5 m",
+   "einseitig": false
+  },
+  {
+   "id": "sled_pull",
+   "name": "Sled Pull",
+   "kategorie": "hyrox",
+   "equipment": [
+    "sled"
+   ],
+   "muskeln": [
+    "Rücken",
+    "Griff",
+    "Beine"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Tief sitzen, Fersen fest",
+    "Hand über Hand ziehen",
+    "Rücken gerade"
+   ],
+   "fehler": [
+    "Zu aufrecht",
+    "Zu langsam ziehen"
+   ],
+   "atmung": "Ausatmen beim Zug",
+   "sicherheit": "Handschuhe tragen.",
+   "leichter": "Leichter Schlitten",
+   "schwerer": "Wettkampfgewicht",
+   "meiden_bei": [],
+   "wdh_standard": "4 × 12,5 m",
+   "einseitig": false
+  },
+  {
+   "id": "burpee_broad_jump",
+   "name": "Burpee Broad Jump",
+   "kategorie": "hyrox",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "Ganzkörper"
+   ],
+   "level": "fortgeschritten",
+   "cues": [
+    "Brust zum Boden",
+    "Beidbeiniger Sprung nach vorn",
+    "Ruhiger Rhythmus, kein Sprint am Anfang"
+   ],
+   "fehler": [
+    "Zu schneller Start",
+    "Zu kurze Sprünge"
+   ],
+   "atmung": "Beim Sprung ausatmen",
+   "sicherheit": "Auf Handgelenke achten.",
+   "leichter": "Ohne Sprung",
+   "schwerer": "Mit Gewichtsweste",
+   "meiden_bei": [
+    "handgelenk",
+    "knie"
+   ],
+   "wdh_standard": "20-80 m",
+   "einseitig": false
+  },
+  {
+   "id": "farmers_carry_hyrox",
+   "name": "Farmers Carry (Hyrox)",
+   "kategorie": "hyrox",
+   "equipment": [
+    "kettlebell"
+   ],
+   "muskeln": [
+    "Griff",
+    "Rumpf",
+    "Schultern"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Kleine schnelle Schritte",
+    "Rumpf fest",
+    "Schultern tief"
+   ],
+   "fehler": [
+    "Zu große Schritte",
+    "Gewicht schwingt"
+   ],
+   "atmung": "Ruhig atmen",
+   "sicherheit": "Griff schonen, wenn nötig kurz abstellen.",
+   "leichter": "Leichter",
+   "schwerer": "Wettkampfgewicht",
+   "meiden_bei": [],
+   "wdh_standard": "200 m",
+   "einseitig": false
+  },
+  {
+   "id": "sandbag_lunge",
+   "name": "Sandbag Lunges",
+   "kategorie": "hyrox",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "Beine",
+    "Po",
+    "Rumpf"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Sack hoch auf den Schultern",
+    "Langer Schritt, hinteres Knie knapp über dem Boden",
+    "Oberkörper aufrecht"
+   ],
+   "fehler": [
+    "Kurze Schritte",
+    "Oberkörper kippt"
+   ],
+   "atmung": "Ausatmen beim Aufstehen",
+   "sicherheit": "Klein anfangen.",
+   "leichter": "Leichterer Sack",
+   "schwerer": "Wettkampfgewicht",
+   "meiden_bei": [
+    "knie_tief"
+   ],
+   "wdh_standard": "100 m",
+   "einseitig": false
+  },
+  {
+   "id": "wall_ball",
+   "name": "Wall Ball",
+   "kategorie": "hyrox",
+   "equipment": [
+    "wallball"
+   ],
+   "muskeln": [
+    "Beine",
+    "Schultern",
+    "Rumpf"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Tief in die Hocke, Hüfte unter das Knie",
+    "Schwung aus den Beinen",
+    "Ball hoch zum Ziel, fangen und direkt weiter"
+   ],
+   "fehler": [
+    "Zu flache Hocke",
+    "Nur mit den Armen werfen"
+   ],
+   "atmung": "Ausatmen beim Wurf",
+   "sicherheit": "Ball fangen, nicht abwehren.",
+   "leichter": "Leichterer Ball",
+   "schwerer": "Wettkampfgewicht",
+   "meiden_bei": [],
+   "wdh_standard": "in Sets",
+   "einseitig": false
+  },
+  {
+   "id": "pike_liegestuetz",
+   "name": "Pike-Liegestütz",
+   "kategorie": "push_v",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "Schulter",
+    "Trizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Hüfte hoch, Körper bildet ein umgedrehtes V",
+    "Kopf zwischen die Arme senken",
+    "Mit den Schultern hochdrücken"
+   ],
+   "fehler": [
+    "Hüfte sinkt",
+    "Ellbogen weit nach außen"
+   ],
+   "atmung": "Ausatmen beim Drücken",
+   "sicherheit": "Füße auf einer Erhöhung machen es schwerer.",
+   "leichter": "Hände erhöht",
+   "schwerer": "Füße erhöht",
+   "meiden_bei": [
+    "schulter",
+    "handgelenk"
+   ],
+   "wdh_standard": "6-12",
+   "einseitig": false
+  },
+  {
+   "id": "inverted_row",
+   "name": "Rudern unter dem Tisch / an der Stange",
+   "kategorie": "pull_h",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "mittlerer Rücken",
+    "Bizeps"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Körper bildet eine gerade Linie",
+    "Brust zur Stange oder Tischkante ziehen",
+    "Schulterblätter am Ende zusammen"
+   ],
+   "fehler": [
+    "Hüfte hängt durch",
+    "Nur mit den Armen ziehen"
+   ],
+   "atmung": "Ausatmen beim Ziehen",
+   "sicherheit": "Stabile Stange oder Tisch benutzen.",
+   "leichter": "Füße näher, Körper steiler",
+   "schwerer": "Füße erhöht",
+   "meiden_bei": [],
+   "wdh_standard": "8-12",
+   "einseitig": false
+  },
+  {
+   "id": "sliding_leg_curl",
+   "name": "Beinbeuger mit Handtuch (am Boden)",
+   "kategorie": "beinbeuger",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "Beinrückseite",
+    "Po"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Rückenlage, Fersen auf einem Handtuch auf glattem Boden",
+    "Hüfte hoch, Beine langsam ausstrecken",
+    "Fersen wieder heranziehen, Hüfte bleibt oben"
+   ],
+   "fehler": [
+    "Hüfte sinkt",
+    "Zu schnell"
+   ],
+   "atmung": "Ausatmen beim Heranziehen",
+   "sicherheit": "Bei Krampf Weg verkürzen.",
+   "leichter": "Glute Bridge",
+   "schwerer": "Einbeinig",
+   "meiden_bei": [],
+   "wdh_standard": "8-12",
+   "einseitig": false
+  },
+  {
+   "id": "prone_y_raise",
+   "name": "Y-Heben in Bauchlage",
+   "kategorie": "schulter_hinten",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "hintere Schulter",
+    "oberer Rücken"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Bauchlage, Stirn auf dem Boden",
+    "Arme im Y vom Boden heben",
+    "Daumen zeigen nach oben"
+   ],
+   "fehler": [
+    "Hohlkreuz",
+    "Schultern ziehen hoch"
+   ],
+   "atmung": "Ausatmen beim Heben",
+   "sicherheit": "Leicht anfangen.",
+   "leichter": "Nur Arme anheben",
+   "schwerer": "Mit Mini-Gewichten",
+   "meiden_bei": [],
+   "wdh_standard": "10-15",
+   "einseitig": false
+  },
+  {
+   "id": "diamant_liegestuetz",
+   "name": "Diamant-Liegestütz",
+   "kategorie": "trizeps",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "Trizeps",
+    "Brust"
+   ],
+   "level": "fortgeschritten",
+   "cues": [
+    "Hände unter der Brust, Daumen und Zeigefinger bilden eine Raute",
+    "Ellbogen nah am Körper",
+    "Körper gerade"
+   ],
+   "fehler": [
+    "Ellbogen weit auseinander",
+    "Hüfte hängt durch"
+   ],
+   "atmung": "Ausatmen beim Drücken",
+   "sicherheit": "Hände erhöht, wenn es zu schwer ist.",
+   "leichter": "Auf den Knien",
+   "schwerer": "Füße erhöht",
+   "meiden_bei": [
+    "handgelenk",
+    "ellbogen"
+   ],
+   "wdh_standard": "6-12",
+   "einseitig": false
+  },
+  {
+   "id": "dead_hang",
+   "name": "Dead Hang (Hängen an der Stange)",
+   "kategorie": "griff",
+   "equipment": [
+    "koerper"
+   ],
+   "muskeln": [
+    "Griff",
+    "Unterarm",
+    "Schultern"
+   ],
+   "level": "anfaenger",
+   "cues": [
+    "Schultern aktiv nach unten",
+    "Körper ruhig",
+    "Atmen"
+   ],
+   "fehler": [
+    "Schultern hochgezogen",
+    "Zu lange"
+   ],
+   "atmung": "Ruhig weiteratmen",
+   "sicherheit": "Bei Schulterschmerz auslassen.",
+   "leichter": "Füße auf Box",
+   "schwerer": "Einarmig",
+   "meiden_bei": [
+    "schulter"
+   ],
+   "wdh_standard": "20-40 Sek.",
+   "einseitig": false
+  }
+ ]
+}

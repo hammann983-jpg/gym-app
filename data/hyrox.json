@@ -1,0 +1,156 @@
+{
+ "version": 1,
+ "geprueft_am": "2026-11-24",
+ "quellen": [
+  "redbull.com/hyrox-weights-overview",
+  "puma.com/articles/hyrox-weights-repetitions-distance-division",
+  "fitnessvolt.com/roxrace/weights"
+ ],
+ "offen_vor_release_pruefen": [
+  "Wall-Ball-Wiederholungen Open Frauen: eine Quelle nennt 75 statt 100 für 2025/26, unbestätigt. Gegen hyrox.com prüfen.",
+  "Alle Gewichte sind aus Sekundärquellen. Offizielles Regelwerk auf hyrox.com gegenlesen."
+ ],
+ "ablauf": "8 x (1 km Laufen + 1 Station), Stationen immer in dieser Reihenfolge",
+ "divisionen": {
+  "open_frauen": "Open Frauen",
+  "open_maenner": "Open Männer (= Pro Frauen)",
+  "pro_frauen": "Pro Frauen",
+  "pro_maenner": "Pro Männer"
+ },
+ "stationen": [
+  {
+   "nr": 1,
+   "uebung_id": "skierg",
+   "name": "SkiErg",
+   "distanz_m": 1000,
+   "einheit": "m",
+   "werte": {}
+  },
+  {
+   "nr": 2,
+   "uebung_id": "sled_push",
+   "name": "Sled Push",
+   "distanz_m": 50,
+   "einheit": "kg inkl. Schlitten",
+   "werte": {
+    "open_frauen": 102,
+    "open_maenner": 152,
+    "pro_frauen": 152,
+    "pro_maenner": 202
+   }
+  },
+  {
+   "nr": 3,
+   "uebung_id": "sled_pull",
+   "name": "Sled Pull",
+   "distanz_m": 50,
+   "einheit": "kg inkl. Schlitten",
+   "werte": {
+    "open_frauen": 78,
+    "open_maenner": 103,
+    "pro_frauen": 103,
+    "pro_maenner": 153
+   }
+  },
+  {
+   "nr": 4,
+   "uebung_id": "burpee_broad_jump",
+   "name": "Burpee Broad Jumps",
+   "distanz_m": 80,
+   "einheit": "m",
+   "werte": {}
+  },
+  {
+   "nr": 5,
+   "uebung_id": "rudergeraet",
+   "name": "Rudern",
+   "distanz_m": 1000,
+   "einheit": "m",
+   "werte": {}
+  },
+  {
+   "nr": 6,
+   "uebung_id": "farmers_carry_hyrox",
+   "name": "Farmers Carry",
+   "distanz_m": 200,
+   "einheit": "kg je Kettlebell (2 Stück)",
+   "werte": {
+    "open_frauen": 16,
+    "open_maenner": 24,
+    "pro_frauen": 24,
+    "pro_maenner": 32
+   }
+  },
+  {
+   "nr": 7,
+   "uebung_id": "sandbag_lunge",
+   "name": "Sandbag Lunges",
+   "distanz_m": 100,
+   "einheit": "kg Sandsack",
+   "werte": {
+    "open_frauen": 10,
+    "open_maenner": 20,
+    "pro_frauen": 20,
+    "pro_maenner": 30
+   }
+  },
+  {
+   "nr": 8,
+   "uebung_id": "wall_ball",
+   "name": "Wall Balls",
+   "wiederholungen": {
+    "open_frauen": 100,
+    "open_maenner": 100,
+    "pro_frauen": 100,
+    "pro_maenner": 100
+   },
+   "einheit": "kg Ball",
+   "werte": {
+    "open_frauen": 4,
+    "open_maenner": 6,
+    "pro_frauen": 6,
+    "pro_maenner": 9
+   },
+   "zielhoehe_m": {
+    "open_frauen": 2.7,
+    "open_maenner": 3.0,
+    "pro_frauen": 3.0,
+    "pro_maenner": 3.0
+   }
+  }
+ ],
+ "richtzeiten_gesamt_open_einzel": {
+  "einsteiger": "1:45-2:15",
+  "fortgeschritten": "1:20-1:45",
+  "stark": "1:05-1:20"
+ },
+ "roxzone_zuschlag_sek_pro_station": [
+  20,
+  30
+ ],
+ "lauftempo_zuschlag_zur_5km_pace_sek_pro_km": [
+  20,
+  40
+ ],
+ "bloecke": {
+  "aufbau": 0.4,
+  "kraft_ausdauer": 0.3,
+  "spezifisch": 0.2,
+  "taper_tage": [
+   7,
+   10
+  ]
+ },
+ "benchmarks": [
+  "skierg_1000",
+  "rudern_1000",
+  "sled_push_4x12_5",
+  "sled_pull_4x12_5",
+  "burpee_broad_jump_80",
+  "farmers_carry_200",
+  "sandbag_lunges_100",
+  "wall_balls_100",
+  "lauf_1km_frisch",
+  "lauf_1km_nach_station"
+ ]
+}
