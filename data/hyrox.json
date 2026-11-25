@@ -1,14 +1,14 @@
 {
  "version": 1,
- "geprueft_am": "2026-11-24",
+ "geprueft_am": "2026-11-25",
  "quellen": [
+  "https://maintain.hyrox.com/rulebooks/HYROX_RulebookSingles_EN.pdf (Einzel-Regelwerk Saison 26/27)",
   "redbull.com/hyrox-weights-overview",
   "puma.com/articles/hyrox-weights-repetitions-distance-division",
   "fitnessvolt.com/roxrace/weights"
  ],
  "offen_vor_release_pruefen": [
-  "Wall-Ball-Wiederholungen Open Frauen: eine Quelle nennt 75 statt 100 für 2025/26, unbestätigt. Gegen hyrox.com prüfen.",
-  "Alle Gewichte sind aus Sekundärquellen. Offizielles Regelwerk auf hyrox.com gegenlesen."
+  "Vor jeder neuen Saison das Regelwerk auf hyrox.com erneut prüfen."
  ],
  "ablauf": "8 x (1 km Laufen + 1 Station), Stationen immer in dieser Reihenfolge",
  "divisionen": {

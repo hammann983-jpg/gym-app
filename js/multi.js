@@ -5,7 +5,7 @@
   function round5(n) { return Math.max(15, Math.round(n / 5) * 5); }
 
   // ---------- Hyrox ----------
-  // Gewichte: Sekundärquellen, noch nicht gegen das offizielle Regelwerk geprüft (Hinweis in der App)
+  // Gewichte und Distanzen: offizielles Hyrox-Einzel-Regelwerk Saison 26/27, geprüft am 25.11.2026
   var W = { open_frauen: 0, open_maenner: 1, pro_frauen: 2, pro_maenner: 3 };
   var STATIONS = [
     { name: "SkiErg", size: "1000 m" },

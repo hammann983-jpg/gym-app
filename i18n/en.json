@@ -496,7 +496,7 @@
   "run.flag.endurance": "strength endurance",
   "run.flag.specific": "race-specific",
   "note.tri": "Triathlon: keep at least 1 full rest day and do not put hard days back to back. Volumes outside the build phase are derived estimates. A sprint requires: swim 400 m, bike 20 km, run 5 km. Get a medical check first.",
-  "note.hyrox": "Hyrox: weights and reps are not officially verified yet (Open women wall balls may be 75). Please check hyrox.com.",
+  "note.hyrox": "Hyrox: weights and reps match the official season 26/27 rulebook (checked 25 Nov 2026). Rules can change each season, so check hyrox.com before your race.",
   "note.one_endurance": "You have several endurance goals. The plan trains only one at a time to avoid overload: your most important one.",
   "priv.title": "Privacy",
   "priv.local": "Your answers, workouts, weights and results are stored only in this browser on your device. There is no account, no server of our own, no ads and no tracking.",
