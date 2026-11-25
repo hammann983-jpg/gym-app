@@ -228,7 +228,7 @@
     if (!p) return "";
     var c = cur(), s = p.sessions[c.idx], d = ensureDraft(c), deload = window.Plan.isDeload(c.week);
     var goal = p.sessions.length, got = weekGoalDone();
-    var h = '<div class="sec">' + esc(t("today.next")) + " · " + esc(sessionTitle(s)) + '</div><h2 class="big">' + esc(headline(s)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span><span class="pill">' + esc(t("today.exercises", { n: s.exercises.length })) + "</span></div>";
+    var h = '<div class="sec">' + esc(t("today.next")) + (s.type === "fb" ? "" : " · " + esc(sessionTitle(s))) + '</div><h2 class="big">' + esc(headline(s)) + '</h2><div class="chips"><span class="pill acc">' + esc(t("today.week", { n: Math.min(c.week, p.weeks), total: p.weeks })) + '</span><span class="pill">' + esc(t("today.exercises", { n: s.exercises.length })) + "</span></div>";
     if (c.week > p.weeks) h += '<div class="note warn">' + esc(t("today.blockdone")) + "</div>";
     if (deload) h += '<div class="note warn">' + esc(t("today.deload")) + "</div>";
     h += '<div class="card ringrow">' + ring(got, goal) + "<div><h3>" + esc(t("today.goal")) + "</h3><p>" + esc(t("today.of", { done: got, total: goal })) + "</p></div></div>";
