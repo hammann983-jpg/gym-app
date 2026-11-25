@@ -703,5 +703,19 @@
   "nutri.fav": "Favori",
   "q.name": "Comment t'appelles-tu ?",
   "h.name": "Facultatif. Ton prénom suffit. Il reste uniquement sur ton appareil.",
-  "hello": "Salut, {name}"
+  "hello": "Salut, {name}",
+  "q.essmuster": "Comment veux-tu manger ?",
+  "h.essmuster": "Le jeûne intermittent est facultatif : pour perdre du poids, c'est la quantité d'énergie qui compte. Pas en cas de trouble alimentaire, grossesse, diabète, avant 18 ans ou sous traitement sans avis médical.",
+  "o.essmuster.normal": "Normal, sans fenêtre horaire",
+  "o.essmuster.f14_10": "Jeûne intermittent 14:10 (manger sur 10 h)",
+  "o.essmuster.f16_8": "Jeûne intermittent 16:8 (manger sur 8 h)",
+  "o.essmuster.f18_6": "Jeûne intermittent 18:6 (manger sur 6 h, strict)",
+  "q.essstart": "Quand commence ta fenêtre alimentaire ?",
+  "h.mahlzeiten": "2 convient au jeûne. 5 à 6 aident avec beaucoup d'entraînement ou en bodybuilding. Le total du jour compte plus que le nombre.",
+  "fast.window": "Manger de {a} à {b}",
+  "fast.text": "{h} heures sans manger. Eau, thé et café sans sucre à tout moment. Prends protéines et glucides dans la fenêtre et entraîne-toi près d'elle.",
+  "fast.safe": "En cas de vertiges, malaises ou crises de fringale : arrête et consulte. Les jours de compétition, mange normalement. Pas en cas de diabète.",
+  "fast.capped": "Dans la fenêtre, l'appli prévoit au maximum {n} repas.",
+  "fast.blocked": "D'après tes réponses, le jeûne n'est pas conseillé. Tu reçois le plan normal. Parles-en à ton médecin.",
+  "nutri.change": "{n} repas · changer de rythme"
 }

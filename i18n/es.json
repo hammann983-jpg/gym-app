@@ -703,5 +703,19 @@
   "nutri.fav": "Favorito",
   "q.name": "¿Cómo te llamas?",
   "h.name": "Opcional. Basta tu nombre de pila. Se queda solo en tu dispositivo.",
-  "hello": "Hola, {name}"
+  "hello": "Hola, {name}",
+  "q.essmuster": "¿Cómo quieres comer?",
+  "h.essmuster": "El ayuno intermitente es opcional: para perder peso cuenta la energía total. No con trastorno alimentario, embarazo, diabetes, menores de 18 o con medicación sin consejo médico.",
+  "o.essmuster.normal": "Normal, sin ventana horaria",
+  "o.essmuster.f14_10": "Ayuno intermitente 14:10 (comer en 10 h)",
+  "o.essmuster.f16_8": "Ayuno intermitente 16:8 (comer en 8 h)",
+  "o.essmuster.f18_6": "Ayuno intermitente 18:6 (comer en 6 h, estricto)",
+  "q.essstart": "¿Cuándo empieza tu ventana para comer?",
+  "h.mahlzeiten": "2 va bien con el ayuno. 5 o 6 ayudan con mucho entrenamiento o culturismo. Importa más el total del día.",
+  "fast.window": "Comer de {a} a {b}",
+  "fast.text": "{h} horas sin comer. Agua, té y café sin azúcar en cualquier momento. Cubre proteína e hidratos dentro de la ventana y entrena cerca de ella.",
+  "fast.safe": "Si te mareas, tienes bajadas o atracones: déjalo y consulta al médico. En días de competición come normal. No con diabetes.",
+  "fast.capped": "En la ventana la app planifica como máximo {n} comidas.",
+  "fast.blocked": "Según tus respuestas, no se recomienda el ayuno. Recibes el plan normal. Consulta con tu médico.",
+  "nutri.change": "{n} comidas · cambiar hábitos"
 }

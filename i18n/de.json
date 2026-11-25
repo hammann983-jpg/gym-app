@@ -703,5 +703,19 @@
   "nutri.fav": "Favorit",
   "q.name": "Wie heißt du?",
   "h.name": "Freiwillig. Dein Vorname reicht. Er bleibt nur auf deinem Gerät.",
-  "hello": "Hallo, {name}"
+  "hello": "Hallo, {name}",
+  "q.essmuster": "Wie möchtest du essen?",
+  "h.essmuster": "Intervallfasten ist kein Muss: Beim Abnehmen zählt die Energiemenge. Nicht bei Essstörung, Schwangerschaft, Diabetes, unter 18 oder mit Medikamenten ohne ärztliche Abklärung.",
+  "o.essmuster.normal": "Normal, ohne Essfenster",
+  "o.essmuster.f14_10": "Intervallfasten 14:10 (10 Std. essen)",
+  "o.essmuster.f16_8": "Intervallfasten 16:8 (8 Std. essen)",
+  "o.essmuster.f18_6": "Intervallfasten 18:6 (6 Std. essen, streng)",
+  "q.essstart": "Wann beginnt dein Essfenster?",
+  "h.mahlzeiten": "2 passt gut zu Intervallfasten. 5 bis 6 sind praktisch bei viel Training oder Bodybuilding. Wichtiger als die Zahl ist die Tagesmenge.",
+  "fast.window": "Essen von {a} bis {b} Uhr",
+  "fast.text": "{h} Stunden Essenspause. Wasser, Tee und Kaffee ohne Zucker gehen jederzeit. Schaff Eiweiß und Kohlenhydrate im Essfenster, lege das Training möglichst nah daran.",
+  "fast.safe": "Bei Schwindel, Kreislaufproblemen oder Heißhunger-Anfällen: aufhören und ärztlich klären. An Wettkampftagen normal essen. Nicht bei Diabetes.",
+  "fast.capped": "Im Essfenster plant die App höchstens {n} Mahlzeiten.",
+  "fast.blocked": "Intervallfasten ist nach deinen Angaben nicht empfohlen. Du bekommst den normalen Essensplan. Sprich bei Fragen mit deiner Ärztin oder deinem Arzt.",
+  "nutri.change": "{n} Mahlzeiten · Essgewohnheit ändern"
 }

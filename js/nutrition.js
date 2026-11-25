@@ -1,8 +1,32 @@
 // Ernährung: Tagesziele und Wochen-Essensplan (reine Funktionen). Regeln: fitness-trainer/references/ernaehrung.md
 (function () {
   var ACT = { sitzend: 1.2, leicht: 1.3, aktiv: 1.4, sehr_aktiv: 1.5 };
-  var SLOT_SPLIT = { 3: [0.28, 0.38, 0.34], 4: [0.25, 0.33, 0.30, 0.12], 5: [0.22, 0.30, 0.28, 0.10, 0.10] };
-  var SLOTS = ["fruehstueck", "mittag", "abend", "snack", "snack"];
+  // Aufteilung der Tagesenergie je nach Zahl der Mahlzeiten
+  var NORMAL = {
+    2: [["mittag", 0.45], ["abend", 0.55]],
+    3: [["fruehstueck", 0.28], ["mittag", 0.38], ["abend", 0.34]],
+    4: [["fruehstueck", 0.25], ["mittag", 0.33], ["abend", 0.30], ["snack", 0.12]],
+    5: [["fruehstueck", 0.22], ["mittag", 0.30], ["abend", 0.28], ["snack", 0.10], ["snack", 0.10]],
+    6: [["fruehstueck", 0.21], ["mittag", 0.25], ["abend", 0.24], ["snack", 0.10], ["snack", 0.10], ["snack", 0.10]]
+  };
+  // Intervallfasten: kein Frühstücks-Slot, höchstens 4 Mahlzeiten im Essfenster
+  var FAST = {
+    2: [["mittag", 0.45], ["abend", 0.55]],
+    3: [["mittag", 0.40], ["abend", 0.40], ["snack", 0.20]],
+    4: [["mittag", 0.34], ["abend", 0.38], ["snack", 0.14], ["snack", 0.14]]
+  };
+  var HOURS = { f14_10: 10, f16_8: 8, f18_6: 6 };
+  // Nicht bei Essstörung, Schwangerschaft, unter 18, Untergewicht (ernaehrungsformen-allergien.md §3) und Herz-/Blutdruck-Medikamenten
+  function fastingAllowed(a) {
+    var off = window.Q && window.Q.screening(a).nutriOff;
+    return !off && a.s5 !== "ja" && a.s5 !== "keine_antwort";
+  }
+  function pattern(a) {
+    var hours = HOURS[a.essmuster], wanted = Number(a.mahlzeiten) || 3;
+    if (!hours || !fastingAllowed(a)) return { fasting: false, meals: NORMAL[wanted] ? wanted : 3, wanted: wanted, blocked: !!hours };
+    var start = [8, 10, 12, 14].indexOf(Number(a.essstart)) >= 0 ? Number(a.essstart) : 12;
+    return { fasting: true, hours: hours, start: start, end: start + hours, meals: Math.max(2, Math.min(4, wanted)), wanted: wanted, blocked: false };
+  }
   var ENDU = ["laufen", "marathon", "triathlon", "hyrox"];
 
   function num(v) { var n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : 0; }
@@ -127,12 +151,14 @@
   // trainDays: Wochentage mit Training. An diesen Tagen kommt eine Pre-Workout-Mahlzeit dazu,
   // das Tagesziel bleibt gleich (bei 4 bis 5 Mahlzeiten ersetzt sie den ersten Snack).
   function week(a, data, date, swaps, adjKcal, trainDays, fav) {
-    var info = weekInfo(date || new Date()), tg = targets(a, adjKcal), m = Number(a.mahlzeiten) || 3;
-    var split = SLOT_SPLIT[m] || SLOT_SPLIT[3], pools = {}, days = [];
+    var info = weekInfo(date || new Date()), tg = targets(a, adjKcal), pat = pattern(a), m = pat.meals;
+    var layout = (pat.fasting ? FAST : NORMAL)[m], pools = {}, days = [];
+    // wenige Mahlzeiten brauchen größere Portionen, viele Mahlzeiten kleinere
+    var maxF = m <= 2 ? 2.2 : m === 3 && pat.fasting ? 1.8 : 1.5, minF = m >= 5 ? 0.55 : 0.7;
     ["fruehstueck", "mittag", "abend", "snack", "pre"].forEach(function (s) { pools[s] = pool(a, data, s, info.key, fav); });
     for (var d = 0; d < 7; d++) {
       var slots = [], snackNo = 0, train = !!(trainDays && trainDays.indexOf(d) >= 0), plan = [];
-      for (var i = 0; i < split.length; i++) plan.push({ slot: SLOTS[i], index: i, share: split[i] });
+      layout.forEach(function (x, i) { plan.push({ slot: x[0], index: i, share: x[1] }); });
       if (train && pools.pre.length) {
         var sn = plan.map(function (x) { return x.slot; }).indexOf("snack");
         if (sn >= 0) { var share = plan[sn].share; plan.splice(sn, 1); }
@@ -147,13 +173,13 @@
         var idx = ((x.slot === "snack" ? d * 2 + snackNo : d) + off) % pl.length;
         if (x.slot === "snack") snackNo++;
         var meal = pl[idx], factor = 1;
-        if (tg) factor = Math.max(0.7, Math.min(1.5, tg.kcal * x.share / meal.kcal));
+        if (tg) factor = Math.max(minF, Math.min(maxF, tg.kcal * x.share / meal.kcal));
         var por = portion(meal, data, factor);
         slots.push({ index: x.index, slot: x.slot, meal: meal, items: por.items, kcal: por.kcal, p: por.p, c: por.c, f: por.f, pool: pl.length });
       });
       days.push({ day: d, train: train, slots: slots, kcal: slots.reduce(function (x, s) { return x + s.kcal; }, 0), p: slots.reduce(function (x, s) { return x + s.p; }, 0) });
     }
-    return { info: info, targets: tg, days: days };
+    return { info: info, targets: tg, days: days, pattern: pat };
   }
 
   // Einkaufsliste der Woche: Zutaten summiert
@@ -163,5 +189,5 @@
     return Object.keys(tot).map(function (k) { return tot[k]; });
   }
 
-  window.Nutrition = { defaultDays: defaultDays, targets: targets, adjust: adjust, bmr: bmr, week: week, weekInfo: weekInfo, pool: pool, shopping: shopping, portion: portion };
+  window.Nutrition = { pattern: pattern, fastingAllowed: fastingAllowed, defaultDays: defaultDays, targets: targets, adjust: adjust, bmr: bmr, week: week, weekInfo: weekInfo, pool: pool, shopping: shopping, portion: portion };
 })();

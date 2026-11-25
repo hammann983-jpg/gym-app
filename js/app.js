@@ -94,6 +94,7 @@
       h += '<div class="numrow"><input class="num" id="num" type="date" style="font-size:24px" value="' + esc(v || "") + '"></div>';
     } else {
       var opts = q.type === "yesno" ? ["ja", "nein", "keine_antwort"] : window.Q.options(q, S.answers);
+      if (q.id === "essmuster" && !window.Nutrition.fastingAllowed(S.answers)) opts = ["normal"];
       h += '<div class="opts">' + opts.map(function (o) {
         var on = q.type === "multi" ? (Array.isArray(v) && v.indexOf(o) >= 0) : v === o;
         return '<button class="opt" data-opt="' + esc(o) + '" aria-pressed="' + on + '">' + (q.type === "multi" ? '<span class="tick"></span>' : "") + "<span>" + esc(optText(q, o)) + "</span></button>";
@@ -620,20 +621,23 @@
   }
 
   // ---------- Angaben ändern, ohne neu anzufangen ----------
-  var EDITABLE = ["name", "gewicht_kg", "zielgewicht_kg", "trainingstage", "dauer_min", "ort", "heim", "schlaf", "verletzungen", "event_datum"];
+  var EDITABLE = ["essmuster", "essstart", "mahlzeiten", "name", "gewicht_kg", "zielgewicht_kg", "trainingstage", "dauer_min", "ort", "heim", "schlaf", "verletzungen", "event_datum"];
   function answersSheet() {
     var d = ui.ans, h = '<div class="sheet-bg" id="ansbg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(t("ans.title")) + '</h2><p class="qhint">' + esc(t("ans.hint")) + "</p>";
-    EDITABLE.forEach(function (id) {
+    var order = ui.ansFood ? EDITABLE : EDITABLE.slice(3).concat(EDITABLE.slice(0, 3));
+    order.forEach(function (id) {
       var q = QS.filter(function (x) { return x.id === id; })[0]; if (!q) return;
       if (id === "heim" && d.ort !== "zuhause") return;
+      if (id === "essstart" && !/^f/.test(d.essmuster || "")) return;
       if (id === "event_datum" && !window.Plan.goals(S.answers).some(function (g) { return ["laufen", "marathon", "triathlon", "hyrox"].indexOf(g) >= 0; })) return;
-      h += '<div class="ansq"><div class="lbl">' + esc(t("q." + id)) + "</div>";
+      h += '<div class="ansq"><div class="lbl">' + esc(t("q." + id)) + "</div>" + (id === "essmuster" ? '<p class="qhint">' + esc(t("h.essmuster")) + "</p>" : "");
       if (q.type === "text") h += '<label class="f"><input type="text" maxlength="30" autocomplete="given-name" data-anst="' + id + '" value="' + esc(d[id] || "") + '" aria-label="' + esc(t("q." + id)) + '"></label>';
       else if (q.type === "number") h += '<label class="f"><input type="text" inputmode="decimal" data-ansn="' + id + '" value="' + esc(d[id] == null ? "" : d[id]) + '" aria-label="' + esc(t("q." + id)) + '"><i>' + esc(unitText(q.unit)) + "</i></label>";
       else if (q.type === "date") h += '<input type="date" data-ansd="' + id + '" value="' + esc(d[id] || "") + '" aria-label="' + esc(t("q." + id)) + '">';
-      else h += '<div class="chips">' + (q.options || []).map(function (o) {
-        var on = q.type === "multi" ? (d[id] || []).indexOf(o) >= 0 : String(d[id]) === String(o);
-        var label = typeof o === "number" ? o + (id === "dauer_min" ? " " + t("today.min") : "") : window.I18N.has("o." + id + "." + o) ? t("o." + id + "." + o) : t("o." + o);
+      else h += '<div class="chips">' + (id === "essmuster" && !window.Nutrition.fastingAllowed(Object.assign({}, S.answers, { gewicht_kg: d.gewicht_kg })) ? ["normal"] : q.options || []).map(function (o) {
+        var cur = id === "essmuster" && !d[id] ? "normal" : d[id];
+        var on = q.type === "multi" ? (d[id] || []).indexOf(o) >= 0 : String(cur) === String(o);
+        var label = typeof o === "number" ? o + (id === "dauer_min" ? " " + t("today.min") : id === "essstart" ? ":00" : "") : window.I18N.has("o." + id + "." + o) ? t("o." + id + "." + o) : t("o." + o);
         return '<button class="chip" data-anso="' + id + "|" + o + '" aria-pressed="' + on + '">' + esc(label) + "</button>";
       }).join("") + "</div>";
       h += "</div>";
@@ -642,10 +646,13 @@
   }
   function saveAnswers() {
     var d = ui.ans, bad = "";
+    if (/^f/.test(d.essmuster || "") && !d.essstart) d.essstart = 12;
     if (d.name !== undefined) { d.name = cleanName(d.name); if (!d.name) delete d.name; }
     EDITABLE.forEach(function (id) {
       var q = QS.filter(function (x) { return x.id === id; })[0]; if (!q) return;
       if (id === "heim" && d.ort !== "zuhause") return;
+      if (id === "essstart" && !/^f/.test(d.essmuster || "")) return;
+      if ((id === "essmuster" || id === "mahlzeiten") && d[id] === undefined) return;
       if (q.type !== "date" && d[id] !== undefined && !window.Q.valid(q, d[id])) bad = bad || t("q." + id);
       if (id === "heim" && !(d.heim && d.heim.length)) bad = bad || t("q.heim");
     });
@@ -831,6 +838,10 @@
       else if (tg.notes.indexOf("muscle") >= 0) h += '<div class="note">' + esc(t("nutri.note.muscle")) + "</div>";
     } else h += '<div class="note">' + esc(t("nutri.off")) + "</div>";
     if (tg && currentWeight()) h += '<p class="qhint">' + esc(t("nutri.byweight", { kg: nf(currentWeight(), 1) })) + "</p>";
+    var pat = w.pattern, clock = function (n) { return (n % 24) + ":00"; };
+    if (pat.fasting) h += '<div class="card fast"><div class="sec">' + esc(t("o.essmuster." + S.answers.essmuster)) + "</div><h3>" + esc(t("fast.window", { a: clock(pat.start), b: clock(pat.end) })) + "</h3><p>" + esc(t("fast.text", { h: 24 - pat.hours })) + '</p><p class="qhint">' + esc(t("fast.safe")) + "</p>" + (pat.wanted > pat.meals ? '<p class="qhint">' + esc(t("fast.capped", { n: pat.meals })) + "</p>" : "") + "</div>";
+    else if (pat.blocked) h += '<div class="note warn">' + esc(t("fast.blocked")) + "</div>";
+    h += '<button class="btn ghost" id="mealopen">' + esc(t("nutri.change", { n: pat.meals })) + "</button>";
     var d = w.days[ui.nday] || w.days[0], lang = window.I18N.lang();
     var mon = w.info.monday;
     h += '<div class="sec">' + esc(t("nutri.week", { d: mon.toLocaleDateString(lang, { day: "numeric", month: "long" }) })) + '</div><div class="days">';
@@ -844,10 +855,10 @@
     d.slots.forEach(function (s) {
       var key = d.day + "|" + s.index, open = !!ui.nopen[key];
       h += '<div class="card meal' + (s.slot === "pre" ? " pre" : "") + '"><div class="mhead"><span class="sec">' + esc(t("slot." + s.slot)) + '</span><button class="swap" data-swap="' + key + '"' + (s.pool < 2 ? " disabled" : "") + ">" + esc(t("nutri.swap")) + "</button></div>" +
-        '<button class="fav" data-fav="' + s.meal.id + '" aria-pressed="' + !!(S.fav && S.fav[s.meal.id]) + '">' + (S.fav && S.fav[s.meal.id] ? "♥ " : "♡ ") + esc(t("nutri.fav")) + "</button>" +
         '<button class="mtitle" data-mopen="' + key + '" aria-expanded="' + open + '"><b>' + esc(mealTitle(s.meal)) + "</b></button>" + (s.slot === "pre" ? '<small class="prewhen">' + esc(t("nutri.prewhen")) + "</small>" : "") + "<small>" +
         (tg ? s.kcal + " " + esc(t("nutri.kcal")) + " · " + s.p + " g " + esc(t("nutri.protein")) + " · " : "") + esc(t("nutri.min", { n: s.meal.prep })) + "</small>";
       if (open) h += '<ul class="ing">' + s.items.map(function (it) { return "<li>" + esc(itemText(it)) + "</li>"; }).join("") + "</ul>";
+      h += '<button class="fav" data-fav="' + s.meal.id + '" aria-pressed="' + !!(S.fav && S.fav[s.meal.id]) + '">' + (S.fav && S.fav[s.meal.id] ? "♥ " : "♡ ") + esc(t("nutri.fav")) + "</button>";
       h += "</div>";
     });
     if (tg) {
@@ -1132,7 +1143,9 @@
     $app.querySelectorAll("[data-edit]").forEach(function (b) { b.onclick = function () { ui.edit = Number(b.getAttribute("data-edit")); ui.ederr = ""; ui.month = S.log[ui.edit].date.slice(0, 7); render(); }; });
     on("edsave", saveEdit); on("eddel", deleteEntry);
     on("edclose", function () { ui.edit = null; render(); });
-    on("ansopen", function () { ui.profile = false; ui.ans = JSON.parse(JSON.stringify(S.answers)); var ws = sortedWeights(); ui.ansW = ui.ans.gewicht_kg; if (ws.length) ui.ans.gewicht_kg = ws[ws.length - 1].kg; ui.ansW = ui.ans.gewicht_kg; ui.anserr = ""; render(); });
+    on("mealopen", function () { ui.ansFood = true; openAnswers(); });
+    on("ansopen", function () { ui.ansFood = false; openAnswers(); });
+    function openAnswers() { ui.profile = false; ui.ans = JSON.parse(JSON.stringify(S.answers)); var ws = sortedWeights(); ui.ansW = ui.ans.gewicht_kg; if (ws.length) ui.ans.gewicht_kg = ws[ws.length - 1].kg; ui.ansW = ui.ans.gewicht_kg; ui.anserr = ""; render(); }
     on("ansclose", function () { ui.ans = null; render(); });
     on("anssave", saveAnswers);
     $app.querySelectorAll("[data-ansn]").forEach(function (el) { el.oninput = function () { var id = el.getAttribute("data-ansn"); if (el.value.trim() === "") delete ui.ans[id]; else ui.ans[id] = el.value.trim().replace(",", "."); }; });

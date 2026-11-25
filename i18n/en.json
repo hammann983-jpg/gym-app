@@ -703,5 +703,19 @@
   "nutri.fav": "Favourite",
   "q.name": "What is your name?",
   "h.name": "Optional. Your first name is enough. It stays on your device only.",
-  "hello": "Hi, {name}"
+  "hello": "Hi, {name}",
+  "q.essmuster": "How do you want to eat?",
+  "h.essmuster": "Intermittent fasting is optional: for weight loss the amount of energy counts. Not with an eating disorder, pregnancy, diabetes, under 18 or on medication without medical advice.",
+  "o.essmuster.normal": "Regular, no eating window",
+  "o.essmuster.f14_10": "Intermittent fasting 14:10 (eat within 10 h)",
+  "o.essmuster.f16_8": "Intermittent fasting 16:8 (eat within 8 h)",
+  "o.essmuster.f18_6": "Intermittent fasting 18:6 (eat within 6 h, strict)",
+  "q.essstart": "When does your eating window start?",
+  "h.mahlzeiten": "2 suits intermittent fasting. 5 to 6 help with lots of training or bodybuilding. The daily total matters more than the number.",
+  "fast.window": "Eat from {a} to {b}",
+  "fast.text": "{h} hours without food. Water, tea and black coffee are fine any time. Get your protein and carbs inside the window and train close to it.",
+  "fast.safe": "If you get dizzy, faint or binge: stop and see a doctor. Eat normally on race days. Not with diabetes.",
+  "fast.capped": "Inside the window the app plans at most {n} meals.",
+  "fast.blocked": "Based on your answers, intermittent fasting is not recommended. You get the regular meal plan. Talk to your doctor if you have questions.",
+  "nutri.change": "{n} meals · change eating pattern"
 }

@@ -96,6 +96,14 @@ Promise.all([fetch("../data/essen.json").then(r => r.json())]).then(function (al
   ok("Für jede Ernährungsform und Allergie gibt es ein Pre-Workout", !badPre.length, badPre.join(" "));
   ok("Pre-Workout in der Einkaufsliste", Nutrition.shopping(tw).length > 0 && tw.days[0].slots.filter(s => s.slot === "pre")[0].items.every(it => Nutrition.shopping(tw).some(x => x.id === it.id)));
   ok("Standardtage nach Trainingstagen", Nutrition.defaultDays({ trainingstage: 3 }).join() === "0,2,4" && Nutrition.defaultDays({ trainingstage: 5 }).length === 5);
+  var two = Nutrition.week(P({ mahlzeiten: 2 }), D, d1, {}), six = Nutrition.week(P({ mahlzeiten: 6 }), D, d1, {});
+  ok("2 und 6 Mahlzeiten", two.days[0].slots.length === 2 && six.days[0].slots.length === 6 && two.days.every(d => !d.slots.some(s => s.slot === "fruehstueck")));
+  var dev = [];
+  [2, 3, 4, 5, 6].forEach(m => ["normal", "f16_8"].forEach(e => { var w = Nutrition.week(P({ mahlzeiten: m, essmuster: e, essstart: 12, s5: "nein" }), D, d1, {}, 0, [0, 2]); w.days.forEach(d => { var r = d.kcal / w.targets.kcal; if (r < 0.85 || r > 1.15) dev.push(m + e + " " + Math.round(r * 100)); }); }));
+  ok("Tagesenergie bleibt bei jeder Mahlzeitenzahl nah am Ziel (±15 %)", !dev.length, dev.slice(0, 8).join(", "));
+  var f = Nutrition.week(P({ mahlzeiten: 5, essmuster: "f16_8", essstart: 12, s5: "nein" }), D, d1, {});
+  ok("16:8: kein Frühstück, höchstens 4 Mahlzeiten, Fenster 12-20", f.pattern.fasting && f.pattern.end === 20 && f.days[0].slots.length === 4 && !f.days[0].slots.some(s => s.slot === "fruehstueck"));
+  ok("Fasten gesperrt: Essstörung, Schwangerschaft, unter 18, Medikamente", [{ essstoerung: "ja" }, { s6: "ja" }, { alter: 16 }, { s5: "ja" }].every(o => !Nutrition.week(P(Object.assign({ essmuster: "f16_8", mahlzeiten: 3 }, o)), D, d1, {}).pattern.fasting));
   document.getElementById("out").textContent = res.join("\n") + "\n\n" + (fails ? fails + " FEHLER" : "ALLE OK (" + res.length + ")");
   document.title = fails ? "FAIL" : "PASS";
 });

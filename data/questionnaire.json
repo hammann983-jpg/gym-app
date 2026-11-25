@@ -539,14 +539,49 @@
    "required": true
   },
   {
+   "id": "essmuster",
+   "sec": "food",
+   "type": "choice",
+   "options": [
+    "normal",
+    "f14_10",
+    "f16_8",
+    "f18_6"
+   ],
+   "hint": true,
+   "required": true
+  },
+  {
+   "id": "essstart",
+   "sec": "food",
+   "type": "choice",
+   "options": [
+    8,
+    10,
+    12,
+    14
+   ],
+   "required": true,
+   "if": {
+    "essmuster": [
+     "f14_10",
+     "f16_8",
+     "f18_6"
+    ]
+   }
+  },
+  {
    "id": "mahlzeiten",
    "sec": "food",
    "type": "choice",
    "options": [
+    2,
     3,
     4,
-    5
+    5,
+    6
    ],
+   "hint": true,
    "required": true
   }
  ]
