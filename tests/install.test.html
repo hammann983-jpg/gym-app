@@ -1,0 +1,34 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Installieren Test</title>
+<body style="font-family:system-ui;padding:20px"><h1>Installier-Tests</h1><pre id="out">läuft…</pre>
+<script src="../js/install.js"></script>
+<script>
+var res = [], fails = 0;
+function ok(name, cond, info) { if (!cond) fails++; res.push((cond ? "OK   " : "FAIL ") + name + (cond ? "" : "  " + (info || ""))); }
+var CHROME = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
+var SAMSUNG = "Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/25.0 Chrome/121.0.0.0 Mobile Safari/537.36";
+var INSTA = "Mozilla/5.0 (Linux; Android 13; SM-G991B; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/126.0.0.0 Mobile Safari/537.36 Instagram 337.0";
+var IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1";
+var IGIOS = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 337.0";
+var IPAD = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15";
+var WIN = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
+var D = Install.detect;
+function is(name, got, want) { ok(name, got === want, got); }
+is("Android Chrome ohne Dialog: Menü-Hilfe", D(CHROME, false, false, 5), "android");
+is("Android Chrome mit Dialog: Knopf", D(CHROME, false, true, 5), "prompt");
+is("Samsung Internet ohne Dialog", D(SAMSUNG, false, false, 5), "samsung");
+is("Samsung Internet mit Dialog: Knopf", D(SAMSUNG, false, true, 5), "prompt");
+is("Instagram-Fenster Android", D(INSTA, false, false, 5), "inapp");
+is("iPhone Safari", D(IPHONE, false, false, 5), "ios");
+is("Instagram-Fenster iPhone", D(IGIOS, false, false, 5), "ios_inapp");
+is("iPad mit Mac-Kennung", D(IPAD, false, false, 5), "ios");
+is("Mac ohne Touch", D(IPAD, false, false, 0), "other");
+is("Windows", D(WIN, false, false, 0), "other");
+is("Schon als App geöffnet", D(CHROME, true, true, 5), "installed");
+var L = Install.chromeLink("https://example.test/gym-app/?v=29#x");
+ok("Chrome-Link öffnet Chrome, ohne Zusätze", L.indexOf("intent://example.test/gym-app/#Intent;scheme=https;package=com.android.chrome;") === 0, L);
+ok("Chrome-Link hat Rückfall", L.indexOf("S.browser_fallback_url=" + encodeURIComponent("https://example.test/gym-app/") + ";end") > 0, L);
+document.getElementById("out").textContent = res.join("\n") + "\n\n" + (fails ? fails + " FEHLER" : "ALLE OK (" + res.length + ")");
+document.title = fails ? "FAIL" : "PASS";
+</script>

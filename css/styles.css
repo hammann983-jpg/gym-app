@@ -327,3 +327,6 @@ main > .sec { margin-bottom: 8px; }
 
 .card.fast { margin: 12px 0 0; border-color: var(--accent-2); }
 #mealopen { margin: 12px 0 4px; }
+/* Installieren */
+.card.install { border-color: var(--accent-2); }
+.card.install a.btn { display: flex; align-items: center; justify-content: center; text-decoration: none; }

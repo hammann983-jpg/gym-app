@@ -68,10 +68,34 @@
       }).join("") + "</div></section>";
   }
 
+  // Karte zum Installieren: Inhalt je nach Handy und Browser
+  function installCard(where) {
+    var st = window.Install.state(), full = where === "profile";
+    if (!full && (st === "installed" || st === "other")) return "";
+    var android = st === "inapp" || st === "samsung" || st === "android";
+    var h = '<div class="card install"><h3>' + esc(t("install.title")) + "</h3>";
+    var p = function (k) { h += "<p>" + esc(t(k)) + "</p>"; };
+    if (st === "installed") p("install.installed");
+    else if (st === "done") p("install.done");
+    else if (st === "prompt") { p("install.ready"); h += '<button class="btn" id="instgo">' + esc(t("install.button")) + "</button>"; }
+    else if (st === "other") { p("install.ios"); p("install.android"); }
+    else p("install." + st);
+    if (android) h += '<a class="btn" href="' + esc(window.Install.chromeLink(location.href)) + '">' + esc(t("install.chrome")) + "</a>";
+    if (android || st === "ios_inapp") h += '<button class="btn ghost" id="instcopy">' + esc(t("install.copy")) + '</button><p class="qhint" id="instmsg" role="status"></p>';
+    return h + "</div>";
+  }
+  function copyLink() {
+    var url = location.href.split("#")[0].split("?")[0];
+    var say = function (txt) { var m = document.getElementById("instmsg"); if (m) m.textContent = txt; };
+    // Klappt das Kopieren nicht (alte In-App-Fenster), steht die Adresse zum Abtippen da
+    if (!(navigator.clipboard && navigator.clipboard.writeText)) { say(url); return; }
+    navigator.clipboard.writeText(url).then(function () { say(t("install.copied")); }, function () { say(url); });
+  }
+
   function welcomeScreen() {
     return '<section class="screen">' + logo() + "<h1>" + esc(t("welcome.title")) + "</h1><p>" + esc(t("welcome.text")) +
       '</p><p class="disclaimer">' + esc(t("welcome.disclaimer")) +
-      '</p><button class="btn" id="start">' + esc(t("welcome.start")) + "</button></section>";
+      "</p>" + installCard("welcome") + '<button class="btn" id="start">' + esc(t("welcome.start")) + "</button></section>";
   }
 
   // ---------- Fragebogen ----------
@@ -1081,7 +1105,7 @@
     return '<div class="sheet-bg" id="bg"><div class="sheet" role="dialog" aria-modal="true"><h2>' + esc(t("profile.title")) + "</h2>" + hello() +
       '<div><div class="lbl">' + esc(t("profile.language")) + '</div><div class="chips">' +
       C.LANGS.map(function (l) { return '<button class="chip" data-lang="' + l.code + '" lang="' + l.code + '" aria-pressed="' + (S.lang === l.code) + '">' + esc(l.label) + "</button>"; }).join("") +
-      '</div></div><button class="btn" id="ansopen">' + esc(t("ans.title")) + '</button><button class="btn ghost" id="fbopen">' + esc(t("fb.title")) + '</button><button class="btn ghost" id="redo">' + esc(t("profile.redo")) + '</button><div><div class="lbl">' + esc(t("backup.title")) + '</div><p class="qhint">' + esc(t("backup.text")) + '</p></div><button class="btn ghost" id="bksave">' + esc(t("backup.save")) + '</button><label class="btn ghost filebtn">' + esc(t("backup.load")) + '<input type="file" accept=".json,application/json" id="bkload" hidden></label><p class="qhint" id="bkmsg" role="status"></p><div><div class="lbl">' + esc(t("install.title")) + '</div><p class="qhint">' + esc(t("install.ios")) + "<br>" + esc(t("install.android")) + '</p></div><button class="btn ghost" id="privopen">' + esc(t("priv.title")) + '</button><p class="ver">' + esc(t("profile.disclaimer")) + '</p><div class="ver">' + esc(t("profile.version")) + " " + C.VERSION + '</div><button class="btn ghost" id="close">' + esc(t("profile.close")) + "</button></div></div>";
+      '</div></div><button class="btn" id="ansopen">' + esc(t("ans.title")) + '</button><button class="btn ghost" id="fbopen">' + esc(t("fb.title")) + '</button><button class="btn ghost" id="redo">' + esc(t("profile.redo")) + '</button><div><div class="lbl">' + esc(t("backup.title")) + '</div><p class="qhint">' + esc(t("backup.text")) + '</p></div><button class="btn ghost" id="bksave">' + esc(t("backup.save")) + '</button><label class="btn ghost filebtn">' + esc(t("backup.load")) + '<input type="file" accept=".json,application/json" id="bkload" hidden></label><p class="qhint" id="bkmsg" role="status"></p>' + installCard("profile") + '<button class="btn ghost" id="privopen">' + esc(t("priv.title")) + '</button><p class="ver">' + esc(t("profile.disclaimer")) + '</p><div class="ver">' + esc(t("profile.version")) + " " + C.VERSION + '</div><button class="btn ghost" id="close">' + esc(t("profile.close")) + "</button></div></div>";
   }
 
   function render() {
@@ -1303,6 +1327,8 @@
         localStorage.setItem(KEY, JSON.stringify(d.data)); window.location.reload();
       });
     };
+    on("instgo", function () { window.Install.prompt(); });
+    on("instcopy", copyLink);
     on("privopen", function () { ui.profile = false; ui.privacy = true; render(); });
     on("privclose", function () { ui.privacy = false; render(); });
     var pbg = document.getElementById("privbg");
@@ -1327,7 +1353,15 @@
     getJSON("data/essen.json").then(function (d) { FOOD = d; }),
     getJSON("data/tips.json").then(function (d) { TIPS = d; }),
     getJSON("data/wissen.json").then(function (d) { KNOW = d; })
-  ]).then(render, render);
+  ]).then(ready, ready);
+  // Meldet der Browser "installierbar" erst später, nur dort neu zeichnen, wo die Karte steht
+  function ready() {
+    render();
+    window.Install.onChange(function () {
+      if (S.lang && !S.welcomed) render();
+      else if (ui.profile) { var s = $app.querySelector("#bg .sheet"), y = s ? s.scrollTop : 0; render(); s = $app.querySelector("#bg .sheet"); if (s) s.scrollTop = y; }
+    });
+  }
 
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
     navigator.serviceWorker.register("sw.js?v=" + C.VERSION).catch(function () {});

@@ -1,7 +1,8 @@
 {
   "name": "FORMA",
   "short_name": "FORMA",
-  "start_url": "./?v=29",
+  "id": "/gym-app/",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#090E1C",
